@@ -213,13 +213,37 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-    public function getProductTypes()
+    public function getProductTypes(Request $request)
     {
         try {
             $user = Auth::user();
+            $productId = $request->input('product_id');
+        
             if ($user !== null) {
-                $data = ProductType::select('id as product_type_id', 'type_name as product_type_name')->get();
+                if ($productId == 0) {
+                    return response()->json([
+                        'success' => false,
+                        'statusCode' => 400,
+                        'message' => 'Invalid product_id provided.',
+                        'data' => []
+                    ], 400);
+                }
+                $query = ProductType::select('product_id', 'id as product_type_id', 'type_name', 'rate');
+
+                if ($productId) {
+                    $query->where('product_id', $productId);
+                }
+                
+                $data = $query->get();
+
+                if ($data->isEmpty()) {
+                    return response()->json([
+                        'success' => false,
+                        'statusCode' => 404,
+                        'message' => 'No product types found for the given product_id.',
+                    ], 404);
+                }
+
             } else {
                 $data = [];
             }
@@ -238,6 +262,41 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+
+    // public function getProductTypes(Request $request)
+    // {
+    //     try {
+    //         $user = Auth::user();
+    //         $productId = $request->input('product_id');
+        
+    //         if ($user !== null) {
+    //             $query = ProductType::select('product_id as product_id', 'id as product_type_id', 'type_name as product_type_name');
+                
+    //             if ($productId) {
+    //                 $query->where('product_id', $productId);
+    //             }
+    //             $data = $query->get();
+   
+
+    //         } else {
+    //             $data = [];
+    //         }
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Product types fetched successfully',
+    //             'data' => $data,
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function getProductRate(Request $request)
     {
         try {

@@ -9,10 +9,10 @@ class Product extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['product_name', 'type_id', 'rate'];
+    protected $fillable = ['product_name'];
 
-    public function type()
+    public function productTypes()
     {
-        return $this->belongsTo(ProductType::class, 'type_id');
+        return $this->hasMany(ProductType::class, 'product_id');
     }
 }
