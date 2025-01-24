@@ -44,7 +44,7 @@ Route::prefix('v1')->group(function () {
         Route::get('order-types', [AuthController::class, 'getOrderTypes']);
         Route::get('dealers', [AuthController::class, 'getDealers']);
         Route::get('products', [AuthController::class, 'getProducts']);
-        Route::get('product-types', [AuthController::class, 'getProductTypes']);
+        Route::post('product-types', [AuthController::class, 'getProductTypes']);
         Route::get('product-rate', [AuthController::class, 'getProductRate']);
         Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
 
