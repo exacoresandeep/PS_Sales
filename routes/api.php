@@ -1,0 +1,54 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\LeadController;
+use App\Http\Controllers\Api\LeaveController;
+use App\Http\Controllers\Api\ActivityController;
+
+Route::prefix('v1')->group(function () {
+    Route::post('login', [AuthController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('employees', [EmployeeController::class, 'store']);
+        Route::get('employee', [EmployeeController::class, 'show']);
+
+        Route::prefix('orders')->group(function () {
+            Route::post('/', [OrderController::class, 'store']); // Store new order
+            Route::get('/', [OrderController::class, 'index']); // List orders by current user ID
+            Route::get('{orderId}', [OrderController::class, 'show']); // order details
+        });
+
+        Route::prefix('leads')->group(function () {
+            Route::post('/', [LeadController::class, 'store']); // Create new lead
+            Route::get('/', [LeadController::class, 'index']); // List Leads by current user ID
+            Route::get('{leadId}', [LeadController::class, 'show']); // Leads details
+            Route::post('{leadId}/update', [LeadController::class, 'updateLead']); // Update lead status
+            Route::post('/filter', [LeadController::class, 'getLeadByFilter']);
+        });
+        Route::prefix('leave')->group(function () {
+            Route::post('/', [LeaveController::class, 'store']); // Create a new leave entry
+            Route::get('/', [LeaveController::class, 'index']); // List leave entries
+            Route::get('{month}', [LeaveController::class, 'leaveByMonth']); // Leave entries for the selected month
+            Route::post('/claim/{id}', [LeaveController::class, 'updateClaim']);
+        });
+        Route::prefix('activities')->group(function () {
+            Route::get('/', [ActivityController::class, 'index']); // List activities for the current employee
+            Route::get('{activityId}', [ActivityController::class, 'viewActivity']); // View Activity
+            Route::post('{activityId}/update', [ActivityController::class, 'updateActivity']); // Update activity
+        });
+
+        Route::get('customer-types', [AuthController::class, 'getCustomerTypes']);
+        Route::get('order-types', [AuthController::class, 'getOrderTypes']);
+        Route::get('dealers', [AuthController::class, 'getDealers']);
+        Route::get('products', [AuthController::class, 'getProducts']);
+        Route::get('product-types', [AuthController::class, 'getProductTypes']);
+        Route::get('product-rate', [AuthController::class, 'getProductRate']);
+        Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
+
+        
+        Route::post('logout', [AuthController::class, 'logout']);
+    });
+});

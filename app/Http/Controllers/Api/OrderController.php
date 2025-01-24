@@ -1,0 +1,152 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\OrderItem;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Exception;
+
+class OrderController extends Controller
+{
+    
+    public function index(Request $request)
+    {
+        try {
+            $employee = $request->user();
+
+            $orders = Order::where('created_by', $employee->id)
+                           ->with([
+                               'orderType',
+                               'dealer',
+                               'orderItems.product',
+                               'lead.customerType'  
+                           ])->get();
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Orders fetched successfully',
+                'data' => $orders,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function store(Request $request)
+    {
+        try {
+
+            $employee = Auth::user();
+
+            $validatedData = $request->validate([
+                'order_type' => 'required|exists:order_types,id',
+                'order_category' => 'nullable|string',
+                'lead_id' => 'required|exists:leads,id',
+                'dealer_id' => 'nullable|exists:dealers,id',
+                'payment_terms' => 'required|in:Advance,Credit',
+                'advance_amount' => 'nullable|numeric',
+                'payment_date' => 'nullable|string',
+                'utr_number' => 'nullable|string',
+                'billing_date' => 'required|string',
+                'reminder_date' => 'required|string',
+                'total_amount' => 'nullable|numeric',
+                'additional_information' => 'nullable|string',
+                'status' => 'nullable|in:Pending,Dispatched,Delivered',
+                'vehicle_category' => 'nullable|string',
+                'vehicle_type' => 'nullable|string',
+                'vehicle_number' => 'nullable|string',
+                'driver_name' => 'nullable|string',
+                'driver_phone' => 'nullable|string',
+                'order_items' => 'required|array',
+                'order_items.*.product_id' => 'required|exists:products,id',
+                // 'order_items.*.total_quantity' => 'required|numeric',
+                // 'order_items.*.priority_quantity' => 'nullable|string',
+                'order_items.*.product_details' => 'nullable|array',
+            ]);
+            if (isset($validatedData['payment_date'])) {
+                $validatedData['payment_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['payment_date'])->format('Y-m-d');
+            }
+
+            $validatedData['billing_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['billing_date'])->format('Y-m-d');
+            $validatedData['reminder_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['reminder_date'])->format('Y-m-d');
+    
+            $validatedData['created_by'] = $employee->id;
+            $order = Order::create($validatedData);
+
+            foreach ($validatedData['order_items'] as $orderItem) {
+                if (isset($orderItem['product_details']) && is_array($orderItem['product_details'])) {
+                    $orderItem['total_quantity'] = collect($orderItem['product_details'])
+                    ->sum(function ($detail) {
+                        return $detail['quantity'] ?? 0;
+                    });
+                    $orderItem['product_details'] = json_encode($orderItem['product_details']);
+                }
+
+                $order->orderItems()->create($orderItem);
+            }
+           
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Order created successfully!',
+                'data' => $order,
+            ], 200);
+
+        } catch (Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function show($orderId)
+    {
+        try {
+
+            $user = Auth::user();
+
+            if ($user === null) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 400,
+                    'message' => 'You must be logged in to view this order.'
+                ], 400);
+            }
+            $order = Order::with([
+                'orderType',      
+                'customerType', 
+                'dealer',        
+                'orderItems.product',
+                'createdBy', 
+                'lead.customerType',
+            ])->findOrFail($orderId); 
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Orders details fetched successfully',
+                'data' => $order,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+}
