@@ -24,5 +24,9 @@ class Employee extends Authenticatable
     {
         return $this->belongsTo(Employee::class, 'reporting_manager');
     }
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
     
 }

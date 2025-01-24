@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\ActivityController;
+use App\Http\Controllers\Api\AttendanceController;
+use App\Http\Controllers\Api\TargetController;
 
 Route::prefix('v1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -39,6 +41,14 @@ Route::prefix('v1')->group(function () {
             Route::get('{activityId}', [ActivityController::class, 'viewActivity']); // View Activity
             Route::post('{activityId}/update', [ActivityController::class, 'updateActivity']); // Update activity
         });
+        Route::prefix('target')->group(function () {
+            Route::get('/targets/{month}', [TargetController::class, 'getMonthlyTarget']);
+        });
+        // Route::prefix('attendance')->group(function () {
+        //     Route::post('/punch-in', [AttendanceController::class, 'punchIn']);
+        //     Route::post('/punch-out', [AttendanceController::class, 'punchOut']);
+        //     Route::get('/auto-punch-out', [AttendanceController::class, 'autoPunchOut']);
+        // });
 
         Route::get('customer-types', [AuthController::class, 'getCustomerTypes']);
         Route::get('order-types', [AuthController::class, 'getOrderTypes']);
