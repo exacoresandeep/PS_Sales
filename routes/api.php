@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\TargetController;
+use App\Http\Controllers\Api\RouteController;
 
 Route::prefix('v1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -42,7 +43,11 @@ Route::prefix('v1')->group(function () {
             Route::post('{activityId}/update', [ActivityController::class, 'updateActivity']); // Update activity
         });
         Route::prefix('target')->group(function () {
-            Route::get('/targets/{month}', [TargetController::class, 'getMonthlyTarget']);
+            Route::get('/{month}', [TargetController::class, 'getMonthlyTarget']);
+        });
+        Route::prefix('route')->group(function () {
+            Route::get('/todays-routes', [RouteController::class, 'getTodaysTrip']);
+            Route::post('/{dealerId}/update-activity', [RouteController::class, 'updateDealerTripActivity']);
         });
         // Route::prefix('attendance')->group(function () {
         //     Route::post('/punch-in', [AttendanceController::class, 'punchIn']);
