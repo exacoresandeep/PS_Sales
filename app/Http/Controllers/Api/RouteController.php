@@ -38,6 +38,37 @@ class RouteController extends Controller
             ], 500);
         }
     }
+    public function viewTripDetails(Request $request, $dealerId)
+    {
+        try {
+            $tripDetails = DealerTripActivity::with(['assignRoute', 'dealer'])
+                ->where('dealer_id', $dealerId)
+                ->get();
+
+            if ($tripDetails->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'No trip details found for the provided dealer.',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Trip details retrieved successfully.',
+                'data' => $tripDetails,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => 'Failed to retrieve trip details. Please try again later.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function updateDealerTripActivity(Request $request, $dealerId)
     {
         try {
