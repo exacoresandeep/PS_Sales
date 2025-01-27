@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\LeaveController;
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\TargetController;
+use App\Http\Controllers\Api\RouteController;
 
 Route::prefix('v1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -28,7 +29,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/', [LeadController::class, 'index']); // List Leads by current user ID
             Route::get('{leadId}', [LeadController::class, 'show']); // Leads details
             Route::post('{leadId}/update', [LeadController::class, 'updateLead']); // Update lead status
-            Route::post('/filter', [LeadController::class, 'getLeadByFilter']);
         });
         Route::prefix('leave')->group(function () {
             Route::post('/', [LeaveController::class, 'store']); // Create a new leave entry
@@ -42,7 +42,13 @@ Route::prefix('v1')->group(function () {
             Route::post('{activityId}/update', [ActivityController::class, 'updateActivity']); // Update activity
         });
         Route::prefix('target')->group(function () {
-            Route::get('/targets/{month}', [TargetController::class, 'getMonthlyTarget']);
+            Route::get('/{month}', [TargetController::class, 'getMonthlyTarget']);
+        });
+        Route::prefix('route')->group(function () {
+            Route::get('/todays-routes', [RouteController::class, 'getTodaysTrip']);
+            Route::post('/{dealerId}/update-activity', [RouteController::class, 'updateDealerTripActivity']);
+            Route::get('/{dealerId}/view-trip-details', [RouteController::class, 'viewTripDetails']);
+            Route::post('/{tripRouteId}/add-dealer', [RouteController::class, 'addDealerToRoute']);
         });
         // Route::prefix('attendance')->group(function () {
         //     Route::post('/punch-in', [AttendanceController::class, 'punchIn']);
