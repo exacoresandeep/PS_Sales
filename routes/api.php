@@ -49,6 +49,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/todays-routes', [RouteController::class, 'getTodaysTrip']);
             Route::post('/{dealerId}/update-activity', [RouteController::class, 'updateDealerTripActivity']);
             Route::get('/{dealerId}/view-trip-details', [RouteController::class, 'viewTripDetails']);
+            Route::post('/{tripRouteId}/add-dealer', [RouteController::class, 'addDealerToRoute']);
         });
         // Route::prefix('attendance')->group(function () {
         //     Route::post('/punch-in', [AttendanceController::class, 'punchIn']);

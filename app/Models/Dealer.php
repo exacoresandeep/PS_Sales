@@ -20,6 +20,7 @@ class Dealer extends Model
         'state',
         'district',
         'taluk',
+        'trip_route_id',
     ];
 
     public function orders()

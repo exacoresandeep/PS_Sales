@@ -41,15 +41,20 @@ class RouteController extends Controller
     public function viewTripDetails(Request $request, $dealerId)
     {
         try {
+            $employeeId = Auth::id();
+
             $tripDetails = DealerTripActivity::with(['assignRoute', 'dealer'])
                 ->where('dealer_id', $dealerId)
+                ->whereHas('assignRoute', function($query) use ($employeeId) {
+                    $query->where('employee_id', $employeeId);
+                })
                 ->get();
 
             if ($tripDetails->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 404,
-                    'message' => 'No trip details found for the provided dealer.',
+                    'message' => 'No trip details found for the provided dealer and authenticated employee.',
                 ], 404);
             }
 
@@ -68,6 +73,7 @@ class RouteController extends Controller
             ], 500);
         }
     }
+
 
     public function updateDealerTripActivity(Request $request, $dealerId)
     {
@@ -109,5 +115,51 @@ class RouteController extends Controller
             ], 500);
         }
     }
+
+    public function addDealerToRoute(Request $request, $tripRouteId)
+    {
+        try {
+            $request->validate([
+                'dealer_code' => 'required|string|max:10|unique:dealers,dealer_code',
+                'dealer_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:15',
+                'email' => 'required|email|max:255',
+                'address' => 'required|string|max:500',
+                'user_zone' => 'required|string|max:100',
+                'pincode' => 'required|string|max:6',
+                'state' => 'required|string|max:100',
+                'district' => 'required|string|max:100',
+                'taluk' => 'required|string|max:100',
+            ]);
+
+            $dealer = Dealer::create([
+                'dealer_code' => $request->dealer_code,
+                'dealer_name' => $request->dealer_name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'address' => $request->address,
+                'user_zone' => $request->user_zone,
+                'pincode' => $request->pincode,
+                'state' => $request->state,
+                'district' => $request->district,
+                'taluk' => $request->taluk,
+                'trip_route_id' => $tripRouteId, 
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Dealer added successfully to the route.',
+                'data' => $dealer,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
 }
