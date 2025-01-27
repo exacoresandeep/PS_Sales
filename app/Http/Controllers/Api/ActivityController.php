@@ -26,7 +26,7 @@ class ActivityController extends Controller
                 ->with(['activityType', 'dealer']) 
                 ->orderBy('assigned_date', 'desc')
                 ->get();
-
+            dd($activities);
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
