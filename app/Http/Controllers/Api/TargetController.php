@@ -8,6 +8,7 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class TargetController extends Controller
 {
@@ -27,19 +28,19 @@ class TargetController extends Controller
                     'success' => false,
                     'statusCode' => 404,
                     'message' => 'No targets found for the selected month.',
-                    'data' => null,
                 ], 404);
             }
 
             $orders = Order::where('created_by', $employeeId)
-            ->whereYear('created_at', $currentYear)
-            ->whereMonth('created_at', $month)
-            ->with('orderItems')
-            ->get();
+            ->whereYear('created_at', $currentYear) 
+            ->whereMonth('created_at', Carbon::parse($month)->month)
+            ->where('status', 'Accepted') 
+            ->pluck('id');
 
-            $achievedTarget = $orders->flatMap(function ($order) {
-                return $order->orderItems;
-            })->sum('total_quantity');
+            $achievedTarget = DB::table('order_items') 
+            ->whereIn('order_id', $orders) 
+            ->sum('total_quantity'); 
+
 
             $response = [
                 'targets' => $targets,
