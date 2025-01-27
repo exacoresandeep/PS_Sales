@@ -10,20 +10,71 @@ use Exception;
 
 class LeadController extends Controller
 {
-    public function index()
+    // public function index()
+    // {
+    //     try {
+    //         $leads = Lead::with('customerType') 
+    //                     ->where('created_by', Auth::id())
+    //                     ->get();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Leads retrieved successfully!',
+    //             'data' => $leads,
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+    public function index(Request $request)
     {
         try {
-            $leads = Lead::with('customerType') 
-                        ->where('created_by', Auth::id())
-                        ->get();
+            $user = Auth::user();
+            if ($user !== null) {
+                $query = Lead::with('customerType')
+                            ->where('created_by', $user->id);
 
-            return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => 'Leads retrieved successfully!',
-                'data' => $leads,
-            ], 200);
+                if ($request->has('search_key') && !empty($request->search_key)) {
+                    $searchKey = $request->search_key;
 
+                    $query->where(function ($q) use ($searchKey) {
+                        $q->where('customer_name', 'like', '%' . $searchKey . '%')
+                        ->orWhere('email', 'like', '%' . $searchKey . '%')
+                        ->orWhere('phone', 'like', '%' . $searchKey . '%');
+                    });
+                }
+
+                $leads = $query->orderBy('customer_name', 'asc')->get();
+
+                if ($leads->isEmpty()) {
+                    return response()->json([
+                        'success' => true,
+                        'statusCode' => 200,
+                        'message' => 'No leads found matching the filter.',
+                        'data' => [],
+                    ], 200);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'statusCode' => 200,
+                    'message' => 'Leads retrieved successfully!',
+                    'data' => $leads,
+                ], 200);
+
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => 'Unauthorized access.',
+                ], 401);
+            }
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -32,6 +83,7 @@ class LeadController extends Controller
             ], 500);
         }
     }
+
 
     public function store(Request $request)
     {
@@ -135,54 +187,7 @@ class LeadController extends Controller
             ], 500);
         }
     }
-    public function getLeadByFilter(Request $request)
-    { 
-        // dd($request->customer_name);
-        try {
-           
-            $user = Auth::user();
-        
-        if ($user !== null) {
-            $query = Lead::with('customerType')->where('created_by', $user->id);
-
-            if ($request->has('search_key') && !empty($request->search_key)) {
-                $searchKey = $request->search_key;
-                
-                $query->where(function ($q) use ($searchKey) {
-                    $q->where('customer_name', 'like', '%' . $searchKey . '%')
-                      ->orWhere('email', 'like', '%' . $searchKey . '%')
-                      ->orWhere('phone', 'like', '%' . $searchKey . '%');
-                });
-            }
-
-            $leads = $query->orderBy('customer_name', 'asc')->get();
-            } else {
-                $leads = [];
-            }
-
-            if ($leads->isEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'statusCode' => 200,
-                    'message' => 'No leads found matching the filter.',
-                    'data' => [],
-                ], 200);
-            }
-
-            return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => 'Leads fetched successfully!',
-                'data' => $leads,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'statusCode' => 500,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
+  
 
 
 

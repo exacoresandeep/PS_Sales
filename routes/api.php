@@ -29,7 +29,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/', [LeadController::class, 'index']); // List Leads by current user ID
             Route::get('{leadId}', [LeadController::class, 'show']); // Leads details
             Route::post('{leadId}/update', [LeadController::class, 'updateLead']); // Update lead status
-            Route::post('/filter', [LeadController::class, 'getLeadByFilter']);
         });
         Route::prefix('leave')->group(function () {
             Route::post('/', [LeaveController::class, 'store']); // Create a new leave entry
