@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
-    /**
-     * Mark the attendance for punch-in.
-     */
+    
     public function punchIn(Request $request)
     {
         $employeeId = Auth::id();
@@ -20,7 +18,6 @@ class AttendanceController extends Controller
         $latitude = $request->latitude;
         $longitude = $request->longitude;
 
-        // Check if already punched in
         $attendance = Attendance::where('employee_id', $employeeId)
                                 ->where('date', $date)
                                 ->first();
@@ -30,15 +27,13 @@ class AttendanceController extends Controller
                 'success' => false,
                 'statusCode' => 400,
                 'message' => 'Already punched in for today',
-                'data' => null
             ]);
         }
 
-        // Create a new punch-in entry
         $attendance = Attendance::create([
             'employee_id' => $employeeId,
             'date' => $date,
-            'punch_in' => Carbon::now()->format('H:i:s'),
+            'punch_in' => Carbon::now('Asia/Kolkata')->format('H:i:s'),
             'latitude' => $latitude,
             'longitude' => $longitude,
         ]);
@@ -51,15 +46,12 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * Mark the attendance for punch-out.
-     */
+
     public function punchOut(Request $request)
     {
         $employeeId = Auth::id();
         $date = Carbon::today()->format('Y-m-d');
         
-        // Find the punch-in record for today
         $attendance = Attendance::where('employee_id', $employeeId)
                                 ->where('date', $date)
                                 ->whereNotNull('punch_in')
@@ -74,9 +66,8 @@ class AttendanceController extends Controller
             ]);
         }
 
-        // Update the punch-out time
         $attendance->update([
-            'punch_out' => Carbon::now()->format('H:i:s'),
+            'punch_out' => Carbon::now('Asia/Kolkata')->format('H:i:s'),
         ]);
 
         return response()->json([
@@ -87,15 +78,12 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * Automatically punch out at 11:59 PM if no punch-out is recorded.
-     */
+   
     public function autoPunchOut()
     {
         $date = Carbon::today()->format('Y-m-d');
         $currentTime = Carbon::now();
 
-        // Check if the time is 11:59 PM
         if ($currentTime->format('H:i') === '23:59') {
             $attendances = Attendance::whereNull('punch_out')
                                      ->whereDate('date', $date)
@@ -119,7 +107,6 @@ class AttendanceController extends Controller
             'success' => true,
             'statusCode' => 200,
             'message' => 'No action required',
-            'data' => null
         ]);
     }
 }
