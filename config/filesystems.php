@@ -40,9 +40,14 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
+<<<<<<< HEAD
             'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
             'throw' => false,
+=======
+            'url' => env('APP_URL') . '/storage',
+            'visibility' => 'public',
+>>>>>>> 60ca7bf (vendor fileupload filecontroller upload folder)
         ],
 
         's3' => [
@@ -59,6 +64,12 @@ return [
 
     ],
 
+<<<<<<< HEAD
+=======
+
+
+   
+>>>>>>> 60ca7bf (vendor fileupload filecontroller upload folder)
     /*
     |--------------------------------------------------------------------------
     | Symbolic Links

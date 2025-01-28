@@ -13,8 +13,13 @@ use App\Http\Controllers\Api\RouteController;
 
 Route::prefix('v1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
+<<<<<<< HEAD
 
     Route::middleware('auth:sanctum')->group(function () {
+=======
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+>>>>>>> 60ca7bf (vendor fileupload filecontroller upload folder)
         Route::post('employees', [EmployeeController::class, 'store']);
         Route::get('employee', [EmployeeController::class, 'show']);
 
@@ -22,7 +27,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [OrderController::class, 'store']); // Store new order
             Route::get('/', [OrderController::class, 'index']); // List orders by current user ID
             Route::get('{orderId}', [OrderController::class, 'show']); // order details
+<<<<<<< HEAD
             Route::get('filter', [OrderController::class, 'orderFilter']);
+=======
+>>>>>>> 60ca7bf (vendor fileupload filecontroller upload folder)
         });
 
         Route::prefix('leads')->group(function () {
@@ -64,8 +72,21 @@ Route::prefix('v1')->group(function () {
         Route::post('product-types', [AuthController::class, 'getProductTypes']);
         Route::get('product-rate', [AuthController::class, 'getProductRate']);
         Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
+<<<<<<< HEAD
 
         
         Route::post('logout', [AuthController::class, 'logout']);
+=======
+        
+        
+        
+        Route::get('getVehicleCategory', [AuthController::class, 'getVehicleCategory']);
+        Route::post('getVehicleTypeByCategory', [AuthController::class, 'getVehicleTypeByCategory']);
+        Route::post('create_order', [AuthController::class, 'create_order']);
+
+
+        Route::post('/fileUpload', [AuthController::class, 'uploadFile']);
+        
+>>>>>>> 60ca7bf (vendor fileupload filecontroller upload folder)
     });
 });
