@@ -15,6 +15,9 @@ class Order extends Model
         'status', 'vehicle_category', 'vehicle_type', 'vehicle_number', 
         'driver_name', 'driver_phone', 'created_by'
     ];
+    protected $casts = [
+        'attachment' => 'array',
+    ];
 
 
     public function orderType()
