@@ -5,12 +5,9 @@
 /public/storage
 /storage/*.key
 /storage/pail
-<<<<<<< HEAD
 /vendor
 .env
-=======
 
->>>>>>> 60ca7bf (vendor fileupload filecontroller upload folder)
 .env.backup
 .env.production
 .phpactor.json

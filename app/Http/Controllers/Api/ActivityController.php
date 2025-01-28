@@ -26,12 +26,29 @@ class ActivityController extends Controller
                 ->with(['activityType', 'dealer']) 
                 ->orderBy('assigned_date', 'desc')
                 ->get();
-            dd($activities);
+            
+            $activitiesData = $activities->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'assigned_date' => $activity->assigned_date,
+                    'completed_date' => $activity->completed_date,
+                    'status' => $activity->status,
+                    'activity_type' => [
+                        'id' => $activity->activityType->id,
+                        'name' => $activity->activityType->name,
+                    ],
+                    'dealer' => [
+                        'id' => $activity->dealer->id,
+                        'dealer_code' => $activity->dealer->dealer_code,
+                        'dealer_name' => $activity->dealer->dealer_name,
+                    ],
+                ];
+            });
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Activities retrieved successfully!',
-                'data' => $activities,
+                'data' => $activitiesData,
             ], 200);
 
         } catch (\Exception $e) {
