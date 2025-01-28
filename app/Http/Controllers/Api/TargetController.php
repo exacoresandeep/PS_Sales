@@ -26,9 +26,9 @@ class TargetController extends Controller
             if ($targets->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'statusCode' => 404,
+                    'statusCode' => 200,
                     'message' => 'No targets found for the selected month.',
-                ], 404);
+                ], 200);
             }
 
             $orders = Order::where('created_by', $employeeId)

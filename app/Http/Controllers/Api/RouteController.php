@@ -81,7 +81,7 @@ class RouteController extends Controller
             $request->validate([
                 'assign_route_id' => 'required|exists:assign_route,id',
                 'record_details' => 'required|string',
-                'attachments' => 'required|array',
+                'attachments' => 'nullable|array',
                 'activity_status' => 'required|in:Pending,Completed', 
             ]);
 
@@ -91,12 +91,21 @@ class RouteController extends Controller
             ]);
 
             $dealerTripActivity->record_details = $request->record_details;
-            $dealerTripActivity->attachments = json_encode($request->attachments);  
             $dealerTripActivity->activity_status = $request->activity_status;
+
+            if ($request->hasFile('attachments')) {
+                $attachments = [];
+                foreach ($request->file('attachments') as $file) {
+                    $filePath = $file->store('Trip', 'public');
+                    $attachments[] = $filePath;  
+                }
+                $dealerTripActivity->attachments = json_encode($attachments); 
+            }
 
             if ($request->activity_status === 'Completed') {
                 $dealerTripActivity->completed_date = now();
             }
+
 
             $dealerTripActivity->save();
 
