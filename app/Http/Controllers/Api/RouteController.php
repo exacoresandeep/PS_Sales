@@ -19,10 +19,48 @@ class RouteController extends Controller
             $employeeId = Auth::id(); 
             $todayDate = now()->toDateString();
 
+            // $trips = AssignRoute::with(['tripRoute', 'dealers'])
+            //     ->where('employee_id', $employeeId)
+            //     ->whereDate('assign_date', $todayDate)
+            //     ->get()
+            //     ->map(function ($trip) {
+            //         $trip->dealers = $trip->dealers->map(function ($dealer) use ($trip) {
+            //             $dealerActivity = DealerTripActivity::where('assign_route_id', $trip->id)
+            //                 ->where('dealer_id', $dealer->id)
+            //                 ->first();
+
+            //             $dealer->activity_status = $dealerActivity->activity_status ?? 'Pending';
+            //             return $dealer;
+            //         });
+            //         return $trip;
+            //     });
+
             $trips = AssignRoute::with(['tripRoute', 'dealers'])
                 ->where('employee_id', $employeeId)
                 ->whereDate('assign_date', $todayDate)
-                ->get();
+                ->get()
+                ->map(function ($trip) {
+                    return [
+                        'employee_id' => $trip->employee_id,
+                        'trip_route_id' => $trip->trip_route_id,
+                        'route_name' => $trip->tripRoute->route_name ?? null,
+                        'assign_date' => $trip->assign_date,
+                        'status' => $trip->status,
+                        'dealers' => $trip->dealers->map(function ($dealer) use ($trip) {
+                            $dealerActivity = DealerTripActivity::where('assign_route_id', $trip->id)
+                                ->where('dealer_id', $dealer->id)
+                                ->first();
+
+                            return [
+                                'id' => $dealer->id,
+                                'dealer_code' => $dealer->dealer_code,
+                                'dealer_name' => $dealer->dealer_name,
+                                'activity_status' => $dealerActivity->activity_status ?? 'Pending',
+                            ];
+                        }),
+                    ];
+                });
+
 
             return response()->json([
                 'success' => true,
