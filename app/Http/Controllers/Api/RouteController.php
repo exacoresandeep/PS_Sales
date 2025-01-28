@@ -19,22 +19,6 @@ class RouteController extends Controller
             $employeeId = Auth::id(); 
             $todayDate = now()->toDateString();
 
-            // $trips = AssignRoute::with(['tripRoute', 'dealers'])
-            //     ->where('employee_id', $employeeId)
-            //     ->whereDate('assign_date', $todayDate)
-            //     ->get()
-            //     ->map(function ($trip) {
-            //         $trip->dealers = $trip->dealers->map(function ($dealer) use ($trip) {
-            //             $dealerActivity = DealerTripActivity::where('assign_route_id', $trip->id)
-            //                 ->where('dealer_id', $dealer->id)
-            //                 ->first();
-
-            //             $dealer->activity_status = $dealerActivity->activity_status ?? 'Pending';
-            //             return $dealer;
-            //         });
-            //         return $trip;
-            //     });
-
             $trips = AssignRoute::with(['tripRoute', 'dealers'])
                 ->where('employee_id', $employeeId)
                 ->whereDate('assign_date', $todayDate)
