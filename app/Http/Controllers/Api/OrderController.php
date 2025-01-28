@@ -21,12 +21,13 @@ class OrderController extends Controller
 
             $orders = Order::where('created_by', $employee->id)
                            ->with([
-                               'orderType',
-                               'dealer',
-                               'orderItems.product',
-                               'lead.customerType'  
+                               'orderType:id,name',
+                               'dealer:id,dealer_name,phone,email',
+                               'orderItems.product:id,product_name',
+                               'lead:id,customer_type,customer_name,email,phone,address,instructions,record_details,status',
+                               'lead.customerType:id,name'  
                            ])->get();
-
+                        
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
@@ -99,17 +100,7 @@ class OrderController extends Controller
 
             $order = Order::create($validatedData);
 
-            // foreach ($validatedData['order_items'] as $orderItem) {
-            //     if (isset($orderItem['product_details']) && is_array($orderItem['product_details'])) {
-            //         $orderItem['total_quantity'] = collect($orderItem['product_details'])
-            //         ->sum(function ($detail) {
-            //             return $detail['quantity'] ?? 0;
-            //         });
-            //         $orderItem['product_details'] = json_encode($orderItem['product_details']);
-            //     }
-
-            //     $order->orderItems()->create($orderItem);
-            // }
+         
             foreach ($validatedData['order_items'] as $orderItem) {
                 if (isset($orderItem['product_details']) && is_array($orderItem['product_details'])) {
                     $orderItem['total_quantity'] = collect($orderItem['product_details'])
