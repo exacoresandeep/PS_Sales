@@ -10,28 +10,7 @@ use Exception;
 
 class LeadController extends Controller
 {
-    // public function index()
-    // {
-    //     try {
-    //         $leads = Lead::with('customerType') 
-    //                     ->where('created_by', Auth::id())
-    //                     ->get();
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'statusCode' => 200,
-    //             'message' => 'Leads retrieved successfully!',
-    //             'data' => $leads,
-    //         ], 200);
-
-    //     } catch (Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 500,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
+    
     public function index(Request $request)
     {
         try {
@@ -60,12 +39,32 @@ class LeadController extends Controller
                         'data' => [],
                     ], 200);
                 }
+                $formattedLeads = $leads->map(function ($lead) {
+                    return [
+                        'id' => $lead->id,
+                        'customer_type' => [
+                            'id' => $lead->customerType->id,
+                            'name' => $lead->customerType->name,
+                        ],
+                        'customer_name' => $lead->customer_name,
+                        'email' => $lead->email,
+                        'phone' => $lead->phone,
+                        'address' => $lead->address,
+                        'instructions' => $lead->instructions,
+                        'record_details' => $lead->record_details,
+                        'attachments' => $lead->attachments,
+                        'latitude' => $lead->latitude,
+                        'longitude' => $lead->longitude,
+                        'status' => $lead->status,
+                        'created_by' => $lead->created_by,
+                    ];
+                });
 
                 return response()->json([
                     'success' => true,
                     'statusCode' => 200,
                     'message' => 'Leads retrieved successfully!',
-                    'data' => $leads,
+                    'data' => $formattedLeads,
                 ], 200);
 
             } else {
@@ -92,8 +91,8 @@ class LeadController extends Controller
             $validatedData = $request->validate([
                 'customer_type' => 'required|exists:customer_types,id',
                 'customer_name' => 'required|string',
-                'email' => 'required|email|unique:leads,email', 
-                'phone' => 'required|string|unique:leads,phone',
+                'email' => 'required|email', 
+                'phone' => 'required|string',
                 'address' => 'required|string',
                 'instructions' => 'nullable|string',
                 'record_details' => 'nullable|string',
@@ -103,6 +102,19 @@ class LeadController extends Controller
                 'longitude' => 'required|numeric',
                 'status' => 'required|in:Opened,Follow Up,Converted,Deal Dropped',
             ]);
+
+            $existingLead = Lead::where('email', $request->email)
+                            ->orWhere('phone', $request->phone)
+                            ->first();
+
+            if ($existingLead) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 409,
+                    'message' => 'Lead with the same email or phone number already exists!',
+                ], 409);
+            }
+
 
             $validatedData['created_by'] = Auth::id();
 

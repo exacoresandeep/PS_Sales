@@ -21,12 +21,13 @@ class OrderController extends Controller
 
             $orders = Order::where('created_by', $employee->id)
                            ->with([
-                               'orderType',
-                               'dealer',
-                               'orderItems.product',
-                               'lead.customerType'  
+                               'orderType:id,name',
+                               'dealer:id,dealer_name,phone,email',
+                               'orderItems.product:id,product_name',
+                               'lead:id,customer_type,customer_name,email,phone,address,instructions,record_details,status',
+                               'lead.customerType:id,name'  
                            ])->get();
-
+                        
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
@@ -72,6 +73,8 @@ class OrderController extends Controller
                 // 'order_items.*.total_quantity' => 'required|numeric',
                 // 'order_items.*.priority_quantity' => 'nullable|string',
                 'order_items.*.product_details' => 'nullable|array',
+                'attachment' => 'nullable|array',
+                'attachment.*' => 'nullable|string',
             ]);
             if (isset($validatedData['payment_date'])) {
                 $validatedData['payment_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['payment_date'])->format('Y-m-d');
@@ -79,19 +82,33 @@ class OrderController extends Controller
 
             $validatedData['billing_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['billing_date'])->format('Y-m-d');
             $validatedData['reminder_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['reminder_date'])->format('Y-m-d');
-    
+           
             $validatedData['created_by'] = $employee->id;
+
+            if ($request->hasFile('attachment')) {
+                $attachments = [];
+                foreach ($validatedData['attachment'] as $fileName) {
+                    $file = $request->file('attachment.' . $fileName);
+                    if ($file) {
+                        $filePath = $file->storeAs('orders', $fileName, 'public');
+                        $attachments[] = $filePath;  
+                    }
+                }
+                $validatedData['attachment'] = json_encode($attachments); 
+            }
+    
+
             $order = Order::create($validatedData);
 
+         
             foreach ($validatedData['order_items'] as $orderItem) {
                 if (isset($orderItem['product_details']) && is_array($orderItem['product_details'])) {
                     $orderItem['total_quantity'] = collect($orderItem['product_details'])
-                    ->sum(function ($detail) {
-                        return $detail['quantity'] ?? 0;
-                    });
-                    $orderItem['product_details'] = json_encode($orderItem['product_details']);
+                        ->sum(function ($detail) {
+                            return $detail['quantity'] ?? 0;
+                        });
+                   
                 }
-
                 $order->orderItems()->create($orderItem);
             }
            
@@ -125,14 +142,14 @@ class OrderController extends Controller
                     'message' => 'You must be logged in to view this order.'
                 ], 400);
             }
+            
             $order = Order::with([
-                'orderType',      
-                'customerType', 
-                'dealer',        
-                'orderItems.product',
-                'createdBy', 
-                'lead.customerType',
-            ])->findOrFail($orderId); 
+                'orderType:id,name',
+                'dealer:id,dealer_name,phone,email', 
+                'orderItems.product:id,product_name',
+                'lead:id,customer_type,customer_name,email,phone,address,instructions,record_details,status',
+                'lead.customerType:id,name', 
+            ])->findOrFail($orderId);
 
             return response()->json([
                 'success' => true,
