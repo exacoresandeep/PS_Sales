@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\VehicleCategory;
 
 class Order extends Model
 {
@@ -12,8 +13,7 @@ class Order extends Model
     protected $fillable = [
         'order_type', 'order_category', 'lead_id','dealer_id', 'payment_terms', 
         'advance_amount', 'payment_date', 'utr_number', 'attachment', 'billing_date', 'reminder_date', 'total_amount', 'additional_information', 
-        'status', 'vehicle_category', 'vehicle_type', 'vehicle_number', 
-        'driver_name', 'driver_phone', 'created_by'
+        'status', 'vehicle_category_id', 'vehicle_number','driver_name', 'driver_phone', 'created_by'
     ];
     protected $casts = [
         'attachment' => 'array',
@@ -47,5 +47,9 @@ class Order extends Model
     public function lead()
     {
         return $this->belongsTo(Lead::class, 'lead_id');
+    }
+    public function vehicleCategory()
+    {
+        return $this->belongsTo(VehicleCategory::class, 'vehicle_category_id');
     }
 }

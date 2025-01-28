@@ -166,20 +166,12 @@ class LeadController extends Controller
             $validatedData = $request->validate([
                 'status' => 'required|in:Opened,Follow Up,Converted,Deal Dropped',
                 'record_details' => 'nullable|string',
-                'attachments' => 'nullable|array', // Ensure it's an array
+                'attachments' => 'nullable|array', 
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,docx|max:2048',
             ]);
 
             $lead = Lead::where('created_by', Auth::id())->findOrFail($leadId);
 
-            // $attachments = $lead->attachments ?? [];
-
-            // if ($request->hasFile('attachments')) {
-            //     foreach ($request->file('attachments') as $file) {
-            //         $path = $file->store('leads', 'public'); 
-            //         $attachments[] = $path; 
-            //     }
-            // }
             $attachments = $lead->attachments ?? []; 
 
             if ($request->hasFile('attachments')) {

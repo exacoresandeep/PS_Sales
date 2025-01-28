@@ -183,7 +183,8 @@ class OrderController extends Controller
                 ], 401);
             }
             $searchKey = $request->input('search_key', '');
-            
+            $parsedDate = Carbon::createFromFormat('d/m/Y', $searchKey);
+            $isDate = $parsedDate && $parsedDate->format('d/m/Y') === $searchKey;
             $ordersQuery = Order::with([
                 'orderType:id,name',
                 'dealer:id,dealer_name,phone,email',
@@ -192,7 +193,10 @@ class OrderController extends Controller
                 'lead.customerType:id,name'
             ])
             ->where('created_by', $employeeId);
-            if (!empty($searchKey)) {
+            if ($isDate) {
+                $ordersQuery->whereDate('created_at', $parsedDate);
+            } else {
+           
                 $searchKey = strtolower($searchKey);
                 
                 if (in_array($searchKey, ['all', 'pending', 'accepted'])) {
