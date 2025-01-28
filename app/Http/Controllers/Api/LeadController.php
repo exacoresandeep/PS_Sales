@@ -57,6 +57,7 @@ class LeadController extends Controller
                         'longitude' => $lead->longitude,
                         'status' => $lead->status,
                         'created_by' => $lead->created_by,
+                        'created_at' => $lead->created_at,
                     ];
                 });
 
