@@ -91,8 +91,8 @@ class LeadController extends Controller
             $validatedData = $request->validate([
                 'customer_type' => 'required|exists:customer_types,id',
                 'customer_name' => 'required|string',
-                'email' => 'required|email|unique:leads,email', 
-                'phone' => 'required|string|unique:leads,phone',
+                'email' => 'required|email', 
+                'phone' => 'required|string',
                 'address' => 'required|string',
                 'instructions' => 'nullable|string',
                 'record_details' => 'nullable|string',
@@ -102,6 +102,19 @@ class LeadController extends Controller
                 'longitude' => 'required|numeric',
                 'status' => 'required|in:Opened,Follow Up,Converted,Deal Dropped',
             ]);
+
+            $existingLead = Lead::where('email', $request->email)
+                            ->orWhere('phone', $request->phone)
+                            ->first();
+
+            if ($existingLead) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 409,
+                    'message' => 'Lead with the same email or phone number already exists!',
+                ], 409);
+            }
+
 
             $validatedData['created_by'] = Auth::id();
 
