@@ -15,6 +15,7 @@ use App\Models\LeaveType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 
 class AuthController extends Controller
@@ -368,6 +369,43 @@ class AuthController extends Controller
             ], 500);
         }
     }
+    public function fileUpload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', 
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors(),
+                'statusCode' => 422,
+                'data' => [],
+                'success' => 'error',
+            ], 422);
+        }
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $path = $file->store('uploads'); 
+            
+            return response()->json([
+                'message' => 'File uploaded successfully.',
+                'statusCode' => 200,
+                'data' => [
+                    'filePath' => $path
+                ],
+                'success' => 'success',
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'No file uploaded.',
+            'statusCode' => 400,
+            'data' => [],
+            'success' => 'error',
+        ], 400);
+    }
+
     
 
 
