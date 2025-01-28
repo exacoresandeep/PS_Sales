@@ -23,20 +23,36 @@ class OrderController extends Controller
                 return $this->orderFilter($request); // Delegate to orderFilter
             }
 
+            // $orders = Order::where('created_by', $employee->id)
+            //                ->with([
+            //                    'orderType:id,name',
+            //                    'dealer:id,dealer_name,phone,email',
+            //                    'orderItems.product:id,product_name',
+            //                    'lead:id,customer_type,customer_name,email,phone,address,instructions,record_details,status',
+            //                    'lead.customerType:id,name'  
+            //                ])->get();
             $orders = Order::where('created_by', $employee->id)
-                           ->with([
-                               'orderType:id,name',
-                               'dealer:id,dealer_name,phone,email',
-                               'orderItems.product:id,product_name',
-                               'lead:id,customer_type,customer_name,email,phone,address,instructions,record_details,status',
-                               'lead.customerType:id,name'  
-                           ])->get();
+                ->with([
+                    'dealer:id,dealer_name',
+                ])
+                ->select('id', 'total_amount', 'status', 'created_at', 'dealer_id')
+                ->get();
                         
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Orders fetched successfully',
-                'data' => $orders,
+                'data' => $orders->map(function ($order) {
+                return [
+                        'id' => $order->id,
+                        'total_amount' => $order->total_amount,
+                        'status' => $order->status,
+                        'created_at' => $order->created_at,
+                        'dealer' => [
+                            'name' => $order->dealer->dealer_name,
+                        ],
+                    ];
+                }),
             ], 200);
 
         } catch (Exception $e) {

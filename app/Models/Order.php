@@ -32,7 +32,7 @@ class Order extends Model
 
     public function dealer()
     {
-        return $this->belongsTo(Dealer::class);
+        return $this->belongsTo(Dealer::class, 'dealer_id');
     }
 
     public function orderItems()
