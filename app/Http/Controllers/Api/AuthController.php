@@ -55,6 +55,7 @@ class AuthController extends Controller
                         'email' => $employee->email,
                         'phone' => $employee->phone,
                         'employee_type' => $employee->employeeType->type_name, 
+                        'employee_type_id' => $employee->employeeType->id, 
                         'address' => $employee->address,
                         'photo' => $employee->photo,
                         'emergency_contact' => $employee->emergency_contact,
