@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\CustomerType;
+use App\Models\Order;
 use App\Models\OrderType;
 use App\Models\Dealer;
 use App\Models\Product;
@@ -30,39 +31,45 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-            $employee = Employee::where('employee_code', $validated['employee_code'])->first();
+            $employee = Employee::join('employee_types', 'employees.id', '=', 'employee_types.id')
+            ->where('employee_code', $validated['employee_code'])
+            ->select('employees.*', 'employee_types.id as type_id', 'employee_types.type_name') // Selecting additional employee_type columns
+            ->first();
 
-            if (!$employee || !Hash::check($validated['password'], $employee->password)) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 400,
-                    'message' => 'Invalid credentials',
-                ], 400);
-            }
-
-            $token = $employee->createToken('API Token')->plainTextToken;
-
+        if (!$employee || !Hash::check($validated['password'], $employee->password)) {
             return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => 'Login successful',
-                'data' => [
-                    'employee' => [
-                        'id' => $employee->id,
-                        'employee_code' => $employee->employee_code,
-                        'name' => $employee->name,
-                        'designation' => $employee->designation,
-                        'email' => $employee->email,
-                        'phone' => $employee->phone,
-                        'employee_type' => $employee->employeeType->type_name, 
-                        'address' => $employee->address,
-                        'photo' => $employee->photo,
-                        'emergency_contact' => $employee->emergency_contact,
-                    ],
-                    'token' => $token,
-                    'status' => 'active', 
+                'success' => false,
+                'statusCode' => 400,
+                'message' => 'Invalid credentials',
+            ], 400);
+        }
+
+        $token = $employee->createToken('API Token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => 'Login successful',
+            'data' => [
+                'employee' => [
+                    'id' => $employee->id,
+                    'employee_code' => $employee->employee_code,
+                    'name' => $employee->name,
+                    'designation' => $employee->designation,
+                    'email' => $employee->email,
+                    'phone' => $employee->phone,
+                    'address' => $employee->address,
+                    'photo' => $employee->photo,
+                    'emergency_contact' => $employee->emergency_contact,
                 ],
-            ], 200);
+                'employee_type' => [
+                    'id' => $employee->type_id,
+                    'type_name' => $employee->type_name,
+                ],
+                'token' => $token,
+                'status' => 'active',
+            ],
+        ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -511,5 +518,44 @@ class AuthController extends Controller
             'success' => 'error',
         ], 400);
     }
+
+    public function trackOrder(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required', 
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors(),
+                'statusCode' => 422,
+                'data' => [],
+                'success' => 'error',
+            ], 422);
+        }
+        try {
+            $user = Auth::user();
+            if ($user !== null) {
+                $data = Order::select('id', 'status', 'created_at as pending_time', 'accepted_time', 'rejected_time', 'dispatched_time', 'intransit_time', 'delivered_time')->get();
+            } else {
+                $data = [];
+            }
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Track order fetched successfully',
+                'data' => $data,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    //dealerOrderList
 
 }
