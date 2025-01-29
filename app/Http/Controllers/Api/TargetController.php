@@ -28,6 +28,7 @@ class TargetController extends Controller
                     'success' => false,
                     'statusCode' => 200,
                     'message' => 'No targets found for the selected month.',
+                    'data' => [],
                 ], 200);
             }
 

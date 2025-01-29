@@ -23,6 +23,9 @@ class OrderController extends Controller
                 return $this->orderFilter($request); // Delegate to orderFilter
             }
 
+            
+           
+
             $orders = Order::where('created_by', $employee->id)
                 ->with(['dealer:id,dealer_name'])
                 ->select('id', 'total_amount', 'status', 'created_at', 'dealer_id')
