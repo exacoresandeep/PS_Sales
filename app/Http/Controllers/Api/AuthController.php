@@ -12,6 +12,8 @@ use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\ProductDetails;
 use App\Models\LeaveType;
+use App\Models\VehicleCategory;
+use App\Models\VehicleType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +55,7 @@ class AuthController extends Controller
                         'email' => $employee->email,
                         'phone' => $employee->phone,
                         'employee_type' => $employee->employeeType->type_name, 
+                        'employee_type_id' => $employee->employeeType->id, 
                         'address' => $employee->address,
                         'photo' => $employee->photo,
                         'emergency_contact' => $employee->emergency_contact,
@@ -407,6 +410,107 @@ class AuthController extends Controller
     }
 
     
+    public function getVehicleCategory()
+    {
+        try {
+            $user = Auth::user(); // Fetch the authenticated user
 
+            // Check if the user is authenticated
+            if ($user) {
+                // Fetch the vehicle categories and select only the required columns
+                $data = VehicleCategory::select('id as vehicle_category_id', 'vehicle_category_name')
+                    ->get();
+            } else {
+                $data = []; // If the user is not authenticated, return an empty array
+            }
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Vehicle Category fetched successfully',
+                'data' => $data, // Return the fetched data
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Catch any exceptions and return a 500 response with the error message
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function getVehicleTypeByCategory(Request $request)
+    {
+        try {
+            $user = Auth::user(); // Fetch the authenticated user
+
+            // Check if the user is authenticated
+            if ($user) {
+                // Validate the request to ensure `vehicle_category_id` is provided
+                $validated = $request->validate([
+                    'vehicle_category_id' => 'required|integer',
+                ]);
+
+                // Fetch the vehicle types for the given `vehicle_category_id`
+                $data = VehicleType::where('vehicle_category_id', $validated['vehicle_category_id'])
+                    ->select('id as vehicle_type_id', 'vehicle_type_name')
+                    ->get();
+            } else {
+                $data = []; // If the user is not authenticated, return an empty array
+            }
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Vehicle Types fetched successfully',
+                'data' => $data, // Return the fetched data
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Catch any exceptions and return a 500 response with the error message
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function uploadFile(Request $request)
+    {
+        // Validate the file
+        $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', // max file size 2MB
+        ]);
+
+        // Check if the file exists in the request
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+
+            // Store the file in the 'uploads' folder under 'storage/app'
+            $path = $file->store('uploads'); // Saves in storage/app/uploads
+
+            // Generate the file path (relative to the storage folder)
+            $filePath = storage_path('app/' . $path);
+
+            // Return a success response
+            return response()->json([
+                'message' => 'File uploaded successfully.',
+                'statusCode' => 200,
+                'data' => [
+                    'filePath' => $filePath, // Path relative to storage/app
+                ],
+                'success' => 'success',
+            ], 200);
+        }
+
+        // If no file is uploaded, return an error response
+        return response()->json([
+            'message' => 'No file uploaded.',
+            'statusCode' => 400,
+            'data' => [],
+            'success' => 'error',
+        ], 400);
+    }
 
 }

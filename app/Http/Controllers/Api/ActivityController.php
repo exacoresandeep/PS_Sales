@@ -75,7 +75,7 @@ class ActivityController extends Controller
 
             $validatedData = $request->validate([
                 'record_details' => 'required|string', 
-                'attachments' => 'required|array',
+                'attachments' => 'nullable|array',
                 'attachments.*' => 'string',
             ]);
 
