@@ -78,7 +78,10 @@ Route::prefix('v1')->group(function () {
         
         Route::get('getVehicleCategory', [AuthController::class, 'getVehicleCategory']);
         Route::post('getVehicleTypeByCategory', [AuthController::class, 'getVehicleTypeByCategory']);
-        // Route::post('create_order', [AuthController::class, 'create_order']);
+
+        Route::get('trackOrder', [AuthController::class, 'trackOrder']);
+        Route::get('dealerOrderList', [AuthController::class, 'dealerOrderList']);
+
 
 
         Route::post('/fileUpload', [AuthController::class, 'uploadFile']);
