@@ -59,6 +59,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/punch-in', [AttendanceController::class, 'punchIn']);
             Route::post('/punch-out', [AttendanceController::class, 'punchOut']);
             Route::get('/auto-punch-out', [AttendanceController::class, 'autoPunchOut']);
+            Route::get('/today', [AttendanceController::class, 'getTodayAttendance']);
+
         });
 
         Route::get('customer-types', [AuthController::class, 'getCustomerTypes']);
@@ -77,8 +79,10 @@ Route::prefix('v1')->group(function () {
         
         Route::get('getVehicleCategory', [AuthController::class, 'getVehicleCategory']);
         Route::post('getVehicleTypeByCategory', [AuthController::class, 'getVehicleTypeByCategory']);
+
         Route::get('trackOrder', [AuthController::class, 'trackOrder']);
         Route::get('dealerOrderList', [AuthController::class, 'dealerOrderList']);
+
 
 
         Route::post('/fileUpload', [AuthController::class, 'uploadFile']);

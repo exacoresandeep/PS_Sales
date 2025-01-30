@@ -21,6 +21,7 @@ class OrderController extends Controller
                 return $this->orderFilter($request); // Delegate to orderFilter
             }
 
+
             $employee = Auth::user();
             if($employee)
             {
@@ -178,6 +179,10 @@ class OrderController extends Controller
                     'message' => "User not Authenticated",
                 ], 401);
             }
+
+            
+           
+
 
         } catch (Exception $e) {
 

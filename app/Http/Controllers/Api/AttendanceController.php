@@ -109,4 +109,32 @@ class AttendanceController extends Controller
             'message' => 'No action required',
         ]);
     }
+    public function getTodayAttendance()
+    {
+        $employeeId = Auth::id();
+        $date = Carbon::today()->format('Y-m-d');
+
+        $attendance = Attendance::where('employee_id', $employeeId)
+                                ->where('date', $date)
+                                ->first();
+
+        if (!$attendance) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 200,
+                'message' => 'No attendance record found for today',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => 'Attendance details retrieved successfully',
+            'data' => [
+                'punch_in' => $attendance->punch_in,
+                'punch_out' => $attendance->punch_out 
+            ]
+        ]);
+    }
+
 }

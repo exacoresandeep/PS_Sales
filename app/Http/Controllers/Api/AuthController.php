@@ -46,6 +46,7 @@ class AuthController extends Controller
 
         $token = $employee->createToken('API Token')->plainTextToken;
 
+
         return response()->json([
             'success' => true,
             'statusCode' => 200,
@@ -61,6 +62,7 @@ class AuthController extends Controller
                     'address' => $employee->address,
                     'photo' => $employee->photo,
                     'emergency_contact' => $employee->emergency_contact,
+
                 ],
                 'employee_type' => [
                     'id' => $employee->type_id,
