@@ -162,7 +162,9 @@ class AuthController extends Controller
                     'state',
                     'district',
                     'taluk'
-                );
+                )->where('approver_id',$user->id);
+
+                
                 if ($request->has('search_key') && !empty($request->search_key)) {
                     $searchKey = $request->search_key;
     
@@ -267,40 +269,6 @@ class AuthController extends Controller
         }
     }
 
-
-    // public function getProductTypes(Request $request)
-    // {
-    //     try {
-    //         $user = Auth::user();
-    //         $productId = $request->input('product_id');
-        
-    //         if ($user !== null) {
-    //             $query = ProductType::select('product_id as product_id', 'id as product_type_id', 'type_name as product_type_name');
-                
-    //             if ($productId) {
-    //                 $query->where('product_id', $productId);
-    //             }
-    //             $data = $query->get();
-   
-
-    //         } else {
-    //             $data = [];
-    //         }
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'statusCode' => 200,
-    //             'message' => 'Product types fetched successfully',
-    //             'data' => $data,
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 500,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
     public function getProductRate(Request $request)
     {
         try {

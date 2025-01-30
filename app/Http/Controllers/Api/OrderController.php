@@ -20,11 +20,8 @@ class OrderController extends Controller
             $employee = $request->user();
 
             if ($request->has('search_key')) {
-                return $this->orderFilter($request); // Delegate to orderFilter
-            }
-
-            
-           
+                return $this->orderFilter($request); 
+            }           
 
             $orders = Order::where('created_by', $employee->id)
                 ->with(['dealer:id,dealer_name'])

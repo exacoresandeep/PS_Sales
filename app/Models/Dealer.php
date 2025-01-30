@@ -12,6 +12,9 @@ class Dealer extends Model
     protected $fillable = [
         'dealer_code',
         'dealer_name',
+        'approver_id',
+        'gst_no',
+        'pan_no',
         'phone',
         'email',
         'address',
