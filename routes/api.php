@@ -60,7 +60,6 @@ Route::prefix('v1')->group(function () {
             Route::post('/punch-out', [AttendanceController::class, 'punchOut']);
             Route::get('/auto-punch-out', [AttendanceController::class, 'autoPunchOut']);
             Route::get('/today', [AttendanceController::class, 'getTodayAttendance']);
-
         });
 
         Route::get('customer-types', [AuthController::class, 'getCustomerTypes']);
