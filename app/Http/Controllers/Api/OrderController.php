@@ -18,15 +18,15 @@ class OrderController extends Controller
     {
         try {
             if ($request->has('search_key')) {
-                return $this->orderFilter($request); // Delegate to orderFilter
+                return $this->orderFilter($request);
             }
 
-
             $employee = Auth::user();
+            
             if($employee)
             {
                 $employeeTypeId = $employee->employee_type_id;
-                // 
+                
                 if($employeeTypeId=="1"){
                     $dealerFlagOrder = '0';    
                 }
