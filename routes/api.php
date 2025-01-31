@@ -80,8 +80,9 @@ Route::prefix('v1')->group(function () {
         Route::post('getVehicleTypeByCategory', [AuthController::class, 'getVehicleTypeByCategory']);
 
         Route::get('trackOrder', [AuthController::class, 'trackOrder']);
-        Route::get('dealerOrderList', [AuthController::class, 'dealerOrderList']);
-
+        Route::get('dealerOrderList', [OrderController::class, 'dealerOrderList']);
+        Route::get('dealerOrderDetails/{orderId}', [OrderController::class, 'show']); 
+        Route::post('dealerOrderStatusUpdate/{orderId}', [OrderController::class, 'dealerOrderStatusUpdate']); 
 
 
         Route::post('/fileUpload', [AuthController::class, 'uploadFile']);
