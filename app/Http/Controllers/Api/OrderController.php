@@ -18,30 +18,26 @@ class OrderController extends Controller
     {
         try {
             if ($request->has('search_key')) {
-                return $this->orderFilter($request);
+                return $this->orderFilter($request); 
             }
 
+
             $employee = Auth::user();
-            
             if($employee)
             {
-                $employeeTypeId = $employee->employee_type_id;
-                
-                if($employeeTypeId=="1"){
-                    $dealerFlagOrder = '0';    
-                }
-                else if($employeeTypeId=="2"){
-                    $dealerFlagOrder = '1';    
-                }
-                else{
-                    $dealerFlagOrder = '0';  
-                }
+                // $employeeTypeId = $employee->employee_type_id;
+                // if($employeeTypeId) {
+                //     $dealerFlagOrder = 0;
+                // }
+                // else{
+                //     $dealerFlagOrder = 1;
+                // }
 
                 $orders = Order::
                     where('created_by', $employee->id)
+                    ->where('dealer_flag_order',0)
                     ->with(['dealer:id,dealer_name'])
                     ->select('id', 'total_amount', 'status', 'created_at', 'dealer_id')
-                    ->where('dealer_flag_order',$dealerFlagOrder)
                     ->get()
                     ->map(function ($order) {
                 
@@ -206,8 +202,13 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            $employeeTypeId = $employee->employee_type_id;
-            $dealerFlagOrder = ($employeeTypeId == "2") ? '1' : '0';
+            // $employeeTypeId = $employee->employee_type_id;
+            // if($employeeTypeId) {
+            //     $dealerFlagOrder = 0;
+            // }
+            // else{
+            //     $dealerFlagOrder = 1;
+            // }
 
             $validatedData = $request->validate([
                 'order_type' => 'required|exists:order_types,id',
@@ -235,7 +236,6 @@ class OrderController extends Controller
                 'attachment.*' => 'nullable|file|mimes:jpg,png,pdf|max:2048',
             ]);
 
-            // Convert date fields if they exist
             if (!empty($validatedData['payment_date'])) {
                 $validatedData['payment_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['payment_date'])->format('Y-m-d');
             }
@@ -243,8 +243,8 @@ class OrderController extends Controller
             $validatedData['reminder_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['reminder_date'])->format('Y-m-d');
         
             $validatedData['created_by'] = $employee->id;
+            // $validatedData['dealer_flag_order'] = $dealerFlagOrder;
 
-            // Handle file uploads
             if ($request->hasFile('attachment')) {
                 $attachments = [];
                 foreach ($request->file('attachment') as $file) {
@@ -254,10 +254,8 @@ class OrderController extends Controller
                 $validatedData['attachment'] = json_encode(array_map('strval', $attachments), JSON_UNESCAPED_UNICODE);
             }
 
-            // Create order
             $order = Order::create($validatedData);
 
-            // Insert order items
             if (!empty($validatedData['order_items'])) {
                 foreach ($validatedData['order_items'] as $orderItem) {
                     if (isset($orderItem['product_details']) && is_array($orderItem['product_details'])) {
@@ -278,12 +276,12 @@ class OrderController extends Controller
                     'lead_id' => $order->lead_id,
                     'dealer_id' => $order->dealer_id,
                     'payment_terms' => $order->payment_terms,
-                    'advance_amount' => round($order->advance_amount, 2), // Ensure it's a number
+                    'advance_amount' => round($order->advance_amount, 2), 
                     'payment_date' => $order->payment_date ? Carbon::parse($order->payment_date)->format('d-m-Y') : null,
                     'utr_number' => $order->utr_number,
                     'billing_date' => Carbon::parse($order->billing_date)->format('d-m-Y'),
                     'reminder_date' => Carbon::parse($order->reminder_date)->format('d-m-Y'),
-                    'total_amount' => round($order->total_amount, 2), // Ensure it's a number
+                    'total_amount' => round($order->total_amount, 2),
                     'additional_information' => $order->additional_information,
                     'status' => $order->status,
                     'created_by' => $order->created_by,
@@ -424,5 +422,82 @@ class OrderController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+
+    public function dealerOrderList()
+    {
+        $employeeId = Auth::id();
+
+        if (!$employeeId) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 401,
+                'message' => 'Unauthorized user.',
+            ], 401);
+        }
+
+        $orders = Order::join('dealers', 'dealers.id', '=', 'orders.created_by_dealer')
+                    //    ->where('orders.dealer_flag_order', 1)
+                       ->where('dealers.approver_id', $employeeId)
+                       ->select('orders.*') 
+                       ->get();
+        // dd($employeeId);
+        if ($orders->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 404,
+                'message' => 'No orders found for the dealer.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'statusCode' => 404,
+            'message' => 'Orders fetched successfully',
+            'data' => $orders
+        ]);
+    }
+
+    public function dealerOrderDetails($orderId)
+    {
+        $order = Order::where('id', $orderId)->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $order
+        ]);
+    }
+
+    public function dealerOrderStatusUpdate(Request $request, $orderId)
+    {
+        $request->validate([
+            'status' => 'required|string'
+        ]);
+
+        $order = Order::where('id', $orderId)->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        $order->status = $request->status;
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order status updated successfully',
+            'data' => $order
+        ]);
     }
 }

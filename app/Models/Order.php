@@ -39,6 +39,7 @@ class Order extends Model
         'vehicle_number',
         'driver_name',
         'driver_phone',
+        'created_by_dealer',
         'created_by',
     ];
 

@@ -23,10 +23,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [OrderController::class, 'store']); // Store new order
             Route::get('/', [OrderController::class, 'index']); // List orders by current user ID
             Route::get('{orderId}', [OrderController::class, 'show']); // order details
-
             Route::get('filter', [OrderController::class, 'orderFilter']);
 
-        
+            Route::get('/dealer/list', [OrderController::class, 'dealerOrderList']); // Dealer order list
+            Route::get('/dealer/{orderId}/details', [OrderController::class, 'dealerOrderDetails']); // Dealer order details
+            Route::post('/dealer/{orderId}/status-update', [OrderController::class, 'dealerOrderStatusUpdate']); // Update order status
         });
 
         Route::prefix('leads')->group(function () {
