@@ -391,26 +391,23 @@ class AuthController extends Controller
     public function getVehicleCategory()
     {
         try {
-            $user = Auth::user(); // Fetch the authenticated user
+            $user = Auth::user(); 
 
-            // Check if the user is authenticated
             if ($user) {
-                // Fetch the vehicle categories and select only the required columns
                 $data = VehicleCategory::select('id as vehicle_category_id', 'vehicle_category_name')
                     ->get();
             } else {
-                $data = []; // If the user is not authenticated, return an empty array
+                $data = []; 
             }
 
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Vehicle Category fetched successfully',
-                'data' => $data, // Return the fetched data
+                'data' => $data, 
             ], 200);
 
         } catch (\Exception $e) {
-            // Catch any exceptions and return a 500 response with the error message
             return response()->json([
                 'success' => false,
                 'statusCode' => 500,
@@ -421,32 +418,28 @@ class AuthController extends Controller
     public function getVehicleTypeByCategory(Request $request)
     {
         try {
-            $user = Auth::user(); // Fetch the authenticated user
+            $user = Auth::user();
 
-            // Check if the user is authenticated
             if ($user) {
-                // Validate the request to ensure `vehicle_category_id` is provided
                 $validated = $request->validate([
                     'vehicle_category_id' => 'required|integer',
                 ]);
 
-                // Fetch the vehicle types for the given `vehicle_category_id`
                 $data = VehicleType::where('vehicle_category_id', $validated['vehicle_category_id'])
                     ->select('id as vehicle_type_id', 'vehicle_type_name')
                     ->get();
             } else {
-                $data = []; // If the user is not authenticated, return an empty array
+                $data = []; 
             }
 
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Vehicle Types fetched successfully',
-                'data' => $data, // Return the fetched data
+                'data' => $data,
             ], 200);
 
         } catch (\Exception $e) {
-            // Catch any exceptions and return a 500 response with the error message
             return response()->json([
                 'success' => false,
                 'statusCode' => 500,
@@ -456,33 +449,27 @@ class AuthController extends Controller
     }
     public function uploadFile(Request $request)
     {
-        // Validate the file
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', // max file size 2MB
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', 
         ]);
 
-        // Check if the file exists in the request
         if ($request->hasFile('file')) {
             $file = $request->file('file');
 
-            // Store the file in the 'uploads' folder under 'storage/app'
-            $path = $file->store('uploads'); // Saves in storage/app/uploads
+            $path = $file->store('uploads');
 
-            // Generate the file path (relative to the storage folder)
             $filePath = storage_path('app/' . $path);
 
-            // Return a success response
             return response()->json([
                 'message' => 'File uploaded successfully.',
                 'statusCode' => 200,
                 'data' => [
-                    'filePath' => $filePath, // Path relative to storage/app
+                    'filePath' => $filePath,
                 ],
                 'success' => 'success',
             ], 200);
         }
 
-        // If no file is uploaded, return an error response
         return response()->json([
             'message' => 'No file uploaded.',
             'statusCode' => 400,
@@ -560,8 +547,8 @@ class AuthController extends Controller
             if ($request->has('search_key') && !empty($request->search_key)) {
                 $searchKey = $request->search_key;
 
-                if (strpos($searchKey, 'OD') === 0) {
-                    $searchKey = str_replace('OD', '', $searchKey);
+                if (strpos($searchKey, 'OD00') === 0) {
+                    $searchKey = str_replace('OD00', '', $searchKey);
 
                     $query->where(function ($q) use ($searchKey) {
                         $q->where('orders.id', '=', $searchKey); 
