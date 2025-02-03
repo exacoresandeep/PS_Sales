@@ -35,7 +35,7 @@ class OrderController extends Controller
 
                 $orders = Order::
                     where('created_by', $employee->id)
-                    ->where('dealer_flag_order',0)
+                    ->where('dealer_flag_order',"0")
                     ->with(['dealer:id,dealer_name'])
                     ->select('id', 'total_amount', 'status', 'created_at', 'dealer_id')
                     ->get()
