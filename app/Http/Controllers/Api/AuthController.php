@@ -530,4 +530,70 @@ class AuthController extends Controller
 
     //dealerOrderList
 
+
+    //Common Filter
+
+    public function getFilteredOrders(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => 'Unauthorized access',
+                    'data' => []
+                ], 401);
+            }
+
+            $query = Order::join('dealers', 'orders.dealer_id', '=', 'dealers.id')
+                ->select(
+                    'orders.id as order_id',
+                    'orders.created_at',
+                    'orders.total_amount',
+                    'dealers.dealer_code',
+                    'dealers.dealer_name'
+                )
+                ->where('orders.created_by', $user->id);
+
+            if ($request->has('search_key') && !empty($request->search_key)) {
+                $searchKey = $request->search_key;
+
+                if (strpos($searchKey, 'OD') === 0) {
+                    $searchKey = str_replace('OD', '', $searchKey);
+
+                    $query->where(function ($q) use ($searchKey) {
+                        $q->where('orders.id', '=', $searchKey); 
+                    });
+                } else {
+                    $query->where(function ($q) use ($searchKey) {
+                        $q->where('orders.id', 'like', '%' . $searchKey . '%')
+                        ->orWhere('dealers.dealer_code', 'like', '%' . $searchKey . '%')
+                        ->orWhere('dealers.dealer_name', 'like', '%' . $searchKey . '%');
+                    });
+                }
+            }
+
+
+            $data = $query->orderBy('orders.id', 'desc')->get();
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Filtered orders fetched successfully',
+                'data' => $data,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+
+
 }
