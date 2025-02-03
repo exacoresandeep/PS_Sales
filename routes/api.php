@@ -18,7 +18,7 @@ Route::prefix('v1')->group(function () {
         Route::post('employees', [EmployeeController::class, 'store']);
         Route::get('employee', [EmployeeController::class, 'show']);
         Route::post('/fileUpload', [AuthController::class, 'fileUpload']);
-
+        Route::get('/filter', [AuthController::class, 'getFilteredOrders']);
         Route::prefix('orders')->group(function () {
             Route::post('/', [OrderController::class, 'store']); // Store new order
             Route::get('/', [OrderController::class, 'index']); // List orders by current user ID
