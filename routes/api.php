@@ -59,7 +59,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('attendance')->group(function () {
             Route::post('/punch-in', [AttendanceController::class, 'punchIn']);
             Route::post('/punch-out', [AttendanceController::class, 'punchOut']);
-            Route::get('/auto-punch-out', [AttendanceController::class, 'autoPunchOut']);
+            // Route::get('/auto-punch-out', [AttendanceController::class, 'autoPunchOut']);
             Route::get('/today', [AttendanceController::class, 'getTodayAttendance']);
         });
 
