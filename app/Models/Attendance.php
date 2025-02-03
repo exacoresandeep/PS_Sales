@@ -18,6 +18,7 @@ class Attendance extends Model
         'punch_out',
         'latitude',
         'longitude',
+        'total_active_hours',
     ];
 
     public function employee()

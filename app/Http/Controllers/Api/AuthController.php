@@ -29,11 +29,13 @@ class AuthController extends Controller
             $validated = $request->validate([
                 'employee_code' => 'required|string',
                 'password' => 'required|string',
+                'employee_type_id' => 'required|integer',
             ]);
 
             $employee = Employee::join('employee_types', 'employees.id', '=', 'employee_types.id')
             ->where('employee_code', $validated['employee_code'])
-            ->select('employees.*', 'employee_types.id as type_id', 'employee_types.type_name') // Selecting additional employee_type columns
+            ->where('employees.employee_type_id', $validated['employee_type_id'])
+            ->select('employees.*', 'employee_types.id as type_id', 'employee_types.type_name') 
             ->first();
 
         if (!$employee || !Hash::check($validated['password'], $employee->password)) {
