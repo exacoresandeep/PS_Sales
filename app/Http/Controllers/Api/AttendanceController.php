@@ -10,60 +10,56 @@ use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
- public function punchIn(Request $request)
-{
-    $employeeId = Auth::id();
-    $date = Carbon::today()->format('Y-m-d');
+    public function punchIn(Request $request)
+    {
+        $employeeId = Auth::id();
+        $date = Carbon::today()->format('Y-m-d');
 
-    $attendance = Attendance::where('employee_id', $employeeId)
-                            ->where('date', $date)
-                            ->first();
+        $attendance = Attendance::where('employee_id', $employeeId)
+                                ->where('date', $date)
+                                ->first();
 
-    if (!$attendance) {
-        $attendance = Attendance::create([
-            'employee_id' => $employeeId,
-            'date' => $date,
-            'punch_in' => Carbon::now('Asia/Kolkata')->format('H:i:s'),
-            'punch_out' => null,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-        ]);
+        if (!$attendance) {
+            $attendance = Attendance::create([
+                'employee_id' => $employeeId,
+                'date' => $date,
+                'punch_in' => Carbon::now('Asia/Kolkata')->format('H:i:s'),
+                'punch_out' => null,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+            ]);
 
-        $totalActiveHours = '00:00:00';  
-    } elseif ($attendance->punch_out !== null) {
-        $attendance->update([
-            'punch_out' => null,
-        ]);
+            // Set initial total active hours as 00:00:00
+            $totalActiveHours = '00:00:00';
+        } elseif ($attendance->punch_out !== null) {
+            $attendance->update([
+                'punch_out' => null,
+            ]);
 
-        $totalActiveHours = '00:00:00'; 
-    } else {
+            $totalActiveHours = '00:00:00';
+        } else {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 400,
+                'message' => 'Already punched in. Punch out first before punching in again.',
+            ]);
+        }
+
         return response()->json([
-            'success' => false,
-            'statusCode' => 400,
-            'message' => 'Already punched in. Punch out first before punching in again.',
+            'success' => true,
+            'statusCode' => 200,
+            'message' => 'Punched in successfully',
+            'data' => [
+                'employee_id' => $attendance->employee_id,
+                'date' => $attendance->date,
+                'punch_in' => $attendance->punch_in,
+                'punch_out' => $attendance->punch_out,
+                'latitude' => $attendance->latitude,
+                'longitude' => $attendance->longitude,
+                'total_active_hours' => $totalActiveHours,
+            ]
         ]);
     }
-
-    $totalActiveHours = $this->calculateTotalActiveHours($employeeId, $date);
-
-    return response()->json([
-        'success' => true,
-        'statusCode' => 200,
-        'message' => 'Punched in successfully',
-        'data' => [
-            'employee_id' => $attendance->employee_id,
-            'date' => $attendance->date,
-            'punch_in' => $attendance->punch_in,
-            'punch_out' => $attendance->punch_out,
-            'latitude' => $attendance->latitude,
-            'longitude' => $attendance->longitude,
-            'total_active_hours' => $totalActiveHours, 
-        ]
-    ]);
-}
-
-
-
 
     public function punchOut(Request $request)
     {
@@ -72,7 +68,7 @@ class AttendanceController extends Controller
 
         $attendance = Attendance::where('employee_id', $employeeId)
                                 ->where('date', $date)
-                                ->whereNotNull('punch_in') 
+                                ->whereNotNull('punch_in')
                                 ->first();
 
         if (!$attendance) {
@@ -92,10 +88,22 @@ class AttendanceController extends Controller
         }
 
         $punchOutTime = Carbon::now('Asia/Kolkata');
-        $punchInTime = Carbon::parse($attendance->punch_in);
 
+        // Accept total_active_hours from the frontend
+        $totalActiveHours = $request->input('total_active_hours'); 
+
+        if (!$totalActiveHours) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 400,
+                'message' => 'Total active hours not provided.',
+            ]);
+        }
+
+        // Store punch-out time & total active hours received from frontend
         $attendance->update([
             'punch_out' => $punchOutTime->format('H:i:s'),
+            'total_active_hours' => $totalActiveHours, // Store the value directly from frontend
         ]);
 
         return response()->json([
@@ -109,7 +117,7 @@ class AttendanceController extends Controller
                 'punch_out' => $attendance->punch_out,
                 'latitude' => $attendance->latitude,
                 'longitude' => $attendance->longitude,
-                'total_active_hours' => $this->calculateTotalActiveHours($employeeId, $date),
+                'total_active_hours' => $attendance->total_active_hours, // Using the value passed from frontend
             ]
         ]);
     }
@@ -131,7 +139,7 @@ class AttendanceController extends Controller
                 'data' => [
                     'punch_in' => null,
                     'punch_out' => null,
-                    'total_active_hours' => '00:00:00', 
+                    'total_active_hours' => '00:00:00',
                 ]
             ]);
         }
@@ -143,32 +151,8 @@ class AttendanceController extends Controller
             'data' => [
                 'punch_in' => $attendance->punch_in,
                 'punch_out' => $attendance->punch_out,
-                'total_active_hours' => $this->calculateTotalActiveHours($employeeId, $date),
+                'total_active_hours' => $attendance->total_active_hours,
             ]
         ]);
     }
-
-
-    private function calculateTotalActiveHours($employeeId, $date)
-    {
-        $attendances = Attendance::where('employee_id', $employeeId)
-                                ->where('date', $date)
-                                ->whereNotNull('punch_out')
-                                ->get();
-
-        if ($attendances->isEmpty()) {
-            return '00:00:00';
-        }
-
-        $totalSeconds = 0;
-
-        foreach ($attendances as $attendance) {
-            $punchIn = Carbon::parse($attendance->punch_in);
-            $punchOut = Carbon::parse($attendance->punch_out);
-            $totalSeconds += $punchIn->diffInSeconds($punchOut);
-        }
-
-        return gmdate("H:i:s", $totalSeconds);
-    }
-
 }
