@@ -20,6 +20,10 @@ class Attendance extends Model
         'longitude',
         'total_active_hours',
     ];
+    protected $casts = [
+        'latitude' => 'string',
+        'longitude' => 'string',
+    ];
 
     public function employee()
     {
