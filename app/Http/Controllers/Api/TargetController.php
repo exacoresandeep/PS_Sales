@@ -25,7 +25,7 @@ class TargetController extends Controller
 
             if ($targets->isEmpty()) {
                 return response()->json([
-                    'success' => false,
+                    'success' => true,
                     'statusCode' => 200,
                     'message' => 'No targets found for the selected month.',
                     'data' => null,
