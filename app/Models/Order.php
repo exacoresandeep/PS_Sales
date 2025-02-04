@@ -12,20 +12,19 @@ class Order extends Model
 
     protected $fillable = [
         'order_type',
+        'customer_type_id',
         'order_category',
         'lead_id',
         'dealer_id',
         'dealer_flag_order',
         'reason_for_rejection',
-        'payment_terms',
+        'payment_terms_id',
         'advance_amount',
         'payment_date',
         'utr_number',
         'attachment',
         'billing_date',
-        'reminder_date',
         'amount',
-        'discount',
         'total_amount',
         'additional_information',
         'status',
@@ -46,11 +45,9 @@ class Order extends Model
     protected $casts = [
         'advance_amount' => 'float',
         'amount' => 'float',
-        'discount' => 'float',
         'total_amount' => 'float',
         'payment_date' => 'date',
         'billing_date' => 'date',
-        'reminder_date' => 'date',
         'accepted_time' => 'datetime',
         'rejected_time' => 'datetime',
         'dispatched_time' => 'datetime',
@@ -67,7 +64,12 @@ class Order extends Model
 
     public function customerType()
     {
-        return $this->belongsTo(CustomerType::class, 'customer_type');
+        return $this->belongsTo(CustomerType::class, 'customer_type_id');
+    }
+
+    public function paymentTerm()
+    {
+        return $this->belongsTo(PaymentTerms::class, 'payment_terms_id');
     }
 
     public function dealer()
