@@ -89,7 +89,7 @@ Route::prefix('v1')->group(function () {
         Route::post('dealerOrderStatusUpdate/{orderId}', [OrderController::class, 'dealerOrderStatusUpdate']); 
 
 
-        Route::post('/fileUpload', [AuthController::class, 'uploadFile']);
+        // Route::post('/fileUpload', [AuthController::class, 'uploadFile']);
         
 
     });

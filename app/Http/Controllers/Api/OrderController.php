@@ -103,7 +103,7 @@ class OrderController extends Controller
                 'order_items.*.product_id' => 'required|exists:products,id',
                 'order_items.*.product_details' => 'nullable|array',
                 'attachment' => 'nullable|array',
-                'attachment.*' => 'nullable|file|mimes:jpg,png,pdf|max:2048',
+                'attachment.*' => 'nullable|string',
             ]);
 
             if (!empty($validatedData['payment_date'])) {
@@ -112,15 +112,6 @@ class OrderController extends Controller
             $validatedData['billing_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['billing_date'])->format('Y-m-d');
         
             $validatedData['created_by'] = $employee->id;
-
-            if ($request->hasFile('attachment')) {
-                $attachments = [];
-                foreach ($request->file('attachment') as $file) {
-                    $filePath = $file->storeAs('orders', $file->getClientOriginalName(), 'public');
-                    $attachments[] = $filePath;
-                }
-                $validatedData['attachment'] = json_encode(array_map('strval', $attachments), JSON_UNESCAPED_UNICODE);
-            }
 
             $order = Order::create($validatedData);
            
