@@ -23,7 +23,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [OrderController::class, 'store']); // Store new order
             Route::get('/', [OrderController::class, 'index']); // List orders by current user ID
             Route::get('{orderId}', [OrderController::class, 'show']); // order details
-            Route::get('filter', [OrderController::class, 'orderFilter']);
+            // Route::get('/filter', [OrderController::class, 'orderFilter']);
 
             Route::get('/dealer/list', [OrderController::class, 'dealerOrderList']); // Dealer order list
             Route::get('/dealer/{orderId}/details', [OrderController::class, 'dealerOrderDetails']); // Dealer order details
@@ -70,6 +70,7 @@ Route::prefix('v1')->group(function () {
         Route::post('product-types', [AuthController::class, 'getProductTypes']);
         Route::get('product-rate', [AuthController::class, 'getProductRate']);
         Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
+        Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
 
         
         Route::post('logout', [AuthController::class, 'logout']);

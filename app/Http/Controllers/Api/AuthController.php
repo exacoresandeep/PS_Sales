@@ -11,6 +11,7 @@ use App\Models\OrderType;
 use App\Models\Dealer;
 use App\Models\Product;
 use App\Models\ProductType;
+use App\Models\PaymentTerms;
 use App\Models\ProductDetails;
 use App\Models\LeaveType;
 use App\Models\VehicleCategory;
@@ -350,6 +351,31 @@ class AuthController extends Controller
             ], 500);
         }
     }
+    public function getPaymentTerms()
+    {
+        try {
+            $user = Auth::user();
+
+            if ($user !== null) {
+                $data = PaymentTerms::select('id as payment_terms_id', 'name as payment_terms_name')->get();
+            } else {
+                $data = [];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Payment terms fetched successfully',
+                'data' => $data,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
     public function fileUpload(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -539,6 +565,7 @@ class AuthController extends Controller
                     'orders.id as order_id',
                     'orders.created_at',
                     'orders.total_amount',
+                    'orders.status',
                     'dealers.dealer_code',
                     'dealers.dealer_name'
                 )
