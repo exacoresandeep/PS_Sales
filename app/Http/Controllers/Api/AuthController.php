@@ -378,38 +378,41 @@ class AuthController extends Controller
     }
     public function fileUpload(Request $request)
     {
+      
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', 
+            'file' => 'required|array', 
+            'file.*' => 'file|mimes:jpg,jpeg,png,pdf|max:2048', 
         ]);
-
         if ($validator->fails()) {
             return response()->json([
-                'message' => $validator->errors(),
+                'success' => false,
                 'statusCode' => 422,
+                'message' => $validator->errors(),
                 'data' => [],
-                'success' => 'error',
             ], 422);
-        }
-
+        }      
+        $filePaths = [];
         if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $path = $file->store('uploads'); 
-            
+            foreach ($request->file('file') as $file) {
+                $path = $file->store('uploads');
+                $filePaths[] = $path; 
+            }
             return response()->json([
-                'message' => 'File uploaded successfully.',
+                'success' => true,
                 'statusCode' => 200,
+                'message' => 'Files uploaded successfully.',  
                 'data' => [
-                    'filePath' => $path
+                    'filePaths' => $filePaths, 
                 ],
-                'success' => 'success',
             ], 200);
         }
 
+        
         return response()->json([
-            'message' => 'No file uploaded.',
+            'success' => false,
             'statusCode' => 400,
+            'message' => 'No file uploaded.',
             'data' => [],
-            'success' => 'error',
         ], 400);
     }
 
@@ -473,36 +476,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    public function uploadFile(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048', 
-        ]);
-
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-
-            $path = $file->store('uploads');
-
-            $filePath = storage_path('app/' . $path);
-
-            return response()->json([
-                'message' => 'File uploaded successfully.',
-                'statusCode' => 200,
-                'data' => [
-                    'filePath' => $filePath,
-                ],
-                'success' => 'success',
-            ], 200);
-        }
-
-        return response()->json([
-            'message' => 'No file uploaded.',
-            'statusCode' => 400,
-            'data' => [],
-            'success' => 'error',
-        ], 400);
-    }
 
     public function trackOrder(Request $request)
     {
@@ -540,8 +513,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-    //dealerOrderList
 
 
     //Common Filter
