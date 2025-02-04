@@ -30,9 +30,4 @@ class Attendance extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    // public function scopeToday($query, $employeeId)
-    // {
-    //     return $query->where('employee_id', $employeeId)
-    //                  ->whereDate('date', now()->toDateString());
-    // }
 }

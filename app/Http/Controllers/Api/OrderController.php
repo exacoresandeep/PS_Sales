@@ -230,11 +230,95 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    // public function orderFilter(Request $request)
+    // {
+    //     try {
+    //         $employeeId = Auth::id();
+
+    //         if (!$employeeId) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => 'Unauthorized user.',
+    //             ], 401);
+    //         }
+
+    //         $searchKey = $request->input('search_key', '');
+    //         $parsedDate = Carbon::createFromFormat('d/m/Y', $searchKey);
+    //         $isDate = $parsedDate && $parsedDate->format('d/m/Y') === $searchKey;
+
+    //         $ordersQuery = Order::with([
+    //             'orderType:id,name',
+    //             'dealer:id,dealer_name,phone,email',
+    //             'orderItems.product:id,product_name',
+    //             'lead:id,customer_type,customer_name,email,phone,address,instructions,record_details,status',
+    //             'lead.customerType:id,name'
+    //         ])
+    //         ->where('created_by', $employeeId);
+            
+    //         if ($isDate) {
+    //             $ordersQuery->whereDate('created_at', $parsedDate);
+    //         } else {
+    //             $searchKey = strtolower($searchKey);
+            
+    //             if (in_array($searchKey, ['all', 'pending', 'accepted'])) {
+    //                 if ($searchKey !== 'all') {
+    //                     $ordersQuery->where('status', ucfirst($searchKey));
+    //                 }
+    //             }
+            
+    //             if (in_array($searchKey, ['today', 'weekly', 'monthly'])) {
+    //                 $startDate = null;
+    //                 $endDate = null;
+            
+    //                 if ($searchKey == 'today') {
+    //                     $startDate = Carbon::today()->startOfDay();
+    //                     $endDate = Carbon::today()->endOfDay();
+    //                 } elseif ($searchKey == 'weekly') {
+    //                     $startDate = Carbon::now()->startOfWeek();
+    //                     $endDate = Carbon::now()->endOfWeek();
+    //                 } elseif ($searchKey == 'monthly') {
+    //                     $startDate = Carbon::now()->startOfMonth();
+    //                     $endDate = Carbon::now()->endOfMonth();
+    //                 }
+            
+    //                 if ($startDate && $endDate) {
+    //                     $ordersQuery->whereBetween('created_at', [$startDate, $endDate]);
+    //                 }
+    //             }
+            
+    //             // Financial year filter
+    //             $currentYear = Carbon::now()->year;
+    //             $financialStartDate = Carbon::create($currentYear - 1, 4, 1); 
+    //             $financialEndDate = Carbon::create($currentYear, 3, 31);
+            
+    //             $ordersQuery->whereBetween('created_at', [$financialStartDate, $financialEndDate]);
+    //         }
+            
+    //         $orders = $ordersQuery->get(); // Ensure this returns an empty collection if no data
+            
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Orders filtered successfully',
+    //             'data' => $orders,
+    //         ], 200);
+            
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
     public function orderFilter(Request $request)
     {
         try {
             $employeeId = Auth::id();
-
+            dd($employeeId);
             if (!$employeeId) {
                 return response()->json([
                     'success' => false,
@@ -243,6 +327,7 @@ class OrderController extends Controller
                 ], 401);
             }
             $searchKey = $request->input('search_key', '');
+            dd($searchKey);
             $parsedDate = Carbon::createFromFormat('d/m/Y', $searchKey);
             $isDate = $parsedDate && $parsedDate->format('d/m/Y') === $searchKey;
             $ordersQuery = Order::with([
@@ -253,6 +338,7 @@ class OrderController extends Controller
                 'lead.customerType:id,name'
             ])
             ->where('created_by', $employeeId);
+            
             if ($isDate) {
                 $ordersQuery->whereDate('created_at', $parsedDate);
             } else {
