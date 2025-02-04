@@ -11,13 +11,14 @@ use Exception;
 class LeadController extends Controller
 {
     
-    public function index(Request $request)
+    public function index($customer_type_id,Request $request)
     {
         try {
             $user = Auth::user();
             if ($user !== null) {
                 $query = Lead::with('customerType')
-                            ->where('created_by', $user->id);
+                            ->where('created_by', $user->id)
+                            ->where('customer_type', $customer_type_id);
 
                 if ($request->has('search_key') && !empty($request->search_key)) {
                     $searchKey = $request->search_key;
