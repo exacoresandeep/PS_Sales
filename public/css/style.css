@@ -296,3 +296,28 @@ main {
 .login-box .btn {
   padding: 15px;
 }
+
+.side-menu-links {
+    list-style: none;
+    padding: 0;
+}
+.side-menu-links li {
+    position: relative;
+    cursor: pointer;
+    padding: 10px;
+}
+.side-menu-links li a {
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+.side-menu-links .arrow {
+    font-size: 16px;
+    margin-left: 5px;
+}
+.submenu {
+    display: none;
+    padding-left: 20px;
+}
