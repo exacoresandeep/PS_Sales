@@ -249,7 +249,7 @@ class OrderController extends Controller
            
                 $searchKey = strtolower($searchKey);
                 
-                if (in_array($searchKey, ['all', 'pending', 'accepted'])) {
+                if (in_array($searchKey, ['all', 'pending', 'accepted', 'rejected'])) {
                     if ($searchKey !== 'all') {
                         $ordersQuery->where('status', ucfirst($searchKey));
                     }
