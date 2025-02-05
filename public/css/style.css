@@ -19,6 +19,11 @@ main {
   border-color: #A02625;
 }
 
+.btn-primary:hover {
+  background: #111;
+  border-color: #111;
+}
+
 .badge {
   padding: 10px;
 }
@@ -84,6 +89,21 @@ main {
   display: block;
   color: #333;
   text-decoration: none;
+}
+
+.menu-cover ul li a:hover {
+  background: #666;
+  color: #fff;
+}
+
+.menu-cover ul li a.menu-title:hover {
+  background: #666;
+  color: #fff;
+}
+
+.menu-cover ul li a.menu-title {
+  background: #666;
+  color: #fff;
 }
 
 .menu-cover ul ul {
@@ -297,27 +317,7 @@ main {
   padding: 15px;
 }
 
-.side-menu-links {
-    list-style: none;
-    padding: 0;
-}
-.side-menu-links li {
-    position: relative;
-    cursor: pointer;
-    padding: 10px;
-}
-.side-menu-links li a {
-    text-decoration: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-.side-menu-links .arrow {
-    font-size: 16px;
-    margin-left: 5px;
-}
-.submenu {
-    display: none;
-    padding-left: 20px;
+.logout a:hover {
+  background: #333;
+  color: #fff;
 }

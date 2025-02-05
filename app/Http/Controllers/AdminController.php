@@ -8,7 +8,6 @@ use App\Models\Employee;
 use Redirect;
 class AdminController extends Controller
 {
-    // Show Admin Login Page
     public function login()
     {
         return view('admin.login');
