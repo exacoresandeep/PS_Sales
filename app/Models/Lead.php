@@ -29,17 +29,15 @@ class Lead extends Model
         'created_by',
     ];
 
-    protected $casts = [
-        'attachments' => 'array', 
-    ];
+   
     public function customerType()
     {
         return $this->belongsTo(CustomerType::class, 'customer_type');
     }
-    // public function district()
-    // {
-    //     return $this->belongsTo(District::class, 'district_id');
-    // }
+    public function district()
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
     public function tripRoute()
     {
         return $this->belongsTo(TripRoute::class, 'trip_route_id');
