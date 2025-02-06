@@ -34,10 +34,13 @@ main {
 }
 
 .side-menu {
-  width: 280px;
+  width: 335px;
   height: 100%;
 }
-
+.icon-right{
+  float:right;
+  /* margin-right:5px; */
+}
 .menu-cover {
   background: #fff;
   border-radius: 10px;
@@ -320,4 +323,24 @@ main {
 .logout a:hover {
   background: #333;
   color: #fff;
+}
+
+.side-menu ul ul {
+  display: none; /* Hide submenus by default */
+  padding-left: 15px;
+}
+
+.menu-title {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.icon-right {
+  margin-left: auto;
+}
+
+.active-menu > ul {
+  display: block !important;
 }

@@ -6,26 +6,97 @@
   <script src="{{ asset('js/vendor/popper.min.js') }}"></script>
   <script src="{{ asset('js/bootstrap.min.js') }}"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap JS (Load after jQuery) -->
+
+
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <script>
-    $(document).ready(function () {
-        $(".has-submenu > a").click(function (e) {
-            e.preventDefault();
-            var $parentLi = $(this).parent(); // Get parent <li>
-            var $submenu = $parentLi.find(".submenu").first(); // Find submenu
-            var $arrow = $(this).find(".arrow");
+ $(document).ready(function () {
 
-            // Close all other submenus (optional)
-            $(".has-submenu").not($parentLi).removeClass("open").find(".submenu").slideUp();
-            $(".has-submenu").not($parentLi).find(".arrow").text("↓");
+    
+    function getCookie(name) {
+        let cookies = document.cookie.split("; ");
+        for (let i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i].split("=");
+            if (cookie[0] === name) {
+                return decodeURIComponent(cookie[1]);
+            }
+        }
+        return null;
+    }
 
-            // Toggle current submenu
-            $parentLi.toggleClass("open");
-            $submenu.slideToggle();
+    function setCookie(name, value) {
+        document.cookie = name + "=" + encodeURIComponent(value) + "; path=/";
+    }
 
-            // Change arrow
-            $arrow.text($parentLi.hasClass("open") ? "↑" : "↓");
+    function loadContent(link) {
+      
+        $.ajax({
+            url: '/load-content/' + link,
+            type: "GET",
+            success: function (response) {
+                $(".dashboard-area").html(response);
+            },
+            error: function () {
+                $(".dashboard-area").html("<p>Error loading content.</p>");
+            }
         });
+    }
+
+    // Restore previously selected link
+    var selectedLink = getCookie("selectedLink");
+    if (selectedLink) {
+        $(".menu-title, .submenu a").removeClass("active");
+        var linkElement = $('.submenu a[href="' + selectedLink + '"]');
+        if (linkElement.length) {
+            linkElement.addClass("active");
+            var parentMenu = linkElement.closest("ul");
+            if (parentMenu.length) {
+                var parentMenuLi = parentMenu.closest("li");
+                parentMenuLi.addClass("menu-open menu-is-opening");
+                parentMenu.slideDown();
+            }
+        }
+        loadContent(selectedLink);
+    } else {
+        loadContent("dashboard");
+    }
+
+    $(".menu-title").click(function () {
+        var $submenu = $(this).next("ul"); // Target only the next UL (submenu)
+        
+        if ($submenu.is(":visible")) {
+            $submenu.slideUp();
+            $(this).find(".icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
+        } else {
+            $(".submenu").slideUp(); // Close all other open menus
+            $(".menu-title .icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
+            
+            $submenu.slideDown();
+            $(this).find(".icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
+        }
     });
+
+    $(".submenu a").on("click", function (event) {
+        event.preventDefault();
+
+        $(".submenu a").removeClass("active");
+        var link = $(this).attr("href");
+
+        if (link !== "#") {
+            setCookie("selectedLink", link);
+            $(this).addClass("active");
+            loadContent(link);
+        }
+    });
+
+
+    
+});
+
+
 </script>
 </body>
 </html>

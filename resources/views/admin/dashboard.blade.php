@@ -4,7 +4,7 @@
 @section('title', 'Admin Dashboard')
 
 @section('content')
-<div class="dashboard-area">
+
     <div class="row">
       <div class="col-md-3">
         <div class="dash-item-box">
@@ -70,5 +70,5 @@
         </div>
       </div>
     </div>
-  </div>
+
 @endsection
