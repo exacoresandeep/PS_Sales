@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AssignRoute;
 use App\Models\Dealer;
+use App\Models\TripRoute;
 use App\Models\DealerTripActivity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -182,6 +183,39 @@ class RouteController extends Controller
                 'statusCode' => 200,
                 'message' => 'Dealer added successfully to the route.',
                 'data' => $dealer,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getRoutesByDistrict($district_id)
+    {
+        try {
+            $routes = TripRoute::where('district_id', $district_id)
+                ->select('id as route_id', 'route_name', 'location_name', 'sub_locations', 'status')
+                ->get();
+
+            if ($routes->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 400,
+                    'message' => 'No routes found for the given district.',
+                ], 400);
+            }
+            foreach ($routes as $route) {
+                $route->sub_locations = json_decode($route->sub_locations);
+            }
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Routes fetched successfully',
+                'data' => $routes,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

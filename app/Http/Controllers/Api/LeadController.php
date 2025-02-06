@@ -85,38 +85,28 @@ class LeadController extends Controller
         }
     }
 
-
     public function store(Request $request)
     {
         try {
-
             $validatedData = $request->validate([
                 'customer_type' => 'required|exists:customer_types,id',
                 'customer_name' => 'required|string',
-                'email' => 'required|email', 
                 'phone' => 'required|string',
                 'address' => 'required|string',
-                'instructions' => 'nullable|string',
-                'record_details' => 'nullable|string',
-                'attachments' => 'nullable|array',
-                'attachments.*' => 'nullable|string', 
-                'latitude' => 'required|numeric',
-                'longitude' => 'required|numeric',
-                'status' => 'required|in:Opened,Follow Up,Converted,Deal Dropped',
+                'city' => 'required|string',
+                'location' => 'required|string',
+                'district_id' => 'required|exists:districts,id',
+                'route_id' => 'required|exists:trip_routes,id',
             ]);
 
-            $existingLead = Lead::where('email', $request->email)
-                            ->orWhere('phone', $request->phone)
-                            ->first();
-
+            $existingLead = Lead::where('phone', $request->phone)->first();
             if ($existingLead) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 409,
-                    'message' => 'Lead with the same email or phone number already exists!',
+                    'message' => 'Lead with the same phone number already exists!',
                 ], 409);
             }
-
 
             $validatedData['created_by'] = Auth::id();
 
@@ -137,6 +127,7 @@ class LeadController extends Controller
             ], 500);
         }
     }
+
     public function show($leadId)
     {
         try {
