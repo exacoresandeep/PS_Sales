@@ -63,4 +63,113 @@ class TargetController extends Controller
             ], 500);
         }
     }
+
+    public function targetList(Request $request)
+    {    
+        if ($request->ajax()) {
+            $pageNumber = ($request->start / $request->length) + 1;
+            $pageLength = $request->length;
+            $skip = ($pageNumber - 1) * $pageLength;
+
+            $orderColumnIndex = $request->order[0]['column'] ?? 0;
+            $orderBy = $request->order[0]['dir'] ?? 'desc';
+            $searchValue = $request->search['value'] ?? '';
+            $columns = [
+                'id',
+                'employee_name',
+                'target_tons'
+            ];
+            $orderColumn = $columns[$orderColumnIndex] ?? 'created_at';
+
+            $query = Target::join('employees', 'employees.id', '=', 'Target.employee_id')
+                ->join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
+                ->orderBy('Target.created_at', 'desc')
+                ->orderBy($orderColumn, $orderBy)
+                ->select('Target.id', 'Target.created_at as from_date', 'Target.*', 'employees.name as employee_name', 'employee_types.type_name as employee_type',DB::raw("CONCAT(Target.month, '-', Target.year) as to_date") );
+
+            if ($searchValue) {
+                $query->where(function ($query) use ($searchValue) {
+                    $query->where('employee_name', 'like', '%' . $searchValue . '%');
+                });
+            }
+
+            $recordsTotal = $query->count();
+            $data = $query->skip($skip)->take($pageLength)->get();
+            $recordsFiltered = $recordsTotal;
+            
+            if ($data->isEmpty()) {
+                return response()->json([
+                    "draw" => $request->draw,
+                    "recordsTotal" => $recordsTotal,
+                    "recordsFiltered" => $recordsFiltered,
+                    'data' => [],
+                    'query' => $query,
+                ], 200);
+            }
+
+            $formattedData = $data->map(function ($row) {
+                $action = '<a onclick="handleAction(\'' . $row->id . '\',\'view\')" title="view"><i class="fa fas fa-eye"></i></a>
+                    <a onclick="editTarget(\'' . $row->id . '\')" title="edit"><i class="fa fa-pencil-square"></i></a>
+                    <a onclick="deleteTarget(\'' . $row->id . '\')" title="delete"><i class="fa fas fa-trash"></i></a>';
+                $status = $row->status == '1' ? "Active" : "Inactive";
+
+                return [
+                    'id' => $row->id,
+                    'employee_type' => $row->employee_type,
+                    'employee_name' => $row->employee_name,
+                    'from_date' => $row->from_date,
+                    'to_date' => $row->to_date,
+                    'target_tons' => $row->target_quantity,
+                    'target_numbers' => $row->target_quantity,
+                    'action' => $action,
+                ];
+            });
+
+            return response()->json([
+                "draw" => $request->draw,
+                "recordsTotal" => $recordsTotal,
+                "recordsFiltered" => $recordsFiltered,
+                'data' => $formattedData,
+            ], 200);
+        }
+    }
+
+    public function view($id)
+    {
+        $target = Target::join('employees', 'employees.id', '=', 'Target.employee_id')
+            ->join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
+            ->where('Target.id', $id)
+            ->select(
+                'Target.id',
+                'Target.created_at as from_date',
+                'Target.*',
+                'employees.name as employee_name',
+                'employee_types.type_name as employee_type',
+                DB::raw("CONCAT(Target.month, '-', Target.year) as to_date")
+            )
+            ->first(); // Fetch a single record
+
+        if (!$target) {
+            return response()->json(['success' => false, 'message' => 'Target not found.'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => view('admin.target.view', compact('target'))->render()
+        ]);
+    }
+
+   
+    public function delete($id)
+    {
+        $rowid = Target::find($id);
+
+        if (!$rowid) {
+            return response()->json(['success' => false, 'message' => 'Target not found.'], 404);
+        }
+
+        $rowid->delete();
+
+        return response()->json(['success' => true, 'message' => 'Target deleted successfully.']);
+    }
 }
