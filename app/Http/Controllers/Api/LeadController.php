@@ -219,18 +219,77 @@ class LeadController extends Controller
         }
     }
 
+    // public function show($leadId)
+    // {
+    //     try {
+    //         $lead = Lead::with('customerType') 
+    //                     ->where('created_by', Auth::id()) 
+    //                     ->findOrFail($leadId); 
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Lead retrieved successfully!',
+    //             'data' => $lead,
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function show($leadId)
     {
         try {
-            $lead = Lead::with('customerType') 
+            $lead = Lead::with(['customerType', 'district', 'tripRoute'])
                         ->where('created_by', Auth::id()) 
-                        ->findOrFail($leadId); 
+                        ->findOrFail($leadId);
+
+            // Format the response data
+            $leadData = [
+                'id' => $lead->id,
+                'customer_type' => $lead->customerType ? [
+                    'id' => $lead->customerType->id,
+                    'name' => $lead->customerType->name,
+                ] : null,
+                'customer_name' => $lead->customer_name,
+                'city' => $lead->city,
+                'location' => $lead->location,
+                'phone' => $lead->phone,
+                'address' => $lead->address,
+                'district' => $lead->district ? [
+                    'id' => $lead->district->id,
+                    'name' => $lead->district->name,
+                ] : null,
+                'trip_route' => $lead->tripRoute ? [
+                    'id' => $lead->tripRoute->id,
+                    'route_name' => $lead->tripRoute->route_name,
+                    'location_name' => $lead->tripRoute->location_name,
+                ] : null,
+                'type_of_visit' => $lead->type_of_visit,
+                'construction_type' => $lead->construction_type,
+                'stage_of_construction' => $lead->stage_of_construction,
+                'follow_up_date' => $lead->follow_up_date,
+                'lead_score' => $lead->lead_score,
+                'lead_source' => $lead->lead_source,
+                'source_name' => $lead->source_name,
+                'total_quantity' => $lead->total_quantity,
+                'lost_volume' => $lead->lost_volume,
+                'lost_to_competitor' => $lead->lost_to_competitor,
+                'reason_for_lost' => $lead->reason_for_lost,
+                'status' => $lead->status,
+                'created_by' => $lead->created_by,
+                'created_at' => $lead->created_at,
+            ];
 
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Lead retrieved successfully!',
-                'data' => $lead,
+                'data' => $leadData,
             ], 200);
 
         } catch (Exception $e) {
@@ -241,6 +300,7 @@ class LeadController extends Controller
             ], 500);
         }
     }
+
 
     public function updateLead(Request $request, $leadId)
     {
@@ -416,6 +476,99 @@ class LeadController extends Controller
             ], 500);
         }
     }
+    public function updateOpenLeads($leadId, Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'type_of_visit' => 'required|string',
+                'construction_type' => 'required|string',
+                'stage_of_construction' => 'required|string',
+                'follow_up_date' => 'required|date',
+                'lead_score' => 'required|integer',
+                'lead_source' => 'required|string',
+                'source_name' => 'required|string',
+                'total_quantity' => 'required|integer',
+                'status' => 'required|string',
+            ]);
+
+            $lead = Lead::where('id', $leadId)
+                        ->where('created_by', Auth::id())
+                        ->firstOrFail();
+
+            $lead->update([
+                'type_of_visit' => $validated['type_of_visit'],
+                'construction_type' => $validated['construction_type'],
+                'stage_of_construction' => $validated['stage_of_construction'],
+                'follow_up_date' => $validated['follow_up_date'],
+                'lead_score' => $validated['lead_score'],
+                'lead_source' => $validated['lead_source'],
+                'source_name' => $validated['source_name'],
+                'total_quantity' => $validated['total_quantity'],
+                'status' => $validated['status'],
+            ]);
+            
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Lead updated successfully!',
+                'data' => $lead,
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 422,
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function updateLostLeads($leadId, Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'lost_volume' => 'required|numeric', 
+                'lost_to_competitor' => 'required|string',
+                'reason_for_lost' => 'required|string',
+            ]);
+
+            $lead = Lead::where('id', $leadId)
+                        ->where('created_by', Auth::id())
+                        ->firstOrFail();
+
+            $lead->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Lead updated successfully!',
+                'data' => $lead,
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 422,
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 
 
   
