@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Lead;
+use App\Models\TripRoute;
 use Exception;
 
 class LeadController extends Controller
@@ -25,7 +26,6 @@ class LeadController extends Controller
 
                     $query->where(function ($q) use ($searchKey) {
                         $q->where('customer_name', 'like', '%' . $searchKey . '%')
-                        ->orWhere('email', 'like', '%' . $searchKey . '%')
                         ->orWhere('phone', 'like', '%' . $searchKey . '%');
                     });
                 }
@@ -48,7 +48,6 @@ class LeadController extends Controller
                             'name' => $lead->customerType->name,
                         ],
                         'customer_name' => $lead->customer_name,
-                        'email' => $lead->email,
                         'phone' => $lead->phone,
                         'address' => $lead->address,
                         'instructions' => $lead->instructions,
@@ -96,7 +95,7 @@ class LeadController extends Controller
                 'city' => 'required|string',
                 'location' => 'required|string',
                 'district_id' => 'required|exists:districts,id',
-                'route_id' => 'required|exists:trip_routes,id',
+                'trip_route_id' => 'required|exists:trip_routes,id',
             ]);
 
             $existingLead = Lead::where('phone', $request->phone)->first();
@@ -106,6 +105,47 @@ class LeadController extends Controller
                     'statusCode' => 409,
                     'message' => 'Lead with the same phone number already exists!',
                 ], 409);
+            }
+            $tripRoute = TripRoute::where('district_id', $request->district_id)
+                        ->where('id', $request->trip_route_id)
+                        ->first();
+            dd($tripRoute);
+            if ($tripRoute) {
+                if ($tripRoute->location_name == $request->city) {
+                    // City exists, check if the location is inside sub_locations
+                    $subLocations = json_decode($tripRoute->sub_locations, true) ?? [];
+    
+                    // Check if the location is already in sub_locations
+                    if (!in_array($request->location, $subLocations)) {
+                        // Add location to sub_locations array
+                        $subLocations[] = $request->location;
+    
+                        // Update the trip route with the new sub_locations
+                        $tripRoute->update([
+                            'sub_locations' => json_encode($subLocations),
+                        ]);
+                    }
+                } else {
+                    // City doesn't exist in location_name, add a new entry
+                    $newSubLocation = [
+                        'location_name' => $request->location,
+                    ];
+    
+                    // Update or create a new entry with city and location in sub_locations
+                    $tripRoute->update([
+                        'location_name' => $request->city,
+                        'sub_locations' => json_encode([$request->location]),
+                    ]);
+                }
+            }else{
+                $tripRoute = TripRoute::create([
+                    'district_id' => $request->district_id,
+                    'route_name' => $request->trip_route_id,
+                    'location_name' => $request->city,
+                    'sub_locations' => json_encode([$request->location]),
+                    'status' => 1, // or any default value for the status
+                ]);
+
             }
 
             $validatedData['created_by'] = Auth::id();
