@@ -6,8 +6,41 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use Redirect;
+use Illuminate\Support\Facades\Cookie;
 class AdminController extends Controller
 {
+
+    public function loadContent($page)
+    {
+        $validPages = [
+            'dashboard',
+            'activity-management',
+            'route-management',
+            'target-management',
+            '404'
+        ];
+        if (!in_array($page, $validPages)) {
+            return response()->json(['error' => 'Page not found.'], 404);
+        }
+
+        switch ($page) {
+            case 'group-approvals':
+                return view('admin.group-approvals');
+            case 'approved-groups':
+                return view('admin.approved-groups');
+            case 'rejected-groups':
+                return view('admin.rejected-groups');
+            case 'pincode':
+                $states=State::all();
+                return view('admin.pincode',compact('states'));
+            case 'districts':
+                $states=State::all();
+                return view('admin.districts',compact('states'));
+            default:
+                return view('admin.' . $page);
+        }
+    }
+    
     public function login()
     {
         return view('admin.login');
@@ -37,6 +70,7 @@ class AdminController extends Controller
 
     public function logout(Request $request)
     {
+        Cookie::queue(Cookie::forget('selectedLink'));
         if (Auth::check()) {
             Auth::user()->tokens()->delete(); 
             Auth::logout(); 
@@ -48,8 +82,16 @@ class AdminController extends Controller
         return redirect()->route('admin.login');
 
     }
-    public function activities(Request $request)
+    public function activity_management(Request $request)
     {
         return view('admin.activity-management');
+    }
+    public function route_management(Request $request)
+    {
+        return view('admin.route-management');
+    }
+    public function target_management(Request $request)
+    {
+        return view('admin.target-management');
     }
 }

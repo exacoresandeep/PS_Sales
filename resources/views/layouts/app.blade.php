@@ -14,6 +14,9 @@
 
     <!-- Custom styles -->
     <link href="{{ asset('css/style.css') }}" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
 <body>
@@ -26,7 +29,9 @@
                 <div class="w-100">
                     <div class="content-area">
                         @include('admin.includes.header')
-                        @yield('content')
+                        <div class="dashboard-area">
+                            @yield('content')
+                        </div>
                     </div>
                 </div>
             </div>
