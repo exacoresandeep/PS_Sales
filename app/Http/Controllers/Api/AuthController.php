@@ -614,6 +614,30 @@ class AuthController extends Controller
         }
     }
 
+    public function getDistricts()
+    {
+        try {
+            $districts = DB::table('districts')
+                ->select('id as district_id', 'name as district_name')
+                ->orderBy('name', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Districts fetched successfully',
+                'data' => $districts,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 
 
 

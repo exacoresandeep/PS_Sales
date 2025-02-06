@@ -238,7 +238,7 @@ class OrderController extends Controller
                 }
             }
             $ordersQuery = Order::with([
-                'dealer:id,dealer_name'  
+                'dealer:id,dealer_name as name'  
             ])
             ->where('created_by', $employeeId)
             ->select('id as order_id', 'created_at', 'status', 'total_amount', 'dealer_id');

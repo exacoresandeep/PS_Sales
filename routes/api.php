@@ -57,6 +57,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/{dealerId}/update-activity', [RouteController::class, 'updateDealerTripActivity']);
             Route::get('/{dealerId}/view-trip-details', [RouteController::class, 'viewTripDetails']);
             Route::post('/{tripRouteId}/add-dealer', [RouteController::class, 'addDealerToRoute']);
+            Route::get('/{district_id}', [RouteController::class, 'getRoutesByDistrict']);
         });
         Route::prefix('attendance')->group(function () {
             Route::post('/punch-in', [AttendanceController::class, 'punchIn']);
@@ -73,11 +74,9 @@ Route::prefix('v1')->group(function () {
         Route::get('product-rate', [AuthController::class, 'getProductRate']);
         Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
         Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
+        Route::get('districts', [AuthController::class, 'getDistricts']);
 
-        
         Route::post('logout', [AuthController::class, 'logout']);
-
-        
         
         
         Route::get('getVehicleCategory', [AuthController::class, 'getVehicleCategory']);
