@@ -33,7 +33,9 @@ Route::prefix('v1')->group(function () {
 
         Route::prefix('leads')->group(function () {
             Route::post('/', [LeadController::class, 'store']); // Create new lead
-            Route::get('/{customer_type_id}', [LeadController::class, 'index']); // List Leads by current user ID
+            Route::get('/', [LeadController::class, 'index']); // List Leads by current user ID
+            Route::get('/{customer_type_id}/filter', [LeadController::class, 'getleadsFilter']);
+            // Route::get('/list', [LeadController::class, 'leadsList']);
             Route::get('{leadId}', [LeadController::class, 'show']); // Leads details
             Route::post('{leadId}/update', [LeadController::class, 'updateLead']); // Update lead status
 
