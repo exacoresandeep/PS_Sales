@@ -18,6 +18,7 @@ class TripRoute extends Model
         'sub_locations', 
         'status',
     ];
+    public $timestamps = false;
 
     public function assignRoutes()
     {
