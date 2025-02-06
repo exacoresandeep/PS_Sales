@@ -9,6 +9,7 @@ use Redirect;
 use Illuminate\Support\Facades\Cookie;
 class AdminController extends Controller
 {
+<<<<<<< HEAD
     public function loadContent($page)
     {
         $validPages = [
@@ -40,6 +41,8 @@ class AdminController extends Controller
         }
     }
     // Show Admin Login Page
+=======
+>>>>>>> 7800af683f257abf8356d28da42a79e4ebe2c0c1
     public function login()
     {
         return view('admin.login');

@@ -1,0 +1,346 @@
+html {
+  position: relative;
+  height: 100%;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  background: #F5F5F5;
+  height: 100%;
+}
+
+main {
+  height: 100%;
+}
+
+.btn-primary {
+  background: #A02625;
+  border-color: #A02625;
+}
+
+.btn-primary:hover {
+  background: #111;
+  border-color: #111;
+}
+
+.badge {
+  padding: 10px;
+}
+
+.main-container {
+  padding: 15px;
+  height: 100%;
+}
+
+.side-menu {
+  width: 335px;
+  height: 100%;
+}
+.icon-right{
+  float:right;
+  /* margin-right:5px; */
+}
+.menu-cover {
+  background: #fff;
+  border-radius: 10px;
+  padding: 15px;
+  height: 90%;
+  box-shadow: 0 0 5px 2px #eee;
+}
+
+.logo {
+  padding: 10px;
+}
+
+.logo img {
+  display: block;
+  margin: 0 auto;
+}
+
+.dashboard {
+  background: #B43433;
+  border-radius: 10px;
+  color: #fff;
+  display: block;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+}
+
+.dashboard i {
+  margin-right: 10px;
+}
+
+.dashboard:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.menu-cover ul {
+  list-style: none;
+  padding: 0;
+}
+
+.menu-cover ul li {
+  margin-bottom: 7px;
+}
+
+.menu-cover ul li a {
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: #F5F5F5;
+  display: block;
+  color: #333;
+  text-decoration: none;
+}
+
+.menu-cover ul li a:hover {
+  background: #666;
+  color: #fff;
+}
+
+.menu-cover ul li a.menu-title:hover {
+  background: #666;
+  color: #fff;
+}
+
+.menu-cover ul li a.menu-title {
+  background: #666;
+  color: #fff;
+}
+
+.menu-cover ul ul {
+  padding: 5px;
+  border-radius: 10px;
+  background: #ddd;
+}
+
+.menu-cover ul li:last-child { 
+  margin-bottom: 0;
+}
+
+.content-area {
+  padding-left: 30px;
+}
+
+.search-box {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  margin-left: 50px;
+}
+.search-box input {
+  width: 100%;
+  padding: 9px;
+  padding-left: 35px;
+  border-radius: 25px;
+  border: #ddd solid 1px;
+}
+.search-box i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+}
+
+.menu-header {
+  border-bottom: #ddd solid 1px;
+  padding-bottom: 15px;
+}
+
+.dashboard-area {
+  padding: 30px 0;
+}
+
+.dash-item-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 0 5px 2px #eee;
+}
+
+.dash-item-box:hover {
+  background: #B43433;
+  color: #fff;
+  transition: ease-in .1s;
+}
+
+.view-sec {
+  padding: 20px;
+  border-top: #ddd solid 1px;
+}
+
+.dash-item-box h4 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.logout {
+  display: block;
+}
+
+.logout a {
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: #F5F5F5;
+  color: #F14431;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+}
+
+.settings-box {
+  text-align: right;
+  display: flex;
+  justify-content: end;
+}
+
+.settings-box .notify {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  align-content: center;
+  margin-right: 20px;
+}
+
+.settings-box .profi-blk {
+  display: inline-flex;
+  min-width: 150px;
+  align-content: center;
+  justify-content: start;
+}
+
+.settings-box .profi-blk img {
+  width: 32px;
+  height: 32px;
+  border-radius: 100px;
+  display: inline-flex;
+  margin-right: 10px;
+}
+
+.settings-box .profi-blk p {
+  display: inline-flex;
+  margin: 0;
+}
+
+.listing-sec table {
+  display: table;
+}
+
+.inner-header {
+  margin-bottom: 30px;
+}
+
+.listing-sec h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: inline-block;
+  margin-right: 25px;
+}
+
+.inner-header h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: inline-block;
+  margin-right: 25px;
+}
+
+.filter-sec {
+  padding-bottom: 20px;
+  border-bottom: #ddd solid 1px;
+  margin-bottom: 30px;
+}
+
+.white-cover {
+  padding: 20px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.in-head {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: #ddd solid 1px;
+}
+
+.activity-blk .form-control {
+  margin-bottom: 20px;
+}
+
+.activity-blk label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.login-cover {
+  width: 547px;
+  display: block;
+  margin: 0 auto;
+}
+
+.login-cover img {
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.login-box {
+  background: #fff;
+  padding: 50px;
+  border-radius: 14px;
+  box-shadow: 0 0 5px 2px #ccc;
+}
+
+.login-box h4 {
+  text-align: center;
+  color: #A02625;
+  font-size: 25px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.login-box p {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.login-box .form-control {
+  margin-bottom: 40px;
+  padding: 15px;
+}
+
+.login-box .btn {
+  padding: 15px;
+}
+
+.logout a:hover {
+  background: #333;
+  color: #fff;
+}
+
+.side-menu ul ul {
+  display: none; /* Hide submenus by default */
+  padding-left: 15px;
+}
+
+.menu-title {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.icon-right {
+  margin-left: auto;
+}
+
+.active-menu > ul {
+  display: block !important;
+}
