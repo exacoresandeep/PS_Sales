@@ -294,6 +294,7 @@ class LeadController extends Controller
                 'statusCode' => 200,
                 'message' => 'Lead updated successfully!',
                 'data' => $lead,
+                // 'order_details' => $order ?? null,
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
