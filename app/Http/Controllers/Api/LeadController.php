@@ -194,7 +194,7 @@ class LeadController extends Controller
                 'customer_name' => $lead->customer_name,
                 'address' => $lead->address,
                 'city' => $lead->city,
-                'location' => $lead->location,
+                'sub_location' => $lead->location,
                 'phone' => $lead->phone,
                 'district' => $lead->district->name ?? null,
                 'route_name' => $tripRoute->route_name,
