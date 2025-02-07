@@ -11,78 +11,7 @@ use Exception;
 
 class LeadController extends Controller
 {
-    
-    // public function index($customer_type_id,Request $request)
-    // {
-    //     try {
-    //         $user = Auth::user();
-    //         if ($user !== null) {
-    //             $query = Lead::with('customerType')
-    //                         ->where('created_by', $user->id)
-    //                         ->where('customer_type', $customer_type_id);
 
-    //             if ($request->has('search_key') && !empty($request->search_key)) {
-    //                 $searchKey = $request->search_key;
-
-    //                 $query->where(function ($q) use ($searchKey) {
-    //                     $q->where('customer_name', 'like', '%' . $searchKey . '%')
-    //                     ->orWhere('phone', 'like', '%' . $searchKey . '%');
-    //                 });
-    //             }
-
-    //             $leads = $query->orderBy('customer_name', 'asc')->get();
-
-    //             if ($leads->isEmpty()) {
-    //                 return response()->json([
-    //                     'success' => true,
-    //                     'statusCode' => 200,
-    //                     'message' => 'No leads found matching the filter.',
-    //                     'data' => [],
-    //                 ], 200);
-    //             }
-    //             $formattedLeads = $leads->map(function ($lead) {
-    //                 return [
-    //                     'id' => $lead->id,
-    //                     'customer_type' => [
-    //                         'id' => $lead->customerType->id,
-    //                         'name' => $lead->customerType->name,
-    //                     ],
-    //                     'customer_name' => $lead->customer_name,
-    //                     'phone' => $lead->phone,
-    //                     'address' => $lead->address,
-    //                     'instructions' => $lead->instructions,
-    //                     'record_details' => $lead->record_details,
-    //                     'attachments' => $lead->attachments,
-    //                     'latitude' => $lead->latitude,
-    //                     'longitude' => $lead->longitude,
-    //                     'status' => $lead->status,
-    //                     'created_by' => $lead->created_by,
-    //                     'created_at' => $lead->created_at,
-    //                 ];
-    //             });
-
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'statusCode' => 200,
-    //                 'message' => 'Leads retrieved successfully!',
-    //                 'data' => $formattedLeads,
-    //             ], 200);
-
-    //         } else {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 401,
-    //                 'message' => 'Unauthorized access.',
-    //             ], 401);
-    //         }
-    //     } catch (Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 500,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
     public function index(Request $request)
     {
         try {
@@ -161,9 +90,10 @@ class LeadController extends Controller
             if ($existingLead) {
                 return response()->json([
                     'success' => false,
-                    'statusCode' => 409,
+                    'statusCode' => 400,
                     'message' => 'Lead with the same phone number already exists!',
-                ], 409);
+                    'data' =>[],
+                ], 400);
             }
             $tripRoute = TripRoute::where('id', $request->trip_route_id)
                         ->where('district_id', $request->district_id)
@@ -219,28 +149,6 @@ class LeadController extends Controller
         }
     }
 
-    // public function show($leadId)
-    // {
-    //     try {
-    //         $lead = Lead::with('customerType') 
-    //                     ->where('created_by', Auth::id()) 
-    //                     ->findOrFail($leadId); 
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'statusCode' => 200,
-    //             'message' => 'Lead retrieved successfully!',
-    //             'data' => $lead,
-    //         ], 200);
-
-    //     } catch (Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 500,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
     public function show($leadId)
     {
         try {
@@ -248,7 +156,6 @@ class LeadController extends Controller
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
 
-            // Format the response data
             $leadData = [
                 'id' => $lead->id,
                 'customer_type' => $lead->customerType ? [
