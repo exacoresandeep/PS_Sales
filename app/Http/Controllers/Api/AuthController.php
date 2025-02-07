@@ -376,49 +376,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    // public function fileUpload(Request $request)
-    // {
-      
-    //     $validator = Validator::make($request->all(), [
-    //         'file' => 'required|array', 
-    //         'file.*' => 'file|mimes:jpg,jpeg,png,pdf|max:2048', 
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 422,
-    //             'message' => $validator->errors(),
-    //             'data' => [],
-    //         ], 422);
-    //     }      
-    //     $filePaths = [];
-    //     if ($request->hasFile('file')) {
-    //         foreach ($request->file('file') as $file) {
-    //             // $path = $file->store('uploads');
-    //             // $filePaths[] = $path; 
-    //             $path = $file->store('uploads'); 
-    //             $fileName = basename($path); 
-    //             $fileUrl = asset('storage/uploads/' . $fileName); 
-    //             $fileUrls[] = $fileUrl;
-    //         }
-    //         return response()->json([
-    //             'success' => true,
-    //             'statusCode' => 200,
-    //             'message' => 'Files uploaded successfully.',  
-    //             'data' => [
-    //                 'filePaths' => $filePaths, 
-    //             ],
-    //         ], 200);
-    //     }
-
-        
-    //     return response()->json([
-    //         'success' => false,
-    //         'statusCode' => 400,
-    //         'message' => 'No file uploaded.',
-    //         'data' => [],
-    //     ], 400);
-    // }
+    
     public function fileUpload(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -613,8 +571,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-
 
 
 }

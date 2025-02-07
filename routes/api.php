@@ -51,6 +51,7 @@ Route::prefix('v1')->group(function () {
         });
         Route::prefix('target')->group(function () {
             Route::get('/{month}', [TargetController::class, 'getMonthlyTarget']);
+            Route::post('/', [TargetController::class, 'index']);
         });
         Route::prefix('route')->group(function () {
             Route::get('/todays-routes', [RouteController::class, 'getTodaysTrip']);
@@ -73,7 +74,6 @@ Route::prefix('v1')->group(function () {
         Route::get('product-rate', [AuthController::class, 'getProductRate']);
         Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
         Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
-
         
         Route::post('logout', [AuthController::class, 'logout']);
 
