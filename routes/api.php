@@ -37,8 +37,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/{customer_type_id}/filter', [LeadController::class, 'getleadsFilter']);
             Route::get('{leadId}', [LeadController::class, 'show']); // Leads details
             Route::post('{leadId}/update', [LeadController::class, 'updateLead']); // Update lead status
-            Route::post('update-open-lead/{leadId}', [LeadController::class, 'updateOpenLeads']);
-            Route::post('update-lost-leads/{leadId}', [LeadController::class, 'updateLostLeads']);
+            // Route::post('update-open-lead/{leadId}', [LeadController::class, 'updateOpenLeads']);
+            // Route::post('update-lost-leads/{leadId}', [LeadController::class, 'updateLostLeads']);
 
         });
         Route::prefix('leave')->group(function () {
