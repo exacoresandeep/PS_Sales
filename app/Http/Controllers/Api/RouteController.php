@@ -205,6 +205,7 @@ class RouteController extends Controller
                     'success' => false,
                     'statusCode' => 400,
                     'message' => 'No routes found for the given district.',
+                    'data' => [],
                 ], 400);
             }
             foreach ($routes as $route) {
