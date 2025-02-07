@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Lead;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\TripRoute;
 use Exception;
 
@@ -208,42 +210,100 @@ class LeadController extends Controller
         }
     }
 
-
     public function updateLead(Request $request, $leadId)
     {
         try {
-           
             $validatedData = $request->validate([
-                'status' => 'required|in:Opened,Follow Up,Converted,Deal Dropped',
-                'record_details' => 'nullable|string',
-                'attachments' => 'nullable|array', 
-                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,docx|max:2048',
+                'type_of_visit' => 'nullable|string',
+                'construction_type' => 'nullable|string',
+                'stage_of_construction' => 'nullable|string',
+                'follow_up_date' => 'nullable|date',
+                'lead_score' => 'nullable|numeric',
+                'lead_source' => 'nullable|string',
+                'source_name' => 'nullable|string',
+                'total_quantity' => 'nullable|numeric',
+                'status' => 'required|in:Opened,Won,Lost',
+                // 'lost_details.lost_volume' => 'nullable|required_if:status,Lost|numeric',
+                // 'lost_details.lost_to_competitor' => 'nullable|required_if:status,Lost|string',
+                // 'lost_details.reason_for_lost' => 'nullable|required_if:status,Lost|string',
+                // 'order_details.customer_type_id' => 'nullable|exists:customer_types,id',
+                // 'order_details.dealer_id' => 'nullable|exists:dealers,id',
+                // 'order_details.dealer_flag_order' => 'nullable|numeric',
+                // 'order_details.payment_terms_id' => 'nullable|exists:payment_terms,id',
+                // 'order_details.total_amount' => 'nullable|numeric',
+                // 'order_details.order_items' => 'nullable|array',
+                // 'order_details.order_items.*.product_id' => 'required_with:order_details.order_items|exists:products,id',
+                // 'order_details.order_items.*.total_quantity' => 'required_with:order_details.order_items|numeric',
+                // 'order_details.order_items.*.balance_quantity' => 'required_with:order_details.order_items|numeric',
+                // 'order_details.order_items.*.product_details' => 'nullable|array',
             ]);
 
-            $lead = Lead::where('created_by', Auth::id())->findOrFail($leadId);
+            $lead = Lead::where('id', $leadId)
+                ->where('created_by', Auth::id())
+                ->firstOrFail();
 
-            $attachments = $lead->attachments ?? []; 
+            $lead->update([
+                'type_of_visit' => $request->type_of_visit,
+                'construction_type' => $request->construction_type,
+                'stage_of_construction' => $request->stage_of_construction,
+                'follow_up_date' => $request->follow_up_date,
+                'lead_score' => $request->lead_score,
+                'lead_source' => $request->lead_source,
+                'source_name' => $request->source_name,
+                'total_quantity' => $request->total_quantity,
+                'status' => $request->status,
+            ]);
 
-            if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $file) {
-                    $path = $file->store('leads', 'public'); 
-                    $attachments[] = $path;
+            if ($request->status === 'Won' && !empty($request->order_details)) {
+                $orderData = [
+                    'customer_type_id' => $request->order_details['customer_type_id'],
+                    'lead_id' => $lead->id,
+                    'dealer_id' => $request->order_details['dealer_id'] ?? null,
+                    'dealer_flag_order' => $request->order_details['dealer_flag_order'] ?? 0,
+                    'payment_terms_id' => $request->order_details['payment_terms_id'],
+                    'total_amount' => $request->order_details['total_amount'],
+                    'billing_date' => now()->format('Y-m-d'),
+                    'status' => 'Pending',
+                    'created_by' => Auth::id(),
+                ];
+
+                $order = Order::create($orderData);
+
+                foreach ($request->order_details['order_items'] as $item) {
+                    $orderItemData = [
+                        'order_id' => $order->id,
+                        'product_id' => $item['product_id'],
+                        'total_quantity' => $item['total_quantity'],
+                        'balance_quantity' => $item['balance_quantity'],
+                        'product_details' => json_encode($item['product_details']), // Store product details as JSON
+                    ];
+                    OrderItem::create($orderItemData);
                 }
             }
 
-
-            $lead->update([
-                'status' => $validatedData['status'],
-                'record_details' => $validatedData['record_details'] ?? $lead->record_details,
-                'attachments' => $attachments, 
-            ]);
+            if ($request->status === 'Lost' && !empty($request->lost_details)) {
+                $lead->update([
+                    'lost_volume' => $request->lost_details['lost_volume'],
+                    'lost_to_competitor' => $request->lost_details['lost_to_competitor'],
+                    'reason_for_lost' => $request->lost_details['reason_for_lost'],
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Lead updated successfully!',
                 'data' => $lead,
+                // 'order_details' => $order ?? null,
             ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 422,
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -252,6 +312,99 @@ class LeadController extends Controller
             ], 500);
         }
     }
+
+
+    // public function updateLead(Request $request, $leadId)
+    // {
+    //     try {
+    //         $validatedData = $request->validate([
+    //             'type_of_visit' => 'nullable|string',
+    //             'construction_type' => 'nullable|string',
+    //             'stage_of_construction' => 'nullable|string',
+    //             'follow_up_date' => 'nullable|date',
+    //             'lead_score' => 'nullable|numeric',
+    //             'lead_source' => 'nullable|string',
+    //             'source_name' => 'nullable|string',
+    //             'total_quantity' => 'nullable|numeric',
+    //             'status' => 'required|in:Opened,Pending,Won,Lost',
+    //             'lost_volume' => 'nullable|required_if:status,Lost|numeric',
+    //             'lost_to_competitor' => 'nullable|required_if:status,Lost|string',
+    //             'reason_for_lost' => 'nullable|required_if:status,Lost|string',
+    //             'order_items' => 'nullable|array',
+    //             'order_items.*.product_id' => 'required_with:order_items|exists:products,id',
+    //             'order_items.*.product_details' => 'nullable|array',
+    //         ]);
+
+    //         $lead = Lead::where('id', $leadId)
+    //                     ->where('created_by', Auth::id())
+    //                     ->firstOrFail();
+
+    //         $lead->update($validatedData);
+
+    //         if ($request->status === 'Won') {
+    //             $orderData = [
+    //                 'customer_type_id' => $lead->customer_type,
+    //                 'lead_id' => $lead->id,
+    //                 'dealer_id' => $lead->dealer_id ?? null,
+    //                 'dealer_flag_order' => 0, // Default value as per your requirement
+    //                 'payment_terms_id' => 1, 
+    //                 'total_amount' => 0,
+    //                 'created_by' => Auth::id(),
+    //             ];
+
+    //             $order = Order::create($orderData);
+
+    //             if (!empty($request->order_items)) {
+    //                 foreach ($request->order_items as $item) {
+    //                     $totalQuantity = 0;
+    //                     if (!empty($item['product_details'])) {
+    //                         foreach ($item['product_details'] as $productDetail) {
+    //                             $totalQuantity += $productDetail['quantity'];
+    //                         }
+    //                     }
+
+    //                     $order->orderItems()->create([
+    //                         'order_id' => $order->id,
+    //                         'product_id' => $item['product_id'],
+    //                         'total_quantity' => $totalQuantity,
+    //                         'balance_quantity' => $totalQuantity,
+    //                         'product_details' => $item['product_details'] ?? [],
+    //                     ]);
+    //                 }
+    //             }
+    //         }
+
+    //         if ($request->status === 'Lost') {
+    //             $lead->update([
+    //                 'lost_volume' => $request->lost_volume,
+    //                 'lost_to_competitor' => $request->lost_to_competitor,
+    //                 'reason_for_lost' => $request->reason_for_lost,
+    //             ]);
+    //         }
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Lead updated successfully!',
+    //             'data' => $lead,
+    //         ], 200);
+
+    //     } catch (\Illuminate\Validation\ValidationException $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 422,
+    //             'message' => 'Validation error',
+    //             'errors' => $e->errors(),
+    //         ], 422);
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
     public function leadsList(Request $request)
     {
         try {
