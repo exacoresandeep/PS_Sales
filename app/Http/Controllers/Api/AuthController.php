@@ -437,9 +437,11 @@ class AuthController extends Controller
     
         $fileUrls = [];
         foreach ($request->file('file') as $file) {
-            // Store in 'uploads' folder inside 'storage/app/public'
-            $path = $file->store('uploads', 'public');  
-            $fileUrls[] = asset('storage/' . $path);
+            // $path = $file->store('uploads', 'public');  
+            // $fileUrls[] = asset('storage/' . $path);
+            $fileName = $file->hashName();
+            $file->storeAs('uploads', $fileName, 'public');  
+            $fileUrls[] = url('storage/uploads/' . $fileName);
         }
     
         return response()->json([
