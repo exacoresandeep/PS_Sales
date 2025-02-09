@@ -58,6 +58,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/{dealerId}/update-activity', [RouteController::class, 'updateDealerTripActivity']);
             Route::get('/{dealerId}/view-trip-details', [RouteController::class, 'viewTripDetails']);
             Route::post('/{tripRouteId}/add-dealer', [RouteController::class, 'addDealerToRoute']);
+            
+            Route::get('/routeList', [RouteController::class, 'routeList']);
+            Route::post('/routeReschedule', [RouteController::class, 'routeReschedule']);
+            Route::get('/todaysRouteSchedule', [RouteController::class, 'todaysRouteSchedule']);
+            Route::post('/changeRouteStatus', [RouteController::class, 'changeRouteStatus']);
         });
         Route::prefix('attendance')->group(function () {
             Route::post('/punch-in', [AttendanceController::class, 'punchIn']);

@@ -139,38 +139,53 @@ class TargetController extends Controller
     {
         try {
             $month = $request->month != "" ? $request->month : Carbon::now()->month;
-            $year  = $request->year  != "" ? $request->year  : Carbon::now()->year;
+            $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
             $employeeId = Auth::id();
+            $currentYear = Carbon::now()->year;
 
-            $targets = Target::where('month', $month)
+            $targets = Target::with('customerType') // Eager load customerType
+                ->where('month', $month)
                 ->where('year', $year)
                 ->where('created_by', $employeeId)
                 ->get();
 
-            if ($targets->isEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'statusCode' => 200,
-                    'message' => 'No targets found for the selected month.',
-                    'data' => null,
-                ], 200);
+            // Initialize response array
+            $response = [];
+
+            foreach ($targets as $target) {
+                if ($target->customerType) { // Ensure customerType exists
+                    $customerTypeId = $target->customerType->id;
+            
+                    // Fetch Orders for this Customer Type
+                    $orders = Order::where('created_by', $employeeId)
+                        ->where('customer_type_id', $customerTypeId)
+                        ->whereYear('created_at', $currentYear)
+                        ->whereMonth('created_at', Carbon::parse($month)->month)
+                        ->where('status', 'Accepted')
+                        ->pluck('id');
+                    // Calculate Achieved Target
+                    $achievedTarget = DB::table('order_items')
+                        ->whereIn('order_id', $orders)
+                        ->sum('total_quantity');
+
+               
+               
+                    // Store structured response
+                    $response[] = [
+                        'target_id' => $target->id,
+                        'customer_type' => [
+                            'id' => $customerTypeId,
+                            'name' => $target->customerType->name ?? 'Unknown', // Add customer type name
+                        ],
+
+                        'target_type_flag' => $target->target_type_flag,
+                        'ton_quantity' => $target->ton_quantity,
+                        'no_quantity' => $target->ton_quantity,
+                        'achieved_quantity' => $achievedTarget,
+                        'status' => ($achievedTarget < $target->ton_quantity) ? 'Target Not Met' : 'Target Achieved'
+                    ];
+                }
             }
-
-            $orders = Order::where('created_by', $employeeId)
-            ->whereYear('created_at', $currentYear) 
-            ->whereMonth('created_at', Carbon::parse($month)->month)
-            ->where('status', 'Accepted') 
-            ->pluck('id');
-
-            $achievedTarget = DB::table('order_items') 
-            ->whereIn('order_id', $orders) 
-            ->sum('total_quantity'); 
-
-
-            $response = [
-                'targets' => $targets,
-                'achieved_quantity' => $achievedTarget,
-            ];
 
             return response()->json([
                 'success' => true,
@@ -183,11 +198,11 @@ class TargetController extends Controller
                 'success' => false,
                 'statusCode' => 500,
                 'message' => 'An error occurred while retrieving target data.',
-                'data' => $e->getMessage(), 
+                'error' => $e->getMessage(), 
             ], 500);
         }
-        
     }
+
     public function view($id)
     {
         $target = Target::join('employees', 'employees.id', '=', 'Target.employee_id')

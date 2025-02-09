@@ -12,10 +12,18 @@ class Target extends Model
     protected $table = 'target';
 
     protected $fillable = [
-        'employee_id',
+        'employee_id', 
+        'customer_types_id',        
+        'target_type_flag',        
         'month',
         'year',
-        'target_quantity',
+        'ton_quantity',
+        'no_quantity',
         'created_by',
     ];
+    public function customerType()
+    {
+        return $this->belongsTo(CustomerType::class, 'customer_types_id');
+    }
+
 }
