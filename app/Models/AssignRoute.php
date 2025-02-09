@@ -16,6 +16,8 @@ class AssignRoute extends Model
         'trip_route_id',
         'assign_date',
         'status',
+        'sub_locations',
+
     ];
 
     public function tripRoute()
