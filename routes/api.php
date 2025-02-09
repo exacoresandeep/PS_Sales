@@ -54,7 +54,7 @@ Route::prefix('v1')->group(function () {
         });
         Route::prefix('target')->group(function () {
             Route::get('/{month}', [TargetController::class, 'getMonthlyTarget']);
-            Route::post('/', [TargetController::class, 'index']);
+            Route::post('/list', [TargetController::class, 'indexList']);
         });
         Route::prefix('route')->group(function () {
             Route::get('/todays-routes', [RouteController::class, 'getTodaysTrip']);

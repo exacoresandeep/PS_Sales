@@ -135,7 +135,7 @@ class TargetController extends Controller
             ], 200);
         }
     }
-    public function index(Request $request)
+    public function indexList(Request $request)
     {
         try {
             $month = $request->month != "" ? $request->month : Carbon::now()->month;
