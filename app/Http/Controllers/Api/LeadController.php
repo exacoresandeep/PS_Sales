@@ -218,7 +218,7 @@ class LeadController extends Controller
                 'construction_type' => 'nullable|string',
                 'stage_of_construction' => 'nullable|string',
                 'follow_up_date' => 'nullable|date',
-                'lead_score' => 'nullable|numeric',
+                'lead_score' => 'nullable|string',
                 'lead_source' => 'nullable|string',
                 'source_name' => 'nullable|string',
                 'total_quantity' => 'nullable|numeric',
