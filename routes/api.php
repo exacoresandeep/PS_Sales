@@ -33,9 +33,12 @@ Route::prefix('v1')->group(function () {
 
         Route::prefix('leads')->group(function () {
             Route::post('/', [LeadController::class, 'store']); // Create new lead
-            Route::get('/{customer_type_id}', [LeadController::class, 'index']); // List Leads by current user ID
+            Route::get('/', [LeadController::class, 'index']); // List Leads by current user ID
+            Route::get('/{customer_type_id}/filter', [LeadController::class, 'getleadsFilter']);
             Route::get('{leadId}', [LeadController::class, 'show']); // Leads details
             Route::post('{leadId}/update', [LeadController::class, 'updateLead']); // Update lead status
+            // Route::post('update-open-lead/{leadId}', [LeadController::class, 'updateOpenLeads']);
+            // Route::post('update-lost-leads/{leadId}', [LeadController::class, 'updateLostLeads']);
 
         });
         Route::prefix('leave')->group(function () {
@@ -63,6 +66,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/routeReschedule', [RouteController::class, 'routeReschedule']);
             Route::get('/todaysRouteSchedule', [RouteController::class, 'todaysRouteSchedule']);
             Route::post('/changeRouteStatus', [RouteController::class, 'changeRouteStatus']);
+            Route::get('/{district_id}', [RouteController::class, 'getRoutesByDistrict']);
+
         });
         Route::prefix('attendance')->group(function () {
             Route::post('/punch-in', [AttendanceController::class, 'punchIn']);
@@ -79,10 +84,10 @@ Route::prefix('v1')->group(function () {
         Route::get('product-rate', [AuthController::class, 'getProductRate']);
         Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
         Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
-        
-        Route::post('logout', [AuthController::class, 'logout']);
 
-        
+        Route::get('districts', [AuthController::class, 'getDistricts']);
+
+        Route::post('logout', [AuthController::class, 'logout']);
         
         
         Route::get('getVehicleCategory', [AuthController::class, 'getVehicleCategory']);

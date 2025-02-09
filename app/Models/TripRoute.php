@@ -12,9 +12,13 @@ class TripRoute extends Model
     protected $table = 'trip_route';
 
     protected $fillable = [
+        'district_id',
         'route_name',
+        'location_name',
+        'sub_locations', 
         'status',
     ];
+    public $timestamps = false;
 
     public function assignRoutes()
     {

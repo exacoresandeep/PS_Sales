@@ -376,7 +376,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    
+
     public function fileUpload(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -393,11 +393,21 @@ class AuthController extends Controller
             ], 422);
         }
     
+        // $fileUrls = [];
+        // foreach ($request->file('file') as $file) {
+        //     // $path = $file->store('uploads', 'public');  
+        //     // $fileUrls[] = asset('storage/' . $path);
+        //     $fileName = $file->hashName();
+        //     $file->storeAs('uploads', $fileName, 'public');  
+        //     $fileUrls[] = url('storage/uploads/' . $fileName);
+        // }
         $fileUrls = [];
         foreach ($request->file('file') as $file) {
-            // Store in 'uploads' folder inside 'storage/app/public'
-            $path = $file->store('uploads', 'public');  
-            $fileUrls[] = asset('storage/' . $path);
+            $fileName = time() . '_' . $file->getClientOriginalName();
+
+            $file->move(public_path('uploads'), $fileName);
+
+            $fileUrls[] = url('uploads/' . $fileName);
         }
     
         return response()->json([
@@ -407,9 +417,6 @@ class AuthController extends Controller
             'data' => ['filePaths' => $fileUrls],
         ], 200);
     }
-    
-
-
     
     public function getVehicleCategory()
     {
@@ -571,6 +578,30 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    public function getDistricts()
+    {
+        try {
+            $districts = DB::table('districts')
+                ->select('id as district_id', 'name as district_name')
+                ->orderBy('name', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Districts fetched successfully',
+                'data' => $districts,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
 
 }
