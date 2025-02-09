@@ -65,7 +65,7 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        return view('admin.dashboard');
+        return view('layouts.app');
     }
 
     public function logout(Request $request)

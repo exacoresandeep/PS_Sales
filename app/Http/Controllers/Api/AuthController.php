@@ -376,7 +376,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
-   
+
     public function fileUpload(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -601,8 +601,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-
 
 
 
