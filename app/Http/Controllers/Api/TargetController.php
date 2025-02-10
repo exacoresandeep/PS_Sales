@@ -143,26 +143,25 @@ class TargetController extends Controller
             $employeeId = Auth::id();
             $currentYear = Carbon::now()->year;
 
-            $targets = Target::with('customerType') // Eager load customerType
+            $targets = Target::with('customerType') 
                 ->where('month', $month)
                 ->where('year', $year)
                 ->where('created_by', $employeeId)
                 ->get();
 
-            // Initialize response array
             $response = [];
 
             foreach ($targets as $target) {
-                if ($target->customerType) { // Ensure customerType exists
+                if ($target->customerType) { 
                     $customerTypeId = $target->customerType->id;
             
-                    // Fetch Orders for this Customer Type
                     $orders = Order::where('created_by', $employeeId)
                         ->where('customer_type_id', $customerTypeId)
                         ->whereYear('created_at', $currentYear)
                         ->whereMonth('created_at', Carbon::parse($month)->month)
                         ->where('status', 'Accepted')
                         ->pluck('id');
+
                     // Calculate Achieved Target
                     $ton_achievedTarget = DB::table('order_items')
                         ->whereIn('order_id', $orders)
@@ -183,12 +182,11 @@ class TargetController extends Controller
                    $targetQty= $target->no_quantity;
                 }
                
-                    // Store structured response
                     $response[] = [
                         'target_id' => $target->id,
                         'customer_type' => [
                             'id' => $customerTypeId,
-                            'name' => $target->customerType->name ?? 'Unknown', // Add customer type name
+                            'name' => $target->customerType->name ?? 'Unknown', 
                         ],
 
                         'target_type_flag' => $target->target_type_flag,
