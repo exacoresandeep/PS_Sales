@@ -161,9 +161,26 @@ class TargetController extends Controller
                         ->whereMonth('created_at', Carbon::parse($month)->month)
                         ->where('status', 'Accepted')
                         ->pluck('id');
-                    $achievedTarget = DB::table('order_items')
+
+                    // Calculate Achieved Target
+                    $ton_achievedTarget = DB::table('order_items')
                         ->whereIn('order_id', $orders)
                         ->sum('total_quantity');
+
+                    $no_achievedTarget = DB::table('leads')
+                        ->whereIn('customer_type', (array) $customerTypeId) // Ensure it's an array
+                        ->where('created_by', $employeeId)
+                        ->whereYear('created_at', Carbon::now()->year) // Or use $currentYear if dynamic
+                        ->whereMonth('created_at', Carbon::parse($month)->month)
+                        ->count();
+
+                if($target->target_type_flag=="ton"){
+                    $achievedTarget=$ton_achievedTarget;
+                    $targetQty=$target->ton_quantity;
+                }else{
+                   $achievedTarget=$no_achievedTarget;
+                   $targetQty= $target->no_quantity;
+                }
                
                     $response[] = [
                         'target_id' => $target->id,
@@ -174,9 +191,9 @@ class TargetController extends Controller
 
                         'target_type_flag' => $target->target_type_flag,
                         'ton_quantity' => $target->ton_quantity,
-                        'no_quantity' => $target->ton_quantity,
+                        'no_quantity' => $target->no_quantity,
                         'achieved_quantity' => $achievedTarget,
-                        'status' => ($achievedTarget < $target->ton_quantity) ? 'Target Not Met' : 'Target Achieved'
+                        'status' => ($achievedTarget < $targetQty) ? 'Target Not Met' : 'Target Achieved'
                     ];
                 }
             }

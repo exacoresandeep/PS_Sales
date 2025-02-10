@@ -200,7 +200,7 @@ class RouteController extends Controller
             $employeeId = Auth::id(); 
             $startDate = Carbon::now()->startOfWeek(); 
             $endDate = Carbon::now()->endOfWeek()->subDay(); 
-            $today = Carbon::now()->addDay()->toDateString(); //addDay()
+            $today = Carbon::now()->toDateString(); 
 
             $trips = AssignRoute::with(['tripRoute'])
                 ->where('employee_id', $employeeId)
@@ -239,7 +239,7 @@ class RouteController extends Controller
     {
         try {
             $employeeId = Auth::id(); 
-            $today = Carbon::now()->addDay()->toDateString(); //addDay()
+            $today = Carbon::now()->toDateString(); 
 
             $trips = AssignRoute::with(['tripRoute'])
                 ->where('employee_id', $employeeId)

@@ -398,7 +398,9 @@ class AuthController extends Controller
             // $path = $file->store('uploads', 'public');  
             // $fileUrls[] = asset('storage/' . $path);
             $fileName = $file->hashName();
+
             $file->storeAs('uploads', $fileName, 'public');  
+
             $fileUrls[] = url('storage/uploads/' . $fileName);
         }
         // $fileUrls = [];
