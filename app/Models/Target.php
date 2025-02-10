@@ -9,16 +9,17 @@ class Target extends Model
 {
     use HasFactory;
     
-    protected $table = 'target';
+    protected $table = 'targets';
 
     protected $fillable = [
-        'employee_id', 
-        'customer_types_id',        
-        'target_type_flag',        
+        'employee_id',     
         'month',
         'year',
-        'ton_quantity',
-        'no_quantity',
+        'unique_lead',
+        'customer_visit',
+        'activity_visit',
+        'aashiyana',
+        'order_quantity',
         'created_by',
     ];
     public function customerType()
