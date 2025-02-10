@@ -85,7 +85,7 @@ Route::prefix('v1')->group(function () {
         Route::get('product-rate', [AuthController::class, 'getProductRate']);
         Route::get('leave-types', [AuthController::class, 'getLeaveTypes']);
         Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
-
+        
         Route::get('districts', [AuthController::class, 'getDistricts']);
 
         Route::post('logout', [AuthController::class, 'logout']);
