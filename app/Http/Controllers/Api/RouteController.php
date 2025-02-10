@@ -30,19 +30,20 @@ class RouteController extends Controller
                         'trip_route_id' => $trip->trip_route_id,
                         'route_name' => $trip->tripRoute->route_name ?? null,
                         'assign_date' => $trip->assign_date,
+                        'location_name' => $trip->tripRoute->location_name,
                         'status' => $trip->status,
-                        'dealers' => $trip->dealers->map(function ($dealer) use ($trip) {
-                            $dealerActivity = DealerTripActivity::where('assign_route_id', $trip->id)
-                                ->where('dealer_id', $dealer->id)
-                                ->first();
+                        // 'dealers' => $trip->dealers->map(function ($dealer) use ($trip) {
+                        //     $dealerActivity = DealerTripActivity::where('assign_route_id', $trip->id)
+                        //         ->where('dealer_id', $dealer->id)
+                        //         ->first();
 
-                            return [
-                                'id' => $dealer->id,
-                                'dealer_code' => $dealer->dealer_code,
-                                'dealer_name' => $dealer->dealer_name,
-                                'activity_status' => $dealerActivity->activity_status ?? 'Pending',
-                            ];
-                        }),
+                        //     return [
+                        //         'id' => $dealer->id,
+                        //         'dealer_code' => $dealer->dealer_code,
+                        //         'dealer_name' => $dealer->dealer_name,
+                        //         'activity_status' => $dealerActivity->activity_status ?? 'Pending',
+                        //     ];
+                        // }),
                     ];
                 });
 
