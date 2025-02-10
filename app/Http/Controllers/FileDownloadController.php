@@ -30,7 +30,7 @@ class FileDownloadController extends Controller
     }
     public function view($filename)
     {
-        $path = storage_path('app/uploads/' . $filename);
+        $path = storage_path('uploads/' . $filename);
 
         if (file_exists($path)) {
             return response()->file($path);
