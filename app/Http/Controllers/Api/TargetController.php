@@ -72,7 +72,7 @@ class TargetController extends Controller
         $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
         $employeeId = Auth::id();
        
-        DB::enableQueryLog();
+        // DB::enableQueryLog();
         $targetQuery = Target::where('employee_id', $employeeId)
                             ->where('month', $month)
                             ->where('year', $year);
