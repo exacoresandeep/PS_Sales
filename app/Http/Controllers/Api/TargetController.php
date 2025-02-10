@@ -4,66 +4,117 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Target;
+use App\Models\Lead;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TargetController extends Controller
 {
-    public function getMonthlyTarget(Request $request)
-    {
-        try {
+    // public function getMonthlyTarget(Request $request)
+    // {
+    //     try {
             
-            $currentYear = Carbon::now()->year;
-            $employeeId = Auth::id();
+    //         $currentYear = Carbon::now()->year;
+    //         $employeeId = Auth::id();
 
-            $targets = Target::where('month', $month)
-                ->where('year', $currentYear)
-                ->where('created_by', $employeeId)
-                ->get();
+    //         $targets = Target::where('month', $month)
+    //             ->where('year', $currentYear)
+    //             ->where('created_by', $employeeId)
+    //             ->get();
 
-            if ($targets->isEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'statusCode' => 200,
-                    'message' => 'No targets found for the selected month.',
-                    'data' => null,
-                ], 200);
-            }
+    //         if ($targets->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => true,
+    //                 'statusCode' => 200,
+    //                 'message' => 'No targets found for the selected month.',
+    //                 'data' => null,
+    //             ], 200);
+    //         }
 
-            $orders = Order::where('created_by', $employeeId)
-            ->whereYear('created_at', $currentYear) 
-            ->whereMonth('created_at', Carbon::parse($month)->month)
-            ->where('status', 'Accepted') 
-            ->pluck('id');
+    //         $orders = Order::where('created_by', $employeeId)
+    //         ->whereYear('created_at', $currentYear) 
+    //         ->whereMonth('created_at', Carbon::parse($month)->month)
+    //         ->where('status', 'Accepted') 
+    //         ->pluck('id');
 
-            $achievedTarget = DB::table('order_items') 
-            ->whereIn('order_id', $orders) 
-            ->sum('total_quantity'); 
+    //         $achievedTarget = DB::table('order_items') 
+    //         ->whereIn('order_id', $orders) 
+    //         ->sum('total_quantity'); 
 
 
-            $response = [
-                'targets' => $targets,
-                'achieved_quantity' => $achievedTarget,
-            ];
+    //         $response = [
+    //             'targets' => $targets,
+    //             'achieved_quantity' => $achievedTarget,
+    //         ];
 
-            return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => 'Target data retrieved successfully.',
-                'data' => $response,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'statusCode' => 500,
-                'message' => 'An error occurred while retrieving target data.',
-                'data' => $e->getMessage(), 
-            ], 500);
-        }
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Target data retrieved successfully.',
+    //             'data' => $response,
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => 'An error occurred while retrieving target data.',
+    //             'data' => $e->getMessage(), 
+    //         ], 500);
+    //     }
+    // }
+    public function getTargets(Request $request)
+    {
+        $month = $request->month != "" ? $request->month : Carbon::now()->month;
+        $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
+        $employeeId = Auth::id();
+       
+        DB::enableQueryLog();
+        $targetQuery = Target::where('employee_id', $employeeId)
+                            ->where('month', $month)
+                            ->where('year', $year);
+        $target = $targetQuery->first();
+        $target = $target ? $target->toArray() : [];
+
+        $uniqueLeadsQuery = Lead::where('created_by', $employeeId)
+                                ->whereYear('created_at', $year)
+                                ->whereMonth('created_at', $month);
+            // dd($uniqueLeadsQuery->toSql(), $uniqueLeadsQuery->getBindings());
+        $uniqueLeads = $uniqueLeadsQuery->count();
+        $aashiyanaQuery = Order::where('created_by', $employeeId)
+                            ->whereYear('created_at', $year)
+                            ->whereMonth('created_at', $month)
+                            ->where('payment_terms_id', 3);
+        // dd($aashiyanaQuery->toSql(), $aashiyanaQuery->getBindings());
+
+        $aashiyanaCount = $aashiyanaQuery->count();
+
+        $ordersQuery = Order::where('created_by', $employeeId)
+                            ->whereYear('created_at', $year)
+                            ->whereMonth('created_at', $month)
+                            ->where('status', 'Accepted');
+
+        $orders = $ordersQuery->pluck('id');
+
+        $achievedOrderQuantityQuery = DB::table('order_items')
+                                        ->whereIn('order_id', $orders);
+
+        $achievedOrderQuantity = $achievedOrderQuantityQuery->sum('total_quantity');
+
+        return response()->json([
+            'target' => $target,
+            'achieved' => [
+                'unique_leads' => $uniqueLeads,
+                'customer_visit' => $customer_visit ?? 0, 
+                'aashiyana' => $aashiyanaCount,
+                'order_quantity' => $achievedOrderQuantity,
+            ],
+        ]);
     }
+
 
     public function targetList(Request $request)
     {   
@@ -135,6 +186,7 @@ class TargetController extends Controller
             ], 200);
         }
     }
+    
     public function indexList(Request $request)
     {
         try {
