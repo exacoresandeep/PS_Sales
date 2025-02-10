@@ -393,22 +393,22 @@ class AuthController extends Controller
             ], 422);
         }
     
-        // $fileUrls = [];
-        // foreach ($request->file('file') as $file) {
-        //     // $path = $file->store('uploads', 'public');  
-        //     // $fileUrls[] = asset('storage/' . $path);
-        //     $fileName = $file->hashName();
-        //     $file->storeAs('uploads', $fileName, 'public');  
-        //     $fileUrls[] = url('storage/uploads/' . $fileName);
-        // }
         $fileUrls = [];
         foreach ($request->file('file') as $file) {
-            $fileName = time() . '_' . $file->getClientOriginalName();
-
-            $file->move(public_path('uploads'), $fileName);
-
-            $fileUrls[] = url('uploads/' . $fileName);
+            // $path = $file->store('uploads', 'public');  
+            // $fileUrls[] = asset('storage/' . $path);
+            $fileName = $file->hashName();
+            $file->storeAs('uploads', $fileName, 'public');  
+            $fileUrls[] = url('storage/uploads/' . $fileName);
         }
+        // $fileUrls = [];
+        // foreach ($request->file('file') as $file) {
+        //     $fileName = time() . '_' . $file->getClientOriginalName();
+
+        //     $file->move(public_path('uploads'), $fileName);
+
+        //     $fileUrls[] = url('uploads/' . $fileName);
+        // }
     
         return response()->json([
             'success' => true,
