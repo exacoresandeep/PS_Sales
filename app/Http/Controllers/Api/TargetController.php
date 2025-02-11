@@ -77,7 +77,7 @@ class TargetController extends Controller
                             ->where('month', $month)
                             ->where('year', $year);
         $target = $targetQuery->first();
-        $target = $target ? $target->toArray() : [];
+        $target = $target ? $target->toArray() : null;
 
         $uniqueLeadsQuery = Lead::where('created_by', $employeeId)
                                 ->whereYear('created_at', $year)
