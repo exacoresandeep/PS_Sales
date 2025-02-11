@@ -1,6 +1,6 @@
 <div class="activity-sec">
     <div class="inner-header button-align">
-      <h3>Target Management</h3>
+      <h3>Target Managements</h3>
       <button class="btn btn-primary">Create Target</button>
     </div>                
     <div class="filter-sec">

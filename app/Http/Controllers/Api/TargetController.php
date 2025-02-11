@@ -14,58 +14,11 @@ use Illuminate\Support\Facades\Log;
 
 class TargetController extends Controller
 {
-    // public function getMonthlyTarget(Request $request)
-    // {
-    //     try {
-            
-    //         $currentYear = Carbon::now()->year;
-    //         $employeeId = Auth::id();
-
-    //         $targets = Target::where('month', $month)
-    //             ->where('year', $currentYear)
-    //             ->where('created_by', $employeeId)
-    //             ->get();
-
-    //         if ($targets->isEmpty()) {
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'statusCode' => 200,
-    //                 'message' => 'No targets found for the selected month.',
-    //                 'data' => null,
-    //             ], 200);
-    //         }
-
-    //         $orders = Order::where('created_by', $employeeId)
-    //         ->whereYear('created_at', $currentYear) 
-    //         ->whereMonth('created_at', Carbon::parse($month)->month)
-    //         ->where('status', 'Accepted') 
-    //         ->pluck('id');
-
-    //         $achievedTarget = DB::table('order_items') 
-    //         ->whereIn('order_id', $orders) 
-    //         ->sum('total_quantity'); 
-
-
-    //         $response = [
-    //             'targets' => $targets,
-    //             'achieved_quantity' => $achievedTarget,
-    //         ];
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'statusCode' => 200,
-    //             'message' => 'Target data retrieved successfully.',
-    //             'data' => $response,
-    //         ], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 500,
-    //             'message' => 'An error occurred while retrieving target data.',
-    //             'data' => $e->getMessage(), 
-    //         ], 500);
-    //     }
-    // }
+    public function index()
+    {
+        $targets = Target::all(); 
+        return view('target.index', compact('targets'));
+    }
     public function getTargets(Request $request)
     {
         $month = $request->month != "" ? $request->month : Carbon::now()->month;
