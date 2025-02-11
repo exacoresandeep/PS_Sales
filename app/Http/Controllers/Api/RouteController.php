@@ -244,30 +244,36 @@ class RouteController extends Controller
             $employeeId = Auth::id(); 
             $today = Carbon::now()->toDateString(); 
 
-            $trips = AssignRoute::with(['tripRoute'])
+            $trip = AssignRoute::with(['tripRoute'])
                 ->where('employee_id', $employeeId)
                 ->where('assign_date', $today) 
-                ->get()
-                ->map(function ($trip) use ($today) {
-                    return [
+                ->first(); // Fetch a single record instead of a list
 
-                        'assign_route_id' => $trip->id,
-                        'employee_id' => $trip->employee_id,
-                        'trip_route_id' => $trip->trip_route_id,
-                        'route_name' => $trip->tripRoute->route_name ?? null,
-                        'location_name' => $trip->tripRoute->location_name ?? null,
-                        'assign_date' => $trip->assign_date,
-                        'assigned_day' => Carbon::parse($trip->assign_date)->format('l'),
-                        // 'active_flag' => ($trip->assign_date >= $today) ? 'active' : 'inactive', 
-                        'sub_locations' => json_decode($trip->sub_locations, true),
-                    ];
-                });
+            if (!$trip) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'No route assigned for today.',
+                    'data' => null,
+                ], 404);
+            }
+
+            $tripData = [
+                'assign_route_id' => $trip->id,
+                'employee_id' => $trip->employee_id,
+                'trip_route_id' => $trip->trip_route_id,
+                'route_name' => $trip->tripRoute->route_name ?? null,
+                'location_name' => $trip->tripRoute->location_name ?? null,
+                'assign_date' => $trip->assign_date,
+                'assigned_day' => Carbon::parse($trip->assign_date)->format('l'),
+                'sub_locations' => json_decode($trip->sub_locations, true),
+            ];
 
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
-                'message' => 'Today route fetched successfully.',
-                'data' => $trips,
+                'message' => 'Today’s route fetched successfully.',
+                'data' => $tripData, // Single object instead of list
             ], 200); 
 
         } catch (\Exception $e) {
@@ -278,6 +284,7 @@ class RouteController extends Controller
             ], 500);
         }
     }
+
 
     public function changeRouteStatus(Request $request)
     {
