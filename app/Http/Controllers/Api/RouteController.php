@@ -215,6 +215,8 @@ class RouteController extends Controller
                         'route_name' => $trip->tripRoute->route_name ?? null,
                         'location_name' => $trip->tripRoute->location_name ?? null,
                         'assign_date' => $trip->assign_date,
+                        'assigned_day' => Carbon::parse($trip->assign_date)->format('l'),
+                        'day' => $trip->assign_date,
                         'active_flag' => ($trip->assign_date >= $today) ? 'active' : 'inactive', 
                         'sub_locations' => json_decode($trip->sub_locations),
                     ];
@@ -255,6 +257,7 @@ class RouteController extends Controller
                         'route_name' => $trip->tripRoute->route_name ?? null,
                         'location_name' => $trip->tripRoute->location_name ?? null,
                         'assign_date' => $trip->assign_date,
+                        'assigned_day' => Carbon::parse($trip->assign_date)->format('l'),
                         // 'active_flag' => ($trip->assign_date >= $today) ? 'active' : 'inactive', 
                         'sub_locations' => json_decode($trip->sub_locations, true),
                     ];
