@@ -53,7 +53,7 @@
                 </a>
                 <ul class="submenu">
                     <li>
-                        <a href="target-management">
+                        <a href="{{ route('admin.target.index') }}">
                             <i class="fa fa-road" aria-hidden="true"></i>
                             All Targets <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
