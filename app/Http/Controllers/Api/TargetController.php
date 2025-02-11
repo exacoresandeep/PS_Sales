@@ -103,8 +103,7 @@ class TargetController extends Controller
                                         ->whereIn('order_id', $orders);
 
         $achievedOrderQuantity = $achievedOrderQuantityQuery->sum('total_quantity');
-
-        return response()->json([
+        $response = [
             'target' => $target,
             'achieved' => [
                 'unique_leads' => $uniqueLeads,
@@ -112,7 +111,13 @@ class TargetController extends Controller
                 'aashiyana' => $aashiyanaCount,
                 'order_quantity' => $achievedOrderQuantity,
             ],
-        ]);
+        ];
+        return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => 'Target data retrieved successfully.',
+            'data' => $response,
+        ], 200);
     }
 
 
