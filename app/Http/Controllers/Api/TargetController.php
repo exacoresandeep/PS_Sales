@@ -19,6 +19,32 @@ class TargetController extends Controller
         $targets = Target::all(); 
         return view('target.index', compact('targets'));
     }
+    public function store(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required',
+            'month' => 'required',
+            'year' => 'required',
+            'unique_lead' => 'nullable|integer',
+            'customer_visit' => 'nullable|integer',
+            'activity_visit' => 'nullable|integer',
+            'aashiyana' => 'nullable|integer',
+            'order_quantity' => 'nullable|integer',
+        ]);
+
+        Target::create([
+            'employee_id' => $request->employee_id,
+            'month' => $request->month,
+            'year' => $request->year,
+            'unique_lead' => $request->unique_lead,
+            'customer_visit' => $request->customer_visit,
+            'activity_visit' => $request->activity_visit,
+            'aashiyana' => $request->aashiyana,
+            'order_quantity' => $request->order_quantity,
+        ]);
+
+        return response()->json(['message' => 'Target created successfully!']);
+    }
     public function getTargets(Request $request)
     {
         $month = $request->month != "" ? $request->month : Carbon::now()->month;
