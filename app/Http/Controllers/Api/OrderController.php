@@ -193,7 +193,7 @@ class OrderController extends Controller
                 'orderItems.product:id,product_name',
                 'lead:id,customer_type,customer_name,phone,address',
                 'lead.customerType:id,name', 
-                'paymentTerms:id,name',
+                'paymentTerm:id,name',
             ])->findOrFail($orderId);
             $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null;
             $order->payment_date = $order->payment_date ? Carbon::parse($order->payment_date)->format('d-m-Y') : null;
