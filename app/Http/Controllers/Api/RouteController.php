@@ -20,39 +20,33 @@ class RouteController extends Controller
             $employeeId = Auth::id(); 
             $todayDate = now()->toDateString();
 
-            $trips = AssignRoute::with(['tripRoute', 'dealers'])
+            $trip = AssignRoute::with(['tripRoute', 'dealers'])
                 ->where('employee_id', $employeeId)
                 ->whereDate('assign_date', $todayDate)
-                ->first()
-                ->map(function ($trip) {
-                    return [
-                        'employee_id' => $trip->employee_id,
-                        'trip_route_id' => $trip->trip_route_id,
-                        'route_name' => $trip->tripRoute->route_name ?? null,
-                        'assign_date' => $trip->assign_date,
-                        'location_name' => $trip->tripRoute->location_name,
-                        'status' => $trip->status,
-                        // 'dealers' => $trip->dealers->map(function ($dealer) use ($trip) {
-                        //     $dealerActivity = DealerTripActivity::where('assign_route_id', $trip->id)
-                        //         ->where('dealer_id', $dealer->id)
-                        //         ->first();
-
-                        //     return [
-                        //         'id' => $dealer->id,
-                        //         'dealer_code' => $dealer->dealer_code,
-                        //         'dealer_name' => $dealer->dealer_name,
-                        //         'activity_status' => $dealerActivity->activity_status ?? 'Pending',
-                        //     ];
-                        // }),
-                    ];
-                });
-
-
+                ->first();
+            if (!$trip) {
+                return response()->json([
+                    'success' => true,
+                    'statusCode' => 200,
+                    'message' => 'No trip assigned for today.',
+                    'data' => null,
+                ], 200);
+            }
+    
+            $tripData = [
+                'employee_id' => $trip->employee_id,
+                'trip_route_id' => $trip->trip_route_id,
+                'route_name' => $trip->tripRoute->route_name ?? null,
+                'assign_date' => $trip->assign_date,
+                'location_name' => $trip->tripRoute->location_name ?? null,
+                'status' => $trip->status,
+            ];
+    
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
-                'message' => 'Today\'s routes retrieved successfully.',
-                'data' => $trips,
+                'message' => "Today's routes retrieved successfully.",
+                'data' => $tripData, 
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
