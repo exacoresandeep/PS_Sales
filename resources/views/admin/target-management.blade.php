@@ -47,14 +47,17 @@
             <th>Sl.No</th>
             <th>Employee Type</th>
             <th>Employee Name</th>
-            <th>From Date</th>
-            <th>To Date</th>
+            <th>Target By Year</th>
+            <th>Target By Month</th>
+            <th>Unique Lead</th>
+            <th>Customer Visit</th>
+            <th>Aashiyana Count</th>                        
             <th>Targets in Tons</th>
-            <th>Target in Number</th>                        
             <th>Action</th>
           </tr>
           </thead>
           <tbody>
+            
              
           </tbody>
          
@@ -69,46 +72,93 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> <!-- Fixed Close Button -->
             </div>
             <div class="modal-body">
-                <form id="createTargetForm">
-                    @csrf
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="employee_id" class="form-label">Employee ID</label>
-                            <input type="text" class="form-control" id="employee_id" name="employee_id" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="month" class="form-label">Month</label>
-                            <input type="text" class="form-control" id="month" name="month" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="year" class="form-label">Year</label>
-                            <input type="text" class="form-control" id="year" name="year" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="unique_lead" class="form-label">Unique Lead</label>
-                            <input type="number" class="form-control" id="unique_lead" name="unique_lead">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customer_visit" class="form-label">Customer Visit</label>
-                            <input type="number" class="form-control" id="customer_visit" name="customer_visit">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="activity_visit" class="form-label">Activity Visit</label>
-                            <input type="number" class="form-control" id="activity_visit" name="activity_visit">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="aashiyana" class="form-label">Aashiyana</label>
-                            <input type="number" class="form-control" id="aashiyana" name="aashiyana">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="order_quantity" class="form-label">Order Quantity</label>
-                            <input type="number" class="form-control" id="order_quantity" name="order_quantity">
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <button type="submit" class="btn btn-primary">Save Target</button>
-                    </div>
-                </form>
+              <form id="targetForm" action="{{ route('targets.store') }}" method="POST">
+                  @csrf
+                  <div class="row">
+                      <!-- Employee Type -->
+                      <div class="col-md-6">
+                          <label for="employee_type" class="form-label">Employee Type</label>
+                          <select class="form-control" name="employee_type" id="employee_type" required>
+                              <option value="">Select Employee Type</option>
+                              {{-- @foreach($employeeTypes as $type)
+                                  <option value="{{ $type->id }}">{{ $type->type_name }}</option>
+                              @endforeach --}}
+                          </select>
+                      </div>
+
+                      <!-- Employee Name -->
+                      <div class="col-md-6">
+                          <label for="employee_id" class="form-label">Employee Name</label>
+                          <select class="form-control" name="employee_id" id="employee_id" required>
+                              <option value="">Select Employee</option>
+                              {{-- @foreach($employees as $employee)
+                                  <option value="{{ $employee->id }}">{{ $employee->name }}</option>
+                              @endforeach --}}
+                          </select>
+                      </div>
+
+                      <!-- Target Year -->
+                      <div class="col-md-6 mt-3">
+                          <label for="year" class="form-label">Target By Year</label>
+                          <select class="form-control" name="year" id="year" required>
+                              @php
+                                  $currentYear = date('Y');
+                                  for ($i = 0; $i < 5; $i++) {
+                                      echo '<option value="' . ($currentYear + $i) . '">' . ($currentYear + $i) . '</option>';
+                                  }
+                              @endphp
+                          </select>
+                      </div>
+
+                      <!-- Target Month -->
+                      <div class="col-md-6 mt-3">
+                          <label for="month" class="form-label">Target By Month</label>
+                          <select class="form-control" name="month" id="month" required>
+                              <option value="January">January</option>
+                              <option value="February">February</option>
+                              <option value="March">March</option>
+                              <option value="April">April</option>
+                              <option value="May">May</option>
+                              <option value="June">June</option>
+                              <option value="July">July</option>
+                              <option value="August">August</option>
+                              <option value="September">September</option>
+                              <option value="October">October</option>
+                              <option value="November">November</option>
+                              <option value="December">December</option>
+                          </select>
+                      </div>
+
+                      <!-- Unique Lead -->
+                      <div class="col-md-6 mt-3">
+                          <label for="unique_lead" class="form-label">Unique Lead</label>
+                          <input type="number" class="form-control" name="unique_lead" id="unique_lead" required>
+                      </div>
+
+                      <!-- Customer Visit -->
+                      <div class="col-md-6 mt-3">
+                          <label for="customer_visit" class="form-label">Customer Visit</label>
+                          <input type="number" class="form-control" name="customer_visit" id="customer_visit" required>
+                      </div>
+
+                      <!-- Aashiyana Count -->
+                      <div class="col-md-6 mt-3">
+                          <label for="aashiyana" class="form-label">Aashiyana Count</label>
+                          <input type="number" class="form-control" name="aashiyana" id="aashiyana" required>
+                      </div>
+
+                      <!-- Target By Ton -->
+                      <div class="col-md-6 mt-3">
+                          <label for="order_quantity" class="form-label">Target By Ton</label>
+                          <input type="number" class="form-control" name="order_quantity" id="order_quantity" required>
+                      </div>
+                  </div>
+                  
+                  <div class="modal-footer mt-4">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-primary">Save Target</button>
+                  </div>
+              </form>
             </div>
         </div>
     </div>
@@ -170,10 +220,12 @@
                   },
                   { data: 'employee_type', name: 'employee_type' },
                   { data: 'employee_name', name: 'employee_name' },
-                  { data: 'from_date', name: 'from_date' },
-                  { data: 'to_date', name: 'to_date' },
-                  { data: 'target_tons', name: 'target_tons' },
-                  { data: 'target_numbers', name: 'target_numbers' },
+                  { data: 'year', name: 'year' },
+                  { data: 'month', name: 'month' },
+                  { data: 'unique_lead', name: 'unique_lead' },
+                  { data: 'customer_visit', name: 'customer_visit' },
+                  { data: 'aashiyana', name: 'aashiyana' },
+                  { data: 'order_quantity', name: 'order_quantity' },
                   { data: 'action', name: 'action', orderable: false, searchable: false }
               ]
           });
