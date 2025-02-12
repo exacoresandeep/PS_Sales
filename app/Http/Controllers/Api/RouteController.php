@@ -23,7 +23,7 @@ class RouteController extends Controller
             $trips = AssignRoute::with(['tripRoute', 'dealers'])
                 ->where('employee_id', $employeeId)
                 ->whereDate('assign_date', $todayDate)
-                ->get()
+                ->first()
                 ->map(function ($trip) {
                     return [
                         'employee_id' => $trip->employee_id,
