@@ -1,7 +1,10 @@
 <div class="activity-sec">
     <div class="inner-header button-align">
       <h3>Target Management</h3>
-      <button class="btn btn-primary">Create Target</button>
+      {{-- <button class="btn btn-primary">Create Target</button> --}}
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTargetModal">
+        Create Target
+      </button>
     </div>                
     <div class="filter-sec">
       <div class="row">                      
@@ -58,7 +61,58 @@
         </table>
     </div>
   </div>
-
+  <div class="modal fade" id="createTargetModal" tabindex="-1" aria-labelledby="createTargetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl"> <!-- Extra Large Modal -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createTargetModalLabel">Create Target</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> <!-- Fixed Close Button -->
+            </div>
+            <div class="modal-body">
+                <form id="createTargetForm">
+                    @csrf
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="employee_id" class="form-label">Employee ID</label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="month" class="form-label">Month</label>
+                            <input type="text" class="form-control" id="month" name="month" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="year" class="form-label">Year</label>
+                            <input type="text" class="form-control" id="year" name="year" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="unique_lead" class="form-label">Unique Lead</label>
+                            <input type="number" class="form-control" id="unique_lead" name="unique_lead">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="customer_visit" class="form-label">Customer Visit</label>
+                            <input type="number" class="form-control" id="customer_visit" name="customer_visit">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="activity_visit" class="form-label">Activity Visit</label>
+                            <input type="number" class="form-control" id="activity_visit" name="activity_visit">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="aashiyana" class="form-label">Aashiyana</label>
+                            <input type="number" class="form-control" id="aashiyana" name="aashiyana">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="order_quantity" class="form-label">Order Quantity</label>
+                            <input type="number" class="form-control" id="order_quantity" name="order_quantity">
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Save Target</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
   <div class="modal fade" id="viewEditModal" tabindex="-1" aria-labelledby="viewEditModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-md">
@@ -78,7 +132,7 @@
             </div>
         </div>
     </div>
-</div>
+  </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -122,6 +176,24 @@
                   { data: 'target_numbers', name: 'target_numbers' },
                   { data: 'action', name: 'action', orderable: false, searchable: false }
               ]
+          });
+          $('#createTargetForm').submit(function (e) {
+              e.preventDefault();
+
+              $.ajax({
+                  url: "{{ route('targets.store') }}", 
+                  type: "POST",
+                  data: $(this).serialize(),
+                  success: function (response) {
+                      alert("Target created successfully!");
+                      $('#createTargetModal').modal('hide');
+                      location.reload();
+                  },
+                  error: function (xhr) {
+                      alert("Something went wrong!");
+                      console.log(xhr.responseText);
+                  }
+              });
           });
   
       });
