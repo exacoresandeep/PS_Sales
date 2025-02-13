@@ -80,9 +80,9 @@
                           <label for="employee_type" class="form-label">Employee Type</label>
                           <select class="form-control" name="employee_type" id="employee_type" required>
                               <option value="">Select Employee Type</option>
-                              {{-- @foreach($employeeTypes as $type)
+                              @foreach($employeeTypes as $type)
                                   <option value="{{ $type->id }}">{{ $type->type_name }}</option>
-                              @endforeach --}}
+                              @endforeach
                           </select>
                       </div>
 
@@ -91,9 +91,9 @@
                           <label for="employee_id" class="form-label">Employee Name</label>
                           <select class="form-control" name="employee_id" id="employee_id" required>
                               <option value="">Select Employee</option>
-                              {{-- @foreach($employees as $employee)
+                              @foreach($employees as $employee)
                                   <option value="{{ $employee->id }}">{{ $employee->name }}</option>
-                              @endforeach --}}
+                              @endforeach
                           </select>
                       </div>
 
@@ -190,65 +190,87 @@
 
 
   <script>
-      $(document).ready(function(){
-          $('#viewEditModal').on('show.bs.modal', function () {
-              $(this).attr('aria-hidden', 'false');
-          });
-          $('.close').click(function() { 
-              $(this).closest('.modal').modal('hide');
-          });
-          var table = $('#example1').DataTable({
-              processing: true,
-              serverSide: true,
-              ajax: {
-                  url: "{{ url('/admin/targetList') }}", 
-                  type: 'POST',
-                  headers: {
-                      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-                  }
-              },
-              columns: [
-                  { 
-                      data: null, 
-                      name: 'sl_no',
-                      render: function (data, type, row, meta) {
-                          return meta.row + meta.settings._iDisplayStart + 1; 
-                      },
-                      orderable: false, 
-                      searchable: false,
-                      class:"text-center"
-                  },
-                  { data: 'employee_type', name: 'employee_type' },
-                  { data: 'employee_name', name: 'employee_name' },
-                  { data: 'year', name: 'year' },
-                  { data: 'month', name: 'month' },
-                  { data: 'unique_lead', name: 'unique_lead' },
-                  { data: 'customer_visit', name: 'customer_visit' },
-                  { data: 'aashiyana', name: 'aashiyana' },
-                  { data: 'order_quantity', name: 'order_quantity' },
-                  { data: 'action', name: 'action', orderable: false, searchable: false }
-              ]
-          });
-          $('#createTargetForm').submit(function (e) {
-              e.preventDefault();
+    $(document).ready(function(){
+        $('#viewEditModal').on('show.bs.modal', function () {
+            $(this).attr('aria-hidden', 'false');
+        });
+        $('.close').click(function() { 
+            $(this).closest('.modal').modal('hide');
+        });
+        var table = $('#example1').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ url('/admin/targetList') }}", 
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                }
+            },
+            columns: [
+                { 
+                    data: null, 
+                    name: 'sl_no',
+                    render: function (data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1; 
+                    },
+                    orderable: false, 
+                    searchable: false,
+                    class:"text-center"
+                },
+                { data: 'employee_type', name: 'employee_type' },
+                { data: 'employee_name', name: 'employee_name' },
+                { data: 'year', name: 'year' },
+                { data: 'month', name: 'month' },
+                { data: 'unique_lead', name: 'unique_lead' },
+                { data: 'customer_visit', name: 'customer_visit' },
+                { data: 'aashiyana', name: 'aashiyana' },
+                { data: 'order_quantity', name: 'order_quantity' },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ]
+        });
+        $('#employee_type').on('change', function () {
+            let employeeTypeId = $(this).val();
+            $('#employee_id').html('<option value="">Loading...</option>'); // Show loading
 
-              $.ajax({
-                  url: "{{ route('targets.store') }}", 
-                  type: "POST",
-                  data: $(this).serialize(),
-                  success: function (response) {
-                      alert("Target created successfully!");
-                      $('#createTargetModal').modal('hide');
-                      location.reload();
-                  },
-                  error: function (xhr) {
-                      alert("Something went wrong!");
-                      console.log(xhr.responseText);
-                  }
-              });
-          });
+            if (employeeTypeId) {
+                $.ajax({
+                    url: "{{ url('/get-employees') }}/" + employeeTypeId,
+                    type: "GET",
+                    success: function (response) {
+                        $('#employee_id').html('<option value="">Select Employee</option>'); // Reset dropdown
+                        $.each(response, function (index, employee) {
+                            $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
+                        });
+                    },
+                    error: function () {
+                        $('#employee_id').html('<option value="">Error loading employees</option>');
+                    }
+                });
+            } else {
+                $('#employee_id').html('<option value="">Select Employee</option>');
+            }
+        });
+        $('#targetForm').submit(function (e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: "{{ route('targets.store') }}",
+                type: "POST",
+                data: $(this).serialize(),
+                success: function (response) {
+                    alert("Target created successfully!");
+                    $('#createTargetModal').modal('hide');
+                    $('#example1').DataTable().ajax.reload();
+                },
+                error: function (xhr) {
+                    alert("Something went wrong!");
+                    console.log(xhr.responseText);
+                }
+            });
+        });
   
-      });
+    });
       function handleAction(itemId, action) {
           $.ajax({
               url: '/admin/viewTarget/' + itemId,
