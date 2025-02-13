@@ -10,4 +10,9 @@ class EmployeeType extends Model
     use HasFactory;
 
     protected $fillable = ['type_name'];
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
 }
