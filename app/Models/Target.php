@@ -26,5 +26,13 @@ class Target extends Model
     {
         return $this->belongsTo(CustomerType::class, 'customer_types_id');
     }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+    public function employeeType()
+    {
+        return $this->belongsTo(EmployeeType::class, 'employee_type_id');
+    }
 
 }

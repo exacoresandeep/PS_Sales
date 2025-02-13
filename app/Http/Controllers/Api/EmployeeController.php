@@ -91,5 +91,10 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+    public function getEmployeesByType($employeeTypeId)
+    {
+        $employees = Employee::where('employee_type_id', $employeeTypeId)->get();
+        return response()->json($employees);
+    }
 
 }
