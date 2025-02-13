@@ -545,7 +545,7 @@ class LeadController extends Controller
                 'construction_type' => 'required|string',
                 'stage_of_construction' => 'required|string',
                 'follow_up_date' => 'required|date',
-                'lead_score' => 'required|integer',
+                'lead_score' => 'required|string',
                 'lead_source' => 'required|string',
                 'source_name' => 'required|string',
                 'total_quantity' => 'required|integer',

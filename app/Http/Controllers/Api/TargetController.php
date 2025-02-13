@@ -14,10 +14,16 @@ use Illuminate\Support\Facades\Log;
 
 class TargetController extends Controller
 {
-    public function index()
+    // public function index()
+    // {
+    //     $targets = Target::all(); 
+    //     return view('target.index', compact('targets'));
+    // }
+    public function create()
     {
-        $targets = Target::all(); 
-        return view('target.index', compact('targets'));
+        $employeeTypes = DB::table('employee_types')->get();
+        $employees = DB::table('employees')->get();
+        return view('target-management', compact('employeeTypes', 'employees'));
     }
     public function store(Request $request)
     {
@@ -98,7 +104,7 @@ class TargetController extends Controller
             'data' => $response,
         ], 200);
     }
-
+    
 
     public function targetList(Request $request)
     {   
@@ -112,17 +118,23 @@ class TargetController extends Controller
             $orderBy = $request->order[0]['dir'] ?? 'desc';
             $searchValue = $request->search['value'] ?? '';
             $columns = [
-                'id',
-                'employee_name',
-                'target_tons'
+                0 => 'targets.id', 
+                1 => 'employee_types.type_name', 
+                2 => 'employees.name', 
+                3 => 'targets.year',
+                4 => 'targets.month',
+                5 => 'targets.unique_lead',
+                6 => 'targets.customer_visit',
+                7 => 'targets.aashiyana',
+                8 => 'targets.order_quantity'
             ];
-            $orderColumn = $columns[$orderColumnIndex] ?? 'created_at';
+            $orderColumn = $columns[$orderColumnIndex] ?? 'targets.created_at';
 
-            $query = Target::join('employees', 'employees.id', '=', 'Target.employee_id')
+            $query = Target::join('employees', 'employees.id', '=', 'targets.employee_id')
                 ->join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
-                ->orderBy('Target.created_at', 'desc')
+                ->orderBy('targets.created_at', 'desc')
                 ->orderBy($orderColumn, $orderBy)
-                ->select('Target.id', 'Target.created_at as from_date', 'Target.*', 'employees.name as employee_name', 'employee_types.type_name as employee_type',DB::raw("CONCAT(Target.month, '-', Target.year) as to_date") );
+                ->select('targets.id', 'targets.created_at as from_date', 'targets.*', 'employees.name as employee_name', 'employee_types.type_name as employee_type',DB::raw("CONCAT(Targets.month, '-', targets.year) as to_date") );
 
             if ($searchValue) {
                 $query->where(function ($query) use ($searchValue) {
@@ -154,10 +166,12 @@ class TargetController extends Controller
                     'id' => $row->id,
                     'employee_type' => $row->employee_type,
                     'employee_name' => $row->employee_name,
-                    'from_date' => $row->from_date,
-                    'to_date' => $row->to_date,
-                    'target_tons' => $row->target_quantity,
-                    'target_numbers' => $row->target_quantity,
+                    'year' => $row->year,
+                    'month' => $row->month,
+                    'unique_lead' => $row->unique_lead,
+                    'customer_visit' => $row->customer_visit,
+                    'aashiyana' => $row->aashiyana,
+                    'order_quantity' => $row->order_quantity,
                     'action' => $action,
                 ];
             });
@@ -171,84 +185,84 @@ class TargetController extends Controller
         }
     }
     
-    public function indexList(Request $request)
-    {
-        try {
-            $month = $request->month != "" ? $request->month : Carbon::now()->month;
-            $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
-            $employeeId = Auth::id();
-            $currentYear = Carbon::now()->year;
+    // public function indexList(Request $request)
+    // {
+    //     try {
+    //         $month = $request->month != "" ? $request->month : Carbon::now()->month;
+    //         $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
+    //         $employeeId = Auth::id();
+    //         $currentYear = Carbon::now()->year;
 
-            $targets = Target::with('customerType') 
-                ->where('month', $month)
-                ->where('year', $year)
-                ->where('created_by', $employeeId)
-                ->get();
+    //         $targets = Target::with('customerType') 
+    //             ->where('month', $month)
+    //             ->where('year', $year)
+    //             ->where('created_by', $employeeId)
+    //             ->get();
 
-            $response = [];
+    //         $response = [];
 
-            foreach ($targets as $target) {
-                if ($target->customerType) { 
-                    $customerTypeId = $target->customerType->id;
+    //         foreach ($targets as $target) {
+    //             if ($target->customerType) { 
+    //                 $customerTypeId = $target->customerType->id;
             
-                    $orders = Order::where('created_by', $employeeId)
-                        ->where('customer_type_id', $customerTypeId)
-                        ->whereYear('created_at', $currentYear)
-                        ->whereMonth('created_at', Carbon::parse($month)->month)
-                        ->where('status', 'Accepted')
-                        ->pluck('id');
+    //                 $orders = Order::where('created_by', $employeeId)
+    //                     ->where('customer_type_id', $customerTypeId)
+    //                     ->whereYear('created_at', $currentYear)
+    //                     ->whereMonth('created_at', Carbon::parse($month)->month)
+    //                     ->where('status', 'Accepted')
+    //                     ->pluck('id');
 
-                    // Calculate Achieved Target
-                    $ton_achievedTarget = DB::table('order_items')
-                        ->whereIn('order_id', $orders)
-                        ->sum('total_quantity');
+    //                 // Calculate Achieved Target
+    //                 $ton_achievedTarget = DB::table('order_items')
+    //                     ->whereIn('order_id', $orders)
+    //                     ->sum('total_quantity');
 
-                    $no_achievedTarget = DB::table('leads')
-                        ->whereIn('customer_type', (array) $customerTypeId) // Ensure it's an array
-                        ->where('created_by', $employeeId)
-                        ->whereYear('created_at', Carbon::now()->year) // Or use $currentYear if dynamic
-                        ->whereMonth('created_at', Carbon::parse($month)->month)
-                        ->count();
+    //                 $no_achievedTarget = DB::table('leads')
+    //                     ->whereIn('customer_type', (array) $customerTypeId) // Ensure it's an array
+    //                     ->where('created_by', $employeeId)
+    //                     ->whereYear('created_at', Carbon::now()->year) // Or use $currentYear if dynamic
+    //                     ->whereMonth('created_at', Carbon::parse($month)->month)
+    //                     ->count();
 
-                if($target->target_type_flag=="ton"){
-                    $achievedTarget=$ton_achievedTarget;
-                    $targetQty=$target->ton_quantity;
-                }else{
-                   $achievedTarget=$no_achievedTarget;
-                   $targetQty= $target->no_quantity;
-                }
+    //             if($target->target_type_flag=="ton"){
+    //                 $achievedTarget=$ton_achievedTarget;
+    //                 $targetQty=$target->ton_quantity;
+    //             }else{
+    //                $achievedTarget=$no_achievedTarget;
+    //                $targetQty= $target->no_quantity;
+    //             }
                
-                    $response[] = [
-                        'target_id' => $target->id,
-                        'customer_type' => [
-                            'id' => $customerTypeId,
-                            'name' => $target->customerType->name ?? 'Unknown', 
-                        ],
+    //                 $response[] = [
+    //                     'target_id' => $target->id,
+    //                     'customer_type' => [
+    //                         'id' => $customerTypeId,
+    //                         'name' => $target->customerType->name ?? 'Unknown', 
+    //                     ],
 
-                        'target_type_flag' => $target->target_type_flag,
-                        'ton_quantity' => $target->ton_quantity,
-                        'no_quantity' => $target->no_quantity,
-                        'achieved_quantity' => $achievedTarget,
-                        'status' => ($achievedTarget < $targetQty) ? 'Target Not Met' : 'Target Achieved'
-                    ];
-                }
-            }
+    //                     'target_type_flag' => $target->target_type_flag,
+    //                     'ton_quantity' => $target->ton_quantity,
+    //                     'no_quantity' => $target->no_quantity,
+    //                     'achieved_quantity' => $achievedTarget,
+    //                     'status' => ($achievedTarget < $targetQty) ? 'Target Not Met' : 'Target Achieved'
+    //                 ];
+    //             }
+    //         }
 
-            return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => 'Target data retrieved successfully.',
-                'data' => $response,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'statusCode' => 500,
-                'message' => 'An error occurred while retrieving target data.',
-                'error' => $e->getMessage(), 
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Target data retrieved successfully.',
+    //             'data' => $response,
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => 'An error occurred while retrieving target data.',
+    //             'error' => $e->getMessage(), 
+    //         ], 500);
+    //     }
+    // }
 
     public function view($id)
     {
