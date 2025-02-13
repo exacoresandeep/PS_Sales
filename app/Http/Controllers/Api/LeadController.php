@@ -158,7 +158,28 @@ class LeadController extends Controller
             $lead = Lead::with(['customerType', 'district', 'tripRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
-
+            $paymentTerms = $lead->orders
+                ->pluck('paymentTerm')
+                ->unique('id')
+                ->filter() 
+                ->map(function ($paymentTerm) {
+                    return [
+                        'id' => $paymentTerm->id,
+                        'name' => $paymentTerm->name,
+                    ];
+                })->values(); 
+            $paymentTerms = $paymentTerms->count() === 1 ? $paymentTerms->first() : ($paymentTerms->isEmpty() ? null : $paymentTerms);
+            $dealers = $lead->orders
+                ->pluck('dealer')
+                ->unique('id')
+                ->filter() 
+                ->map(function ($dealer) {
+                    return [
+                        'id' => $dealer->id,
+                        'name' => $dealer->dealer_name,
+                    ];
+                })->values();
+            $dealers = $dealers->count() === 1 ? $dealers->first() : ($dealers->isEmpty() ? null : $dealers);
             $leadData = [
                 'id' => $lead->id,
                 'customer_type' => $lead->customerType ? [
@@ -193,18 +214,12 @@ class LeadController extends Controller
                 'status' => $lead->status,
                 'created_by' => $lead->created_by,
                 'created_at' => $lead->created_at,
+                'payment_terms' => $paymentTerms,
+                'dealers' => $dealers,
                 'orders' => $lead->orders->map(function ($order) {
                 return [
                         'id' => $order->id,
                         'total_amount' => $order->total_amount,
-                        'payment_terms' => $order->paymentTerm ? [
-                            'id' => $order->paymentTerm->id,
-                            'name' => $order->paymentTerm->name,
-                        ] : null,
-                        'dealer' => $order->dealer ? [
-                            'id' => $order->dealer->id,
-                            'name' => $order->dealer->name,
-                        ] : null,
                         'status' => $order->status,
                         'billing_date' => $order->billing_date,
                         'order_items' => $order->orderItems->map(function ($item) {
