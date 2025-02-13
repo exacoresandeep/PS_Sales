@@ -155,7 +155,7 @@ class LeadController extends Controller
     public function show($leadId)
     {
         try {
-            $lead = Lead::with(['customerType', 'district', 'tripRoute', 'orders.orderItems.product', 'orders.paymentTerms', 'orders.dealer'])
+            $lead = Lead::with(['customerType', 'district', 'tripRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
 
@@ -197,9 +197,9 @@ class LeadController extends Controller
                 return [
                         'id' => $order->id,
                         'total_amount' => $order->total_amount,
-                        'payment_terms' => $order->paymentTerms ? [
-                            'id' => $order->paymentTerms->id,
-                            'name' => $order->paymentTerms->name,
+                        'payment_terms' => $order->paymentTerm ? [
+                            'id' => $order->paymentTerm->id,
+                            'name' => $order->paymentTerm->name,
                         ] : null,
                         'dealer' => $order->dealer ? [
                             'id' => $order->dealer->id,
@@ -213,7 +213,7 @@ class LeadController extends Controller
                                 'product_id' => $item->product_id,
                                 'total_quantity' => $item->total_quantity,
                                 'balance_quantity' => $item->balance_quantity,
-                                'product_details' => json_decode($item->product_details, true),
+                                'product_details' => $item->product_details,
                             ];
                         }),
                     ];
