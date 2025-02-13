@@ -155,7 +155,7 @@ class LeadController extends Controller
     public function show($leadId)
     {
         try {
-            $lead = Lead::with(['customerType', 'district', 'tripRoute'])
+            $lead = Lead::with(['customerType', 'district', 'tripRoute', 'orders.orderItems.product', 'orders.paymentTerms', 'orders.dealer'])
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
 
@@ -193,6 +193,31 @@ class LeadController extends Controller
                 'status' => $lead->status,
                 'created_by' => $lead->created_by,
                 'created_at' => $lead->created_at,
+                'orders' => $lead->orders->map(function ($order) {
+                return [
+                        'id' => $order->id,
+                        'total_amount' => $order->total_amount,
+                        'payment_terms' => $order->paymentTerms ? [
+                            'id' => $order->paymentTerms->id,
+                            'name' => $order->paymentTerms->name,
+                        ] : null,
+                        'dealer' => $order->dealer ? [
+                            'id' => $order->dealer->id,
+                            'name' => $order->dealer->name,
+                        ] : null,
+                        'status' => $order->status,
+                        'billing_date' => $order->billing_date,
+                        'order_items' => $order->orderItems->map(function ($item) {
+                            return [
+                                'id' => $item->id,
+                                'product_id' => $item->product_id,
+                                'total_quantity' => $item->total_quantity,
+                                'balance_quantity' => $item->balance_quantity,
+                                'product_details' => json_decode($item->product_details, true),
+                            ];
+                        }),
+                    ];
+                }),
             ];
 
             return response()->json([
@@ -276,7 +301,7 @@ class LeadController extends Controller
                         'product_id' => $item['product_id'],
                         'total_quantity' => $item['total_quantity'],
                         'balance_quantity' => $item['balance_quantity'],
-                        'product_details' => json_encode($item['product_details']), // Store product details as JSON
+                        'product_details' => json_encode($item['product_details']), 
                     ];
                     OrderItem::create($orderItemData);
                 }
