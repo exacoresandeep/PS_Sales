@@ -19,7 +19,8 @@ Route::prefix('admin')->group(function () {
     // Route::get('/target-management', [AdminController::class, 'index'])->name('admin.target-management');
     // Route::get('/targets/create', [TargetController::class, 'create'])->name('targets.create');
     Route::post('/targets/store', [TargetController::class, 'store'])->name('targets.store');
-    Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType']);
+    // Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType']);
+    Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType'])->name('admin.getEmployees');
     Route::post('/targetList', [TargetController::class, 'targetList'])->name('admin.targetList');
     Route::get('/viewTarget/{id}', [TargetController::class, 'view'])->name('admin.viewTarget');
     Route::post('/deleteTarget/{id}', [TargetController::class, 'delete'])->name('deleteTarget');

@@ -65,7 +65,7 @@
     </div>
   </div>
   <div class="modal fade" id="createTargetModal" tabindex="-1" aria-labelledby="createTargetModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl"> <!-- Extra Large Modal -->
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createTargetModalLabel">Create Target</h5>
@@ -91,9 +91,9 @@
                           <label for="employee_id" class="form-label">Employee Name</label>
                           <select class="form-control" name="employee_id" id="employee_id" required>
                               <option value="">Select Employee</option>
-                              @foreach($employees as $employee)
+                              {{-- @foreach($employees as $employee)
                                   <option value="{{ $employee->id }}">{{ $employee->name }}</option>
-                              @endforeach
+                              @endforeach --}}
                           </select>
                       </div>
 
@@ -235,18 +235,19 @@
 
             if (employeeTypeId) {
                 $.ajax({
-                    url: "{{ url('/get-employees') }}/" + employeeTypeId,
-                    type: "GET",
-                    success: function (response) {
-                        $('#employee_id').html('<option value="">Select Employee</option>'); // Reset dropdown
-                        $.each(response, function (index, employee) {
-                            $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
-                        });
-                    },
-                    error: function () {
-                        $('#employee_id').html('<option value="">Error loading employees</option>');
-                    }
-                });
+                        url: "{{ route('admin.getEmployees', '') }}/" + employeeTypeId, // Use Laravel route helper
+                        type: "GET",
+                        success: function (response) {
+                            $('#employee_id').html('<option value="">Select Employee</option>'); // Reset dropdown
+                            $.each(response, function (index, employee) {
+                                $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
+                            });
+                        },
+                        error: function (xhr) {
+                            $('#employee_id').html('<option value="">Error loading employees</option>');
+                            console.error(xhr.responseText); // Log the error in the console
+                        }
+                    });
             } else {
                 $('#employee_id').html('<option value="">Select Employee</option>');
             }

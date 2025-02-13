@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
+use App\Models\EmployeeType;
 use Redirect;
 use Illuminate\Support\Facades\Cookie;
 class AdminController extends Controller
@@ -92,6 +93,8 @@ class AdminController extends Controller
     }
     public function target_management(Request $request)
     {
-        return view('admin.target-management');
+        $employeeTypes = EmployeeType::all();
+        return view('admin.target-management', compact('employeeTypes'));
+        // return view('admin.target-management');
     }
 }
