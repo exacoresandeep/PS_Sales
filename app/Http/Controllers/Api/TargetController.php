@@ -378,10 +378,17 @@ class TargetController extends Controller
     
         return response()->json(['message' => 'Target updated successfully!']);
     }
-    public function viewTargets()
+    public function viewTargets(Request $request)
     {
-        $targets = Target::all(); 
-        return response()->json($targets);
+        $target = Target::with(['employee.employeeType'])->find($request->id);
+
+        if (!$target) {
+            return response()->json(['success' => false, 'message' => 'Target not found!']);
+        }
+
+        $html = view('admin.targets.view-details', compact('target'))->render();
+
+        return response()->json(['success' => true, 'html' => $html]);
     }
    
     public function delete($id)
@@ -403,5 +410,6 @@ class TargetController extends Controller
 
         return response()->json(['message' => 'Target deleted successfully!']);
     }
+
 
 }
