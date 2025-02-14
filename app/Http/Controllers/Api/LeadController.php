@@ -316,7 +316,7 @@ class LeadController extends Controller
                         'product_id' => $item['product_id'],
                         'total_quantity' => $item['total_quantity'],
                         'balance_quantity' => $item['balance_quantity'],
-                        'product_details' => json_encode($item['product_details']), 
+                        'product_details' => $item['product_details'], 
                     ];
                     OrderItem::create($orderItemData);
                 }
