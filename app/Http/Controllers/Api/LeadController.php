@@ -158,7 +158,8 @@ class LeadController extends Controller
             $lead = Lead::with(['customerType', 'district', 'tripRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
-            $paymentTerms = $lead->orders
+            $leadWonOrders = $lead->orders->where('source', 'lead_won');
+            $paymentTerms = $leadWonOrders
                 ->pluck('paymentTerm')
                 ->unique('id')
                 ->filter() 
@@ -169,7 +170,7 @@ class LeadController extends Controller
                     ];
                 })->values(); 
             $paymentTerms = $paymentTerms->count() === 1 ? $paymentTerms->first() : ($paymentTerms->isEmpty() ? null : $paymentTerms);
-            $dealers = $lead->orders
+            $dealers = $leadWonOrders
                 ->pluck('dealer')
                 ->unique('id')
                 ->filter() 
@@ -216,7 +217,7 @@ class LeadController extends Controller
                 'created_at' => $lead->created_at,
                 'payment_terms' => $paymentTerms,
                 'dealers' => $dealers,
-                'orders' => $lead->orders->map(function ($order) {
+                'orders' => $leadWonOrders->map(function ($order) {
                 return [
                         'id' => $order->id,
                         'total_amount' => $order->total_amount,
@@ -305,6 +306,7 @@ class LeadController extends Controller
                     'total_amount' => $request->order_details['total_amount'],
                     'billing_date' => now()->format('Y-m-d'),
                     'status' => 'Pending',
+                    'source' => 'lead_won',
                     'created_by' => Auth::id(),
                 ];
 
