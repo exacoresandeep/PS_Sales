@@ -255,16 +255,17 @@ class LeadController extends Controller
 
     public function updateLead(Request $request, $leadId)
     {
+
         try {
             $validatedData = $request->validate([
-                'type_of_visit' => 'required|string',
-                'construction_type' => 'required|string',
-                'stage_of_construction' => 'required|string',
-                'follow_up_date' => 'required|date',
-                'lead_score' => 'required|string',
-                'lead_source' => 'required|string',
-                'source_name' => 'required|string',
-                'total_quantity' => 'required|numeric',
+                'type_of_visit' => 'nullable|string',
+                'construction_type' => 'nullable|string',
+                'stage_of_construction' => 'nullable|string',
+                'follow_up_date' => 'nullable|date',
+                'lead_score' => 'nullable|string',
+                'lead_source' => 'nullable|string',
+                'source_name' => 'nullable|string',
+                'total_quantity' => 'nullable|numeric',
                 'status' => 'required|in:Opened,Won,Lost',
             
             ]);
