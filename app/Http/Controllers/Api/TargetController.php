@@ -50,7 +50,8 @@ class TargetController extends Controller
             'unique_lead' => $request->unique_lead,
             'customer_visit' => $request->customer_visit,
             'aashiyana' => $request->aashiyana,
-            'order_quantity' => $request->order_quantity
+            'order_quantity' => $request->order_quantity,
+            'status' => 1
         ]);
 
         return response()->json(['message' => 'Target created successfully!', 'target' => $target], 200);
@@ -408,7 +409,7 @@ class TargetController extends Controller
         $target = Target::findOrFail($id);
         $target->delete();
 
-        return response()->json(['message' => 'Target deleted successfully!']);
+        return response()->json(['success' => true, 'message' => 'Target deleted successfully!']);
     }
 
 
