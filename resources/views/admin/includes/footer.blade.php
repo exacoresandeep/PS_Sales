@@ -144,8 +144,7 @@ $(document).ready(function () {
             $('#filter_employee').html('<option value="">-Select Employee-</option>');
         }
     });
-
-    // Delete Target
+    
     function deleteTarget(id) {
         Swal.fire({
             title: 'Are you sure?',
@@ -153,20 +152,53 @@ $(document).ready(function () {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'No, cancel!'
+            cancelButtonText: 'No, cancel!',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                $.post("{{ route('admin.target.delete', '') }}/" + id, {
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                }, function (response) {
-                    Swal.fire('Deleted!', response.message, 'success');
-                    table.ajax.reload();
-                }).fail(function () {
-                    Swal.fire('Error', 'Could not delete target.', 'error');
+                $.ajax({
+                    url: "{{ route('admin.target.delete', '') }}/" + id,
+                    type: "DELETE",
+                    data: { _token: "{{ csrf_token() }}" },
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire('Deleted!', response.message, 'success');
+                            $('#targetTable').DataTable().ajax.reload(); // Reload DataTable
+                        } else {
+                            Swal.fire('Error', response.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Could not delete target.', 'error');
+                    }
                 });
             }
         });
     }
+
+
+    // Delete Target
+    // function deleteTarget(id) {
+    //     Swal.fire({
+    //         title: 'Are you sure?',
+    //         text: "This action cannot be undone!",
+    //         icon: 'warning',
+    //         showCancelButton: true,
+    //         confirmButtonText: 'Yes, delete it!',
+    //         cancelButtonText: 'No, cancel!'
+    //     }).then((result) => {
+    //         if (result.isConfirmed) {
+    //             $.post("{{ route('admin.target.delete', '') }}/" + id, {
+    //                 _token: $('meta[name="csrf-token"]').attr('content')
+    //             }, function (response) {
+    //                 Swal.fire('Deleted!', response.message, 'success');
+    //                 table.ajax.reload();
+    //             }).fail(function () {
+    //                 Swal.fire('Error', 'Could not delete target.', 'error');
+    //             });
+    //         }
+    //     });
+    // }
 
     // Global function for edit/view actions
     window.handleAction = function (id, action) {
