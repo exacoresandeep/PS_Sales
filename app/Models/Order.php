@@ -28,6 +28,7 @@ class Order extends Model
         'total_amount',
         'additional_information',
         'status',
+        'source',
         'accepted_time',
         'rejected_time',
         'dispatched_time',
