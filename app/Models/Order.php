@@ -54,6 +54,7 @@ class Order extends Model
         'intransit_time' => 'datetime',
         'delivered_time' => 'datetime',
         'attachment' => 'array',
+        
     ];
 
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "615b0f27dd95e80a7164358e4e7f6a4b",
+    "content-hash": "85ae91534d81b00759e6d41e2e971a2c",
     "packages": [
         {
             "name": "brick/math",
@@ -1056,7 +1056,6 @@
         },
         {
             "name": "laravel/framework",
-
             "version": "v11.40.0",
             "source": {
                 "type": "git",
@@ -1067,7 +1066,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/laravel/framework/zipball/599a28196d284fee158cc10086fd56ac625ad7a3",
                 "reference": "599a28196d284fee158cc10086fd56ac625ad7a3",
-
                 "shasum": ""
             },
             "require": {
@@ -1094,7 +1092,6 @@
                 "league/uri": "^7.5.1",
                 "monolog/monolog": "^3.0",
                 "nesbot/carbon": "^2.72.2|^3.4",
-
                 "nunomaduro/termwind": "^2.0",
                 "php": "^8.2",
                 "psr/container": "^1.1.1|^2.0.1",
@@ -5864,6 +5861,95 @@
                 "source": "https://github.com/webmozarts/assert/tree/1.11.0"
             },
             "time": "2022-06-03T18:03:27+00:00"
+        },
+        {
+            "name": "yajra/laravel-datatables-oracle",
+            "version": "v11.1.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/yajra/laravel-datatables.git",
+                "reference": "b48eb614d0474c23a9c8041563beef9dda39656d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/yajra/laravel-datatables/zipball/b48eb614d0474c23a9c8041563beef9dda39656d",
+                "reference": "b48eb614d0474c23a9c8041563beef9dda39656d",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/database": "^11",
+                "illuminate/filesystem": "^11",
+                "illuminate/http": "^11",
+                "illuminate/support": "^11",
+                "illuminate/view": "^11",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "algolia/algoliasearch-client-php": "^3.4.1",
+                "larastan/larastan": "^2.9.1",
+                "laravel/pint": "^1.14",
+                "laravel/scout": "^10.8.3",
+                "meilisearch/meilisearch-php": "^1.6.1",
+                "orchestra/testbench": "^9",
+                "rector/rector": "^1.0"
+            },
+            "suggest": {
+                "yajra/laravel-datatables-buttons": "Plugin for server-side exporting of dataTables.",
+                "yajra/laravel-datatables-editor": "Plugin to use DataTables Editor (requires a license).",
+                "yajra/laravel-datatables-export": "Plugin for server-side exporting using livewire and queue worker.",
+                "yajra/laravel-datatables-fractal": "Plugin for server-side response using Fractal.",
+                "yajra/laravel-datatables-html": "Plugin for server-side HTML builder of dataTables."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "DataTables": "Yajra\\DataTables\\Facades\\DataTables"
+                    },
+                    "providers": [
+                        "Yajra\\DataTables\\DataTablesServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "11.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helper.php"
+                ],
+                "psr-4": {
+                    "Yajra\\DataTables\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Arjay Angeles",
+                    "email": "aqangeles@gmail.com"
+                }
+            ],
+            "description": "jQuery DataTables API for Laravel",
+            "keywords": [
+                "datatables",
+                "jquery",
+                "laravel",
+                "yajra"
+            ],
+            "support": {
+                "issues": "https://github.com/yajra/laravel-datatables/issues",
+                "source": "https://github.com/yajra/laravel-datatables/tree/v11.1.6"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/sponsors/yajra",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-01-21T03:15:46+00:00"
         }
     ],
     "packages-dev": [
@@ -6141,7 +6227,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/filp/whoops/zipball/075bc0c26631110584175de6523ab3f1652eb28e",
                 "reference": "075bc0c26631110584175de6523ab3f1652eb28e",
-
                 "shasum": ""
             },
             "require": {
@@ -6191,7 +6276,6 @@
             ],
             "support": {
                 "issues": "https://github.com/filp/whoops/issues",
-
                 "source": "https://github.com/filp/whoops/tree/2.17.0"
             },
             "funding": [
@@ -6674,7 +6758,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/nunomaduro/collision/zipball/86f003c132143d5a2ab214e19933946409e0cae7",
                 "reference": "86f003c132143d5a2ab214e19933946409e0cae7",
-
                 "shasum": ""
             },
             "require": {
@@ -6773,13 +6856,11 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/pestphp/pest/zipball/4a987d3d5c4e3ba36c76fecbf56113baac2d1b2b",
                 "reference": "4a987d3d5c4e3ba36c76fecbf56113baac2d1b2b",
-
                 "shasum": ""
             },
             "require": {
                 "brianium/paratest": "^7.7.0",
                 "nunomaduro/collision": "^8.6.1",
-
                 "nunomaduro/termwind": "^2.3.0",
                 "pestphp/pest-plugin": "^3.0.0",
                 "pestphp/pest-plugin-arch": "^3.0.0",
@@ -6790,14 +6871,12 @@
             "conflict": {
                 "filp/whoops": "<2.16.0",
                 "phpunit/phpunit": ">11.5.3",
-
                 "sebastian/exporter": "<6.0.0",
                 "webmozart/assert": "<1.11.0"
             },
             "require-dev": {
                 "pestphp/pest-dev-tools": "^3.3.0",
                 "pestphp/pest-plugin-type-coverage": "^3.2.3",
-
                 "symfony/process": "^7.2.0"
             },
             "bin": [
@@ -6864,7 +6943,6 @@
             "support": {
                 "issues": "https://github.com/pestphp/pest/issues",
                 "source": "https://github.com/pestphp/pest/tree/v3.7.4"
-
             },
             "funding": [
                 {
@@ -6877,7 +6955,6 @@
                 }
             ],
             "time": "2025-01-23T14:03:29+00:00"
-
         },
         {
             "name": "pestphp/pest-plugin",
@@ -7021,7 +7098,6 @@
         },
         {
             "name": "pestphp/pest-plugin-laravel",
-
             "version": "v3.1.0",
             "source": {
                 "type": "git",
@@ -7043,7 +7119,6 @@
                 "laravel/dusk": "^8.2.13|dev-develop",
                 "orchestra/testbench": "^9.9.0|^10.0.0",
                 "pestphp/pest-dev-tools": "^3.3.0"
-
             },
             "type": "library",
             "extra": {
@@ -7082,7 +7157,6 @@
             ],
             "support": {
                 "source": "https://github.com/pestphp/pest-plugin-laravel/tree/v3.1.0"
-
             },
             "funding": [
                 {
@@ -7095,7 +7169,6 @@
                 }
             ],
             "time": "2025-01-24T13:22:39+00:00"
-
         },
         {
             "name": "pestphp/pest-plugin-mutate",
@@ -7834,7 +7907,6 @@
         },
         {
             "name": "phpunit/phpunit",
-
             "version": "11.5.3",
             "source": {
                 "type": "git",
@@ -7845,7 +7917,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/30e319e578a7b5da3543073e30002bf82042f701",
                 "reference": "30e319e578a7b5da3543073e30002bf82042f701",
-
                 "shasum": ""
             },
             "require": {
@@ -7860,7 +7931,6 @@
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.2",
                 "phpunit/php-code-coverage": "^11.0.8",
-
                 "phpunit/php-file-iterator": "^5.1.0",
                 "phpunit/php-invoker": "^5.0.1",
                 "phpunit/php-text-template": "^4.0.1",
@@ -7868,7 +7938,6 @@
                 "sebastian/cli-parser": "^3.0.2",
                 "sebastian/code-unit": "^3.0.2",
                 "sebastian/comparator": "^6.3.0",
-
                 "sebastian/diff": "^6.0.2",
                 "sebastian/environment": "^7.2.0",
                 "sebastian/exporter": "^6.3.0",
@@ -7919,9 +7988,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-
                 "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.3"
-
             },
             "funding": [
                 {
@@ -7938,7 +8005,6 @@
                 }
             ],
             "time": "2025-01-13T09:36:00+00:00"
-
         },
         {
             "name": "sebastian/cli-parser",
