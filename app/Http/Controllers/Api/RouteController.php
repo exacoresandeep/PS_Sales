@@ -303,7 +303,7 @@ class RouteController extends Controller
             // Update the status where point_name matches
             foreach ($subLocations as &$location) {
                 if ($location['point_name'] === $pointName) {
-                    $location['status'] = 'Complete'; // Change status to "Complete"
+                    $location['status'] = true; // Change status to "Complete"
                 }
             }
 
