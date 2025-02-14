@@ -32,28 +32,28 @@ class TargetController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'employee_id' => 'required',
-            'month' => 'required',
-            'year' => 'required',
-            'unique_lead' => 'nullable|integer',
-            'customer_visit' => 'nullable|integer',
-            'activity_visit' => 'nullable|integer',
-            'aashiyana' => 'nullable|integer',
-            'order_quantity' => 'nullable|integer',
+            'employee_type' => 'required|exists:employee_types,id',
+            'employee_id' => 'required|exists:employees,id',
+            'year' => 'required|numeric',
+            'month' => 'required|string',
+            'unique_lead' => 'required|integer|min:0',
+            'customer_visit' => 'required|integer|min:0',
+            'aashiyana' => 'required|integer|min:0',
+            'order_quantity' => 'required|integer|min:0'
         ]);
 
-        Target::create([
+        $target = Target::create([
+            'employee_type_id' => $request->employee_type,
             'employee_id' => $request->employee_id,
-            'month' => $request->month,
             'year' => $request->year,
+            'month' => $request->month,
             'unique_lead' => $request->unique_lead,
             'customer_visit' => $request->customer_visit,
-            'activity_visit' => $request->activity_visit,
             'aashiyana' => $request->aashiyana,
-            'order_quantity' => $request->order_quantity,
+            'order_quantity' => $request->order_quantity
         ]);
 
-        return response()->json(['message' => 'Target created successfully!']);
+        return response()->json(['message' => 'Target created successfully!', 'target' => $target], 200);
     }
     public function getTargets(Request $request)
     {
@@ -112,15 +112,16 @@ class TargetController extends Controller
 
     public function targetList(Request $request)
     {
-        dd($request->all());
+        // Load related employee and employeeType to prevent N+1 query issues
         $query = Target::with(['employee.employeeType']);
 
+        // Apply filters based on request parameters
         if ($request->has('employee_type') && !empty($request->employee_type)) {
             $query->whereHas('employee', function ($q) use ($request) {
                 $q->where('employee_type_id', $request->employee_type);
             });
         }
-        
+
         if ($request->has('employee_id') && !empty($request->employee_id)) {
             $query->where('employee_id', $request->employee_id);
         }
@@ -134,22 +135,48 @@ class TargetController extends Controller
         }
 
         return DataTables::of($query)
+            ->addIndexColumn() // Adds an auto-incrementing column (Sl.No)
             ->addColumn('employee_type', function ($target) {
-                return $target->employee->employeeType->type_name ?? '-';
+                return optional($target->employee->employeeType)->type_name ?? '-';
             })
             ->addColumn('employee_name', function ($target) {
-                return $target->employee->name ?? '-';
+                return optional($target->employee)->name ?? '-';
+            })
+            ->addColumn('year', function ($target) {
+                return $target->year ?? '-';
+            })
+            ->addColumn('month', function ($target) {
+                return $target->month ?? '-';
+            })
+            ->addColumn('unique_lead', function ($target) {
+                return $target->unique_lead ?? '0';
+            })
+            ->addColumn('customer_visit', function ($target) {
+                return $target->customer_visit ?? '0';
+            })
+            ->addColumn('aashiyana', function ($target) {
+                return $target->aashiyana ?? '0';
+            })
+            ->addColumn('order_quantity', function ($target) {
+                return $target->order_quantity ?? '0';
             })
             ->addColumn('action', function ($target) {
                 return '
-                    <button class="btn btn-sm btn-primary" onclick="handleAction(' . $target->id . ', \'view\')">View</button>
-                    <button class="btn btn-sm btn-warning" onclick="handleAction(' . $target->id . ', \'edit\')">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteTarget(' . $target->id . ')">Delete</button>
+                    <button class="btn btn-sm btn-info" onclick="handleAction(' . $target->id . ', \'view\')" title="View">
+                        <i class="fa fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="handleAction(' . $target->id . ', \'edit\')" title="Edit">
+                        <i class="fa fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTarget(' . $target->id . ')" title="Delete">
+                        <i class="fa fa-trash"></i>
+                    </button>
                 ';
             })
             ->rawColumns(['action'])
             ->make(true);
     }
+
 
 
     // public function targetList(Request $request)
@@ -353,7 +380,7 @@ class TargetController extends Controller
     }
     public function viewTargets()
     {
-        $targets = Target::all(); // Or filter as needed
+        $targets = Target::all(); 
         return response()->json($targets);
     }
    

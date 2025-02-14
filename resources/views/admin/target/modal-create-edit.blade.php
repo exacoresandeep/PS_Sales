@@ -73,39 +73,3 @@
     </div>
 </div>
 
-<script>
-$(document).ready(function () {
-    // Load Employees on Employee Type Change
-    $('#employee_type').change(function () {
-        let typeId = $(this).val();
-        $('#employee_id').html('<option value="">Loading...</option>');
-
-        if (typeId) {
-            $.get("{{ route('admin.getEmployees', '') }}/" + typeId, function (response) {
-                $('#employee_id').html('<option value="">-Select Employee-</option>');
-                $.each(response, function (index, employee) {
-                    $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
-                });
-            });
-        } else {
-            $('#employee_id').html('<option value="">-Select Employee-</option>');
-        }
-    });
-
-    // Submit Form (Create / Update)
-    $('#targetForm').submit(function (e) {
-        e.preventDefault();
-        let formData = $(this).serialize();
-        // let url = $('#target_id').val() ? "{{ route('admin.target.update') }}" : "{{ route('admin.target.store') }}";
-        let url = $('#target_id').val() ? "/admin/targets/update" : "{{ route('admin.target.store') }}";
-
-        $.post(url, formData, function (response) {
-            Swal.fire('Success', response.message, 'success');
-            $('#createEditModal').modal('hide');
-            $('#targetTable').DataTable().ajax.reload();
-        }).fail(function () {
-            Swal.fire('Error', 'Something went wrong!', 'error');
-        });
-    });
-});
-</script>

@@ -11,14 +11,3 @@
         </div>
     </div>
 </div>
-
-<script>
-function loadViewModal(id) {
-    $.get("{{ route('admin.target.get', '') }}/" + id, function (response) {
-        $('#viewModalBody').html(response.viewContent);
-        $('#viewModal').modal('show');
-    }).fail(function () {
-        Swal.fire('Error', 'Could not load details.', 'error');
-    });
-}
-</script>
