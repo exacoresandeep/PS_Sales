@@ -255,18 +255,30 @@ class LeadController extends Controller
 
     public function updateLead(Request $request, $leadId)
     {
-
         try {
             $validatedData = $request->validate([
-                'type_of_visit' => 'nullable|string',
-                'construction_type' => 'nullable|string',
-                'stage_of_construction' => 'nullable|string',
-                'follow_up_date' => 'nullable|date',
-                'lead_score' => 'nullable|string',
-                'lead_source' => 'nullable|string',
-                'source_name' => 'nullable|string',
-                'total_quantity' => 'nullable|numeric',
+                'type_of_visit' => 'required|string',
+                'construction_type' => 'required|string',
+                'stage_of_construction' => 'required|string',
+                'follow_up_date' => 'required|date',
+                'lead_score' => 'required|string',
+                'lead_source' => 'required|string',
+                'source_name' => 'required|string',
+                'total_quantity' => 'required|numeric',
                 'status' => 'required|in:Opened,Won,Lost',
+                'lost_details.lost_volume' => 'nullable|required_if:status,Lost|numeric',
+                'lost_details.lost_to_competitor' => 'nullable|required_if:status,Lost|string',
+                'lost_details.reason_for_lost' => 'nullable|required_if:status,Lost|string',
+                'order_details.customer_type_id' => 'nullable|exists:customer_types,id',
+                'order_details.dealer_id' => 'nullable|exists:dealers,id',
+                'order_details.dealer_flag_order' => 'nullable|numeric',
+                'order_details.payment_terms_id' => 'nullable|exists:payment_terms,id',
+                'order_details.total_amount' => 'nullable|numeric',
+                'order_details.order_items' => 'nullable|array',
+                'order_details.order_items.*.product_id' => 'required_with:order_details.order_items|exists:products,id',
+                'order_details.order_items.*.total_quantity' => 'required_with:order_details.order_items|numeric',
+                'order_details.order_items.*.balance_quantity' => 'required_with:order_details.order_items|numeric',
+                'order_details.order_items.*.product_details' => 'nullable|array',
             
             ]);
 
