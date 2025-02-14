@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\TripRoute;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class LeadController extends Controller
 {
@@ -256,33 +257,23 @@ class LeadController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'type_of_visit' => 'nullable|string',
-                'construction_type' => 'nullable|string',
-                'stage_of_construction' => 'nullable|string',
-                'follow_up_date' => 'nullable|date',
-                'lead_score' => 'nullable|string',
-                'lead_source' => 'nullable|string',
-                'source_name' => 'nullable|string',
-                'total_quantity' => 'nullable|numeric',
+                'type_of_visit' => 'required|string',
+                'construction_type' => 'required|string',
+                'stage_of_construction' => 'required|string',
+                'follow_up_date' => 'required|date',
+                'lead_score' => 'required|string',
+                'lead_source' => 'required|string',
+                'source_name' => 'required|string',
+                'total_quantity' => 'required|numeric',
                 'status' => 'required|in:Opened,Won,Lost',
-                // 'lost_details.lost_volume' => 'nullable|required_if:status,Lost|numeric',
-                // 'lost_details.lost_to_competitor' => 'nullable|required_if:status,Lost|string',
-                // 'lost_details.reason_for_lost' => 'nullable|required_if:status,Lost|string',
-                // 'order_details.customer_type_id' => 'nullable|exists:customer_types,id',
-                // 'order_details.dealer_id' => 'nullable|exists:dealers,id',
-                // 'order_details.dealer_flag_order' => 'nullable|numeric',
-                // 'order_details.payment_terms_id' => 'nullable|exists:payment_terms,id',
-                // 'order_details.total_amount' => 'nullable|numeric',
-                // 'order_details.order_items' => 'nullable|array',
-                // 'order_details.order_items.*.product_id' => 'required_with:order_details.order_items|exists:products,id',
-                // 'order_details.order_items.*.total_quantity' => 'required_with:order_details.order_items|numeric',
-                // 'order_details.order_items.*.balance_quantity' => 'required_with:order_details.order_items|numeric',
-                // 'order_details.order_items.*.product_details' => 'nullable|array',
+            
             ]);
 
             $lead = Lead::where('id', $leadId)
                 ->where('created_by', Auth::id())
                 ->firstOrFail();
+
+            DB::beginTransaction();
 
             $lead->update([
                 'type_of_visit' => $request->type_of_visit,
@@ -295,6 +286,8 @@ class LeadController extends Controller
                 'total_quantity' => $request->total_quantity,
                 'status' => $request->status,
             ]);
+
+            $order = null;
 
             if ($request->status === 'Won' && !empty($request->order_details)) {
                 $orderData = [
@@ -311,16 +304,30 @@ class LeadController extends Controller
                 ];
 
                 $order = Order::create($orderData);
-
-                foreach ($request->order_details['order_items'] as $item) {
-                    $orderItemData = [
-                        'order_id' => $order->id,
-                        'product_id' => $item['product_id'],
-                        'total_quantity' => $item['total_quantity'],
-                        'balance_quantity' => $item['balance_quantity'],
-                        'product_details' => $item['product_details'], 
-                    ];
-                    OrderItem::create($orderItemData);
+                if ($request->has('order_details.order_items') && is_array($request->order_details['order_items'])) {
+                    $orderItems = [];
+                    foreach ($request->order_details['order_items'] as $item) {
+                        $orderItems[] = [
+                            'order_id' => $order->id,
+                            'product_id' => $item['product_id'],
+                            'total_quantity' => $item['total_quantity'],
+                            'balance_quantity' => $item['balance_quantity'],
+                            'product_details' => $item['product_details'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+                    OrderItem::insert($orderItems);
+                    // foreach ($request->order_details['order_items'] as $item) {
+                    //     $orderItemData = [
+                    //         'order_id' => $order->id,
+                    //         'product_id' => $item['product_id'],
+                    //         'total_quantity' => $item['total_quantity'],
+                    //         'balance_quantity' => $item['balance_quantity'],
+                    //         'product_details' => $item['product_details'], 
+                    //     ];
+                    //     OrderItem::create($orderItemData);
+                    // }
                 }
             }
 
@@ -330,7 +337,8 @@ class LeadController extends Controller
                     'lost_to_competitor' => $request->lost_details['lost_to_competitor'],
                     'reason_for_lost' => $request->lost_details['reason_for_lost'],
                 ]);
-            }
+            } 
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -348,6 +356,7 @@ class LeadController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'statusCode' => 500,
