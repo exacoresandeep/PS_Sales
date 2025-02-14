@@ -6,25 +6,29 @@ use App\Http\Controllers\Controller;
 use App\Models\Target;
 use App\Models\Lead;
 use App\Models\Order;
+use App\Models\EmployeeType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
 
 class TargetController extends Controller
 {
-    // public function index()
-    // {
-    //     $targets = Target::all(); 
-    //     return view('target.index', compact('targets'));
-    // }
-    public function create()
+    public function index()
     {
-        $employeeTypes = DB::table('employee_types')->get();
-        $employees = DB::table('employees')->get();
-        return view('target-management', compact('employeeTypes', 'employees'));
+        $targets = Target::all(); 
+        $employeeTypes = EmployeeType::all();
+        return view('admin.target.index', compact('targets','employeeTypes'));
     }
+
+    // public function create()
+    // {
+    //     $employeeTypes = DB::table('employee_types')->get();
+    //     $employees = DB::table('employees')->get();
+    //     return view('target-management', compact('employeeTypes', 'employees'));
+    // }
     public function store(Request $request)
     {
         $request->validate([
@@ -104,86 +108,128 @@ class TargetController extends Controller
             'data' => $response,
         ], 200);
     }
-    
+
 
     public function targetList(Request $request)
-    {   
-        
-        if ($request->ajax()) {
-            $pageNumber = ($request->start / $request->length) + 1;
-            $pageLength = $request->length;
-            $skip = ($pageNumber - 1) * $pageLength;
+    {
+        dd($request->all());
+        $query = Target::with(['employee.employeeType']);
 
-            $orderColumnIndex = $request->order[0]['column'] ?? 0;
-            $orderBy = $request->order[0]['dir'] ?? 'desc';
-            $searchValue = $request->search['value'] ?? '';
-            $columns = [
-                0 => 'targets.id', 
-                1 => 'employee_types.type_name', 
-                2 => 'employees.name', 
-                3 => 'targets.year',
-                4 => 'targets.month',
-                5 => 'targets.unique_lead',
-                6 => 'targets.customer_visit',
-                7 => 'targets.aashiyana',
-                8 => 'targets.order_quantity'
-            ];
-            $orderColumn = $columns[$orderColumnIndex] ?? 'targets.created_at';
-
-            $query = Target::join('employees', 'employees.id', '=', 'targets.employee_id')
-                ->join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
-                ->orderBy('targets.created_at', 'desc')
-                ->orderBy($orderColumn, $orderBy)
-                ->select('targets.id', 'targets.created_at as from_date', 'targets.*', 'employees.name as employee_name', 'employee_types.type_name as employee_type',DB::raw("CONCAT(Targets.month, '-', targets.year) as to_date") );
-
-            if ($searchValue) {
-                $query->where(function ($query) use ($searchValue) {
-                    $query->where('employee_name', 'like', '%' . $searchValue . '%');
-                });
-            }
-
-            $recordsTotal = $query->count();
-            $data = $query->skip($skip)->take($pageLength)->get();
-            $recordsFiltered = $recordsTotal;
-            
-            if ($data->isEmpty()) {
-                return response()->json([
-                    "draw" => $request->draw,
-                    "recordsTotal" => $recordsTotal,
-                    "recordsFiltered" => $recordsFiltered,
-                    'data' => [],
-                    'query' => $query,
-                ], 200);
-            }
-
-            $formattedData = $data->map(function ($row) {
-                $action = '<a onclick="handleAction(\'' . $row->id . '\',\'view\')" title="view"><i class="fa fas fa-eye"></i></a>
-                    <a onclick="editTarget(\'' . $row->id . '\')" title="edit"><i class="fa fa-pencil-square"></i></a>
-                    <a onclick="deleteTarget(\'' . $row->id . '\')" title="delete"><i class="fa fas fa-trash"></i></a>';
-                $status = $row->status == '1' ? "Active" : "Inactive";
-
-                return [
-                    'id' => $row->id,
-                    'employee_type' => $row->employee_type,
-                    'employee_name' => $row->employee_name,
-                    'year' => $row->year,
-                    'month' => $row->month,
-                    'unique_lead' => $row->unique_lead,
-                    'customer_visit' => $row->customer_visit,
-                    'aashiyana' => $row->aashiyana,
-                    'order_quantity' => $row->order_quantity,
-                    'action' => $action,
-                ];
+        if ($request->has('employee_type') && !empty($request->employee_type)) {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('employee_type_id', $request->employee_type);
             });
-
-            return response()->json([
-                "draw" => $request->draw,
-                "recordsTotal" => $recordsTotal,
-                "recordsFiltered" => $recordsFiltered,
-                'data' => $formattedData,
-            ], 200);
         }
+        
+        if ($request->has('employee_id') && !empty($request->employee_id)) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        if ($request->has('year') && !empty($request->year)) {
+            $query->where('year', $request->year);
+        }
+
+        if ($request->has('month') && !empty($request->month)) {
+            $query->where('month', $request->month);
+        }
+
+        return DataTables::of($query)
+            ->addColumn('employee_type', function ($target) {
+                return $target->employee->employeeType->type_name ?? '-';
+            })
+            ->addColumn('employee_name', function ($target) {
+                return $target->employee->name ?? '-';
+            })
+            ->addColumn('action', function ($target) {
+                return '
+                    <button class="btn btn-sm btn-primary" onclick="handleAction(' . $target->id . ', \'view\')">View</button>
+                    <button class="btn btn-sm btn-warning" onclick="handleAction(' . $target->id . ', \'edit\')">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTarget(' . $target->id . ')">Delete</button>
+                ';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
+
+
+    // public function targetList(Request $request)
+    // {   
+        
+    //     if ($request->ajax()) {
+    //         $pageNumber = ($request->start / $request->length) + 1;
+    //         $pageLength = $request->length;
+    //         $skip = ($pageNumber - 1) * $pageLength;
+
+    //         $orderColumnIndex = $request->order[0]['column'] ?? 0;
+    //         $orderBy = $request->order[0]['dir'] ?? 'desc';
+    //         $searchValue = $request->search['value'] ?? '';
+    //         $columns = [
+    //             0 => 'targets.id', 
+    //             1 => 'employee_types.type_name', 
+    //             2 => 'employees.name', 
+    //             3 => 'targets.year',
+    //             4 => 'targets.month',
+    //             5 => 'targets.unique_lead',
+    //             6 => 'targets.customer_visit',
+    //             7 => 'targets.aashiyana',
+    //             8 => 'targets.order_quantity'
+    //         ];
+    //         $orderColumn = $columns[$orderColumnIndex] ?? 'targets.created_at';
+
+    //         $query = Target::join('employees', 'employees.id', '=', 'targets.employee_id')
+    //             ->join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
+    //             ->orderBy('targets.created_at', 'desc')
+    //             ->orderBy($orderColumn, $orderBy)
+    //             ->select('targets.id', 'targets.created_at as from_date', 'targets.*', 'employees.name as employee_name', 'employee_types.type_name as employee_type',DB::raw("CONCAT(Targets.month, '-', targets.year) as to_date") );
+
+    //         if ($searchValue) {
+    //             $query->where(function ($query) use ($searchValue) {
+    //                 $query->where('employee_name', 'like', '%' . $searchValue . '%');
+    //             });
+    //         }
+
+    //         $recordsTotal = $query->count();
+    //         $data = $query->skip($skip)->take($pageLength)->get();
+    //         $recordsFiltered = $recordsTotal;
+            
+    //         if ($data->isEmpty()) {
+    //             return response()->json([
+    //                 "draw" => $request->draw,
+    //                 "recordsTotal" => $recordsTotal,
+    //                 "recordsFiltered" => $recordsFiltered,
+    //                 'data' => [],
+    //                 'query' => $query,
+    //             ], 200);
+    //         }
+
+    //         $formattedData = $data->map(function ($row) {
+    //             $action = '<a onclick="handleAction(\'' . $row->id . '\',\'view\')" title="view"><i class="fa fas fa-eye"></i></a>
+    //                 <a onclick="editTarget(\'' . $row->id . '\')" title="edit"><i class="fa fa-pencil-square"></i></a>
+    //                 <a onclick="deleteTarget(\'' . $row->id . '\')" title="delete"><i class="fa fas fa-trash"></i></a>';
+    //             $status = $row->status == '1' ? "Active" : "Inactive";
+
+    //             return [
+    //                 'id' => $row->id,
+    //                 'employee_type' => $row->employee_type,
+    //                 'employee_name' => $row->employee_name,
+    //                 'year' => $row->year,
+    //                 'month' => $row->month,
+    //                 'unique_lead' => $row->unique_lead,
+    //                 'customer_visit' => $row->customer_visit,
+    //                 'aashiyana' => $row->aashiyana,
+    //                 'order_quantity' => $row->order_quantity,
+    //                 'action' => $action,
+    //             ];
+    //         });
+
+    //         return response()->json([
+    //             "draw" => $request->draw,
+    //             "recordsTotal" => $recordsTotal,
+    //             "recordsFiltered" => $recordsFiltered,
+    //             'data' => $formattedData,
+    //         ], 200);
+    //     }
+    // }
     
     // public function indexList(Request $request)
     // {
@@ -288,7 +334,28 @@ class TargetController extends Controller
             'data' => view('admin.target.view', compact('target'))->render()
         ]);
     }
-
+    public function update(Request $request)
+    {
+        $target = Target::findOrFail($request->id);
+        
+        $target->update([
+            'employee_type' => $request->employee_type,
+            'employee_id' => $request->employee_id,
+            'year' => $request->year,
+            'month' => $request->month,
+            'unique_lead' => $request->unique_lead,
+            'customer_visit' => $request->customer_visit,
+            'aashiyana' => $request->aashiyana,
+            'order_quantity' => $request->order_quantity,
+        ]);
+    
+        return response()->json(['message' => 'Target updated successfully!']);
+    }
+    public function viewTargets()
+    {
+        $targets = Target::all(); // Or filter as needed
+        return response()->json($targets);
+    }
    
     public function delete($id)
     {
@@ -302,4 +369,12 @@ class TargetController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Target deleted successfully.']);
     }
+    public function destroy($id)
+    {
+        $target = Target::findOrFail($id);
+        $target->delete();
+
+        return response()->json(['message' => 'Target deleted successfully!']);
+    }
+
 }

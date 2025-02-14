@@ -16,10 +16,14 @@ Route::prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/activity-management', [AdminController::class, 'activity_management'])->name('admin.activity-management');
     Route::get('/route-management', [AdminController::class, 'route_management'])->name('admin.route-management');
-    // Route::get('/target-management', [AdminController::class, 'index'])->name('admin.target-management');
-    // Route::get('/targets/create', [TargetController::class, 'create'])->name('targets.create');
-    Route::post('/targets/store', [TargetController::class, 'store'])->name('targets.store');
-    // Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType']);
+    
+    Route::post('/targets/store', [TargetController::class, 'store'])->name('admin.target.store');
+    Route::get('/targets', [TargetController::class, 'index'])->name('admin.target.index');
+    Route::post('/targets/update', [TargetController::class, 'update'])->name('admin.target.update');
+    Route::get('/targets/get', [TargetController::class, 'viewTargets'])->name('admin.target.get');
+    Route::delete('/targets/{id}', [TargetController::class, 'destroy'])->name('admin.target.delete');
+    Route::post('/targets/list', [TargetController::class, 'targetList'])->name('admin.target.list');
+    
     Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType'])->name('admin.getEmployees');
     Route::post('/targetList', [TargetController::class, 'targetList'])->name('admin.targetList');
     Route::get('/viewTarget/{id}', [TargetController::class, 'view'])->name('admin.viewTarget');
