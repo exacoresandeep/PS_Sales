@@ -325,7 +325,7 @@ class LeadController extends Controller
                             'product_id' => $item['product_id'],
                             'total_quantity' => $item['total_quantity'],
                             'balance_quantity' => $item['balance_quantity'],
-                            'product_details' => json_encode($item['product_details']), // Store it correctlyd
+                            'product_details' => json_encode($item['product_details']),
                             'created_at' => now(),
                             'updated_at' => now(),
                         ];
@@ -570,6 +570,10 @@ class LeadController extends Controller
                             'id' => $lead->customerType->id,
                             'name' => $lead->customerType->name,
                         ] : null,
+                        'city' => $lead->city,
+                        'location' => $lead->location,
+                        'phone' => $lead->phone,
+                        'address' => $lead->address,
                         'district' => $lead->district ? [
                             'id' => $lead->district->id,
                             'name' => $lead->district->name,
