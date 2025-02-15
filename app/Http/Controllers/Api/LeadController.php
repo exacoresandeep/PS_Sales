@@ -563,6 +563,7 @@ class LeadController extends Controller
 
                 $formattedLeads = $leads->map(function ($lead) {
                     return [
+                        'lead_id' => $lead->id,
                         'status' => $lead->status,
                         'customer_name' => $lead->customer_name,
                         'customer_type' => $lead->customerType ? [

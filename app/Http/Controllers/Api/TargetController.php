@@ -114,7 +114,7 @@ class TargetController extends Controller
     public function targetList(Request $request)
     {
         // Load related employee and employeeType to prevent N+1 query issues
-        $query = Target::with(['employee.employeeType']);
+        $query = Target::with(['employee.employeeType'])->where('status', '1')->withTrashed();
 
         // Apply filters based on request parameters
         if ($request->has('employee_type') && !empty($request->employee_type)) {
@@ -392,21 +392,23 @@ class TargetController extends Controller
         return response()->json(['success' => true, 'html' => $html]);
     }
    
-    public function delete($id)
-    {
-        $rowid = Target::find($id);
+    // public function delete($id)
+    // {
+    //     $rowid = Target::find($id);
 
-        if (!$rowid) {
-            return response()->json(['success' => false, 'message' => 'Target not found.'], 404);
-        }
+    //     if (!$rowid) {
+    //         return response()->json(['success' => false, 'message' => 'Target not found.'], 404);
+    //     }
 
-        $rowid->delete();
+    //     $rowid->delete();
 
-        return response()->json(['success' => true, 'message' => 'Target deleted successfully.']);
-    }
+    //     return response()->json(['success' => true, 'message' => 'Target deleted successfully.']);
+    // }
     public function destroy($id)
     {
         $target = Target::findOrFail($id);
+        $target->status = '0';
+        $target->save();
         $target->delete();
 
         return response()->json(['success' => true, 'message' => 'Target deleted successfully!']);
