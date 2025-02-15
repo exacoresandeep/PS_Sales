@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Target extends Model
 {
-    use HasFactory;
-    
+    use HasFactory, SoftDeletes; // Add SoftDeletes trait
+
     protected $table = 'targets';
 
     protected $fillable = [
@@ -22,17 +23,21 @@ class Target extends Model
         'order_quantity',
         'created_by',
     ];
+
+    protected $dates = ['deleted_at']; 
+    
     public function customerType()
     {
         return $this->belongsTo(CustomerType::class, 'customer_types_id');
     }
+
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
     }
+
     public function employeeType()
     {
         return $this->belongsTo(EmployeeType::class, 'employee_type_id');
     }
-
 }

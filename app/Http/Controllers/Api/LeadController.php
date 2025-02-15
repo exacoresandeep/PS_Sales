@@ -325,7 +325,7 @@ class LeadController extends Controller
                             'product_id' => $item['product_id'],
                             'total_quantity' => $item['total_quantity'],
                             'balance_quantity' => $item['balance_quantity'],
-                            'product_details' => $item['product_details'],
+                            'product_details' => json_encode($item['product_details']), // Store it correctlyd
                             'created_at' => now(),
                             'updated_at' => now(),
                         ];
@@ -563,6 +563,7 @@ class LeadController extends Controller
 
                 $formattedLeads = $leads->map(function ($lead) {
                     return [
+                        'lead_id' => $lead->id,
                         'status' => $lead->status,
                         'customer_name' => $lead->customer_name,
                         'customer_type' => $lead->customerType ? [
