@@ -22,12 +22,12 @@ Route::prefix('admin')->group(function () {
     Route::post('/targets/list', [TargetController::class, 'targetList'])->name('admin.target.list');
     Route::post('/targets/update', [TargetController::class, 'update'])->name('admin.target.update');
     Route::get('/targets/get', [TargetController::class, 'viewTargets'])->name('admin.target.get');
-    Route::delete('/targets/{id}', [TargetController::class, 'destroy'])->name('admin.target.delete');
+    Route::delete('/targets/delete/{id}', [TargetController::class, 'destroy'])->name('admin.target.delete');
     
     Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType'])->name('admin.getEmployees');
     Route::post('/targetList', [TargetController::class, 'targetList'])->name('admin.targetList');
     Route::get('/viewTarget/{id}', [TargetController::class, 'view'])->name('admin.viewTarget');
-    Route::post('/deleteTarget/{id}', [TargetController::class, 'delete'])->name('deleteTarget');
+    // Route::post('/deleteTarget/{id}', [TargetController::class, 'delete'])->name('deleteTarget');
 
     
     Route::middleware('auth:sanctum')->group(function () {
