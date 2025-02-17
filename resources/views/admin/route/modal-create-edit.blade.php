@@ -37,7 +37,7 @@
                         <!-- Sub Locations (Comma-separated) -->
                         <div class="col-md-12">
                             <label>Sub Locations (comma-separated)</label>
-                            <input type="text" class="form-control" name="sub_locations" id="sub_locations" placeholder="Enter sub locations separated by commas">
+                            <input class="form-control" id="sub-locations" name="sub_locations" type="text" placeholder="Enter sub-locations" />
                         </div>
                     </div>
                 </div>

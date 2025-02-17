@@ -27,7 +27,7 @@ class OrderController extends Controller
             {
                 $orders = Order::where('created_by', $employee->id)
                     ->where('dealer_flag_order',"0")
-                    ->with(['dealer:id,dealer_name'])
+                    ->with(['dealer:id,dealer_code,dealer_name'])
                     ->select('id', 'total_amount', 'status', 'created_at', 'dealer_id')
                     ->get()
                     ->map(function ($order) {
@@ -47,6 +47,7 @@ class OrderController extends Controller
                             'created_at' => $order->created_at->format('d-m-Y'),
                             'dealer' => [
                                 'name' => $order->dealer->dealer_name,
+                                'dealer_code' => $order->dealer->dealer_code,
                             ],
                         ];
                     }),

@@ -19,11 +19,57 @@ class RouteController extends Controller
     public function index()
     {
         $routes = TripRoute::all(); 
-        $districts = District::all(); // Fetch all districts for the filter dropdown
-        $employeeTypes = EmployeeType::all(); // Fetch all employee types for the filter dropdown
+        $districts = District::all();
+        $employeeTypes = EmployeeType::all();
     
         return view('admin.route.index', compact('routes', 'districts', 'employeeTypes'));
     }
+    public function store(Request $request)
+    {
+        $request->validate([
+            'district_id' => 'required|exists:districts,id',
+            'route_name' => 'required|string|max:255',
+            'location_name' => 'required|string|max:255',
+            'sub_locations' => 'required|string', 
+        ]);
+        $subLocations = explode(',', $request->sub_locations);
+
+        $subLocations = array_map('trim', $subLocations);
+    
+        $route = new TripRoute();
+        $route->district_id = $request->district_id;
+        $route->route_name = $request->route_name;
+        $route->location_name = $request->location_name;
+        $route->sub_locations = json_encode($subLocations);
+        $route->save();
+
+        return response()->json(['message' => 'Route created successfully']);
+    }
+
+    public function update(Request $request)
+    {
+        $request->validate([
+            'district_id' => 'required|exists:districts,id',
+            'route_name' => 'required|string|max:255',
+            'location_name' => 'required|string|max:255',
+            'sub_locations' => 'required|string',
+        ]);
+        $subLocations = explode(',', $request->sub_locations);
+
+        // Clean up each sub-location value (trim whitespace)
+        $subLocations = array_map('trim', $subLocations);
+
+        $route = TripRoute::findOrFail($request->id);
+        
+        $route->district_id = $request->district_id;
+        $route->route_name = $request->route_name;
+        $route->location_name = $request->location_name;
+        $route->sub_locations = json_encode($subLocations);
+        $route->save();
+
+        return response()->json(['message' => 'Route updated successfully']);
+    }
+
     public function getTodaysTrip(Request $request)
     {
         try {
