@@ -210,6 +210,7 @@ class RouteController extends Controller
             $trips = AssignRoute::with(['tripRoute'])
                 ->where('employee_id', $employeeId)
                 ->whereBetween('assign_date', [$startDate, $endDate]) 
+                ->orderBy('assign_date', 'asc')
                 ->get()
                 ->map(function ($trip) use ($today) {
                     return [
