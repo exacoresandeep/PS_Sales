@@ -113,10 +113,8 @@ class TargetController extends Controller
 
     public function targetList(Request $request)
     {
-        // Load related employee and employeeType to prevent N+1 query issues
         $query = Target::with(['employee.employeeType'])->where('status', '1')->withTrashed();
 
-        // Apply filters based on request parameters
         if ($request->has('employee_type') && !empty($request->employee_type)) {
             $query->whereHas('employee', function ($q) use ($request) {
                 $q->where('employee_type_id', $request->employee_type);
@@ -136,7 +134,24 @@ class TargetController extends Controller
         }
 
         return DataTables::of($query)
-            ->addIndexColumn() // Adds an auto-incrementing column (Sl.No)
+            ->filter(function ($query) use ($request) {
+                if (!empty($request->search['value'])) {
+                    $searchValue = $request->search['value'];
+                    $query->whereHas('employee', function ($q) use ($searchValue) {
+                        $q->where('name', 'like', "%{$searchValue}%");
+                    })
+                    ->orWhereHas('employee.employeeType', function ($q) use ($searchValue) {
+                        $q->where('type_name', 'like', "%{$searchValue}%");
+                    })
+                    ->orWhere('year', 'like', "%{$searchValue}%")
+                    ->orWhere('month', 'like', "%{$searchValue}%")
+                    ->orWhere('unique_lead', 'like', "%{$searchValue}%")
+                    ->orWhere('customer_visit', 'like', "%{$searchValue}%")
+                    ->orWhere('aashiyana', 'like', "%{$searchValue}%")
+                    ->orWhere('order_quantity', 'like', "%{$searchValue}%");
+                }
+            })
+            ->addIndexColumn() 
             ->addColumn('employee_type', function ($target) {
                 return optional($target->employee->employeeType)->type_name ?? '-';
             })
@@ -364,10 +379,13 @@ class TargetController extends Controller
     }
     public function update(Request $request)
     {
-        $target = Target::findOrFail($request->id);
-        
+        $target = Target::find($request->id);
+
+        if (!$target) {
+            return response()->json(['error' => 'Target not found'], 404);
+        }
+
         $target->update([
-            'employee_type' => $request->employee_type,
             'employee_id' => $request->employee_id,
             'year' => $request->year,
             'month' => $request->month,
@@ -376,21 +394,41 @@ class TargetController extends Controller
             'aashiyana' => $request->aashiyana,
             'order_quantity' => $request->order_quantity,
         ]);
-    
-        return response()->json(['message' => 'Target updated successfully!']);
-    }
-    public function viewTargets(Request $request)
-    {
-        $target = Target::with(['employee.employeeType'])->find($request->id);
 
-        if (!$target) {
-            return response()->json(['success' => false, 'message' => 'Target not found!']);
+        return response()->json(['message' => 'Target updated successfully']);
+    }
+    public function viewTargets($id)
+    {
+        if (!$id) {
+            return response()->json(['error' => 'Missing target ID.'], 400);
         }
 
-        $html = view('admin.targets.view-details', compact('target'))->render();
+        $target = Target::with('employee.employeeType')->find($id);
+        if (!$target) {
+            return response()->json(['error' => 'Target not found.'], 404);
+        }
 
-        return response()->json(['success' => true, 'html' => $html]);
+        $viewContent = view('admin.target.modal-view', compact('target'))->render();
+
+        return response()->json([
+            'target' => $target,
+            'viewContent' => $viewContent
+        ]);
     }
+
+
+    // public function viewTarget($id)
+    // {
+    //     $target = Target::with('employee.employeeType')->find($id);
+
+    //     if (!$target) {
+    //         return response()->json(['error' => 'Target not found'], 404);
+    //     }
+
+    //     $viewContent = view('admin.target.modal-view-content', compact('target'))->render();
+
+    //     return response()->json(['viewContent' => $viewContent, 'target' => $target]);
+    // }
    
     // public function delete($id)
     // {

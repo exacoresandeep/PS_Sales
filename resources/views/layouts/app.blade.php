@@ -43,4 +43,3 @@
 
     @include('admin.includes.footer')
 
-  

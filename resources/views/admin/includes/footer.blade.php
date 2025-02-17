@@ -23,19 +23,18 @@
 <script>
 
 $(document).ready(function () {
-    function loadViewModal(id) {
-        $.get("{{ route('admin.target.get', '') }}/" + id, function (response) {
-            $('#viewModalBody').html(response.viewContent);
-            $('#viewModal').modal('show');
-        }).fail(function () {
-            Swal.fire('Error', 'Could not load details.', 'error');
-        });
-    }
+ 
     $('#openCreateModal').click(function () {
         $('#targetForm')[0].reset(); 
         $('#target_id').val(''); 
         $('#createEditModalLabel').text('Create Target');
         $('#createEditModal').modal('show'); 
+    });
+    $('#openCreateRouteModal').click(function () {
+        $('#routeForm')[0].reset(); 
+        $('#route_id').val(''); 
+        $('#createEditRouteModalLabel').text('Create Target');
+        $('#createEditRouteModal').modal('show'); 
     });
     $('#employee_type').change(function () {
         let employeeTypeId = $(this).val();
@@ -55,26 +54,29 @@ $(document).ready(function () {
         }
     });
 
-    // Handle Target Form Submission
+ 
     $('#targetForm').submit(function (e) {
         e.preventDefault();
         let formData = $(this).serialize();
+        let targetId = $('#target_id').val();
+        let url = targetId ? "{{ route('admin.target.update') }}" : "{{ route('admin.target.store') }}";
 
         $.ajax({
-            url: "{{ route('admin.target.store') }}", 
+            url: url,
             type: "POST",
             data: formData,
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (response) {
                 Swal.fire('Success', response.message, 'success');
-                $('#createEditModal').modal('hide'); // Close modal
-                $('#targetTable').DataTable().ajax.reload(); // Reload DataTable
+                $('#createEditModal').modal('hide'); 
+                $('#targetTable').DataTable().ajax.reload();
             },
             error: function (xhr) {
                 Swal.fire('Error', 'Could not save target.', 'error');
             }
         });
     });
+
     $(".menu-title").click(function () {
         var $submenu = $(this).next(".submenu"); // Target the next UL (submenu)
         
@@ -90,7 +92,6 @@ $(document).ready(function () {
         }
     });
 
-    // Ensure that active menu is expanded on page load
     $(".submenu a.active").each(function () {
         $(this).closest(".submenu").slideDown();
         $(this).closest("li").find(".menu-title .icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
@@ -98,6 +99,7 @@ $(document).ready(function () {
     var table = $('#targetTable').DataTable({
         processing: true,
         serverSide: true,
+        searching: true,
         ajax: {
             url: "{{ route('admin.target.list') }}",
             type: 'POST',
@@ -123,12 +125,10 @@ $(document).ready(function () {
         ]
     });
 
-    // Reload DataTable when filters change
     $('.filter-sec select').change(function () {
         table.ajax.reload();
     });
 
-    // Load Employees based on Employee Type
     $('#filter_employee_type').change(function () {
         let employeeTypeId = $(this).val();
         $('#filter_employee').html('<option value="">Loading...</option>');
@@ -176,42 +176,37 @@ $(document).ready(function () {
         });
     }
 
-
-    // Delete Target
-    // function deleteTarget(id) {
-    //     Swal.fire({
-    //         title: 'Are you sure?',
-    //         text: "This action cannot be undone!",
-    //         icon: 'warning',
-    //         showCancelButton: true,
-    //         confirmButtonText: 'Yes, delete it!',
-    //         cancelButtonText: 'No, cancel!'
-    //     }).then((result) => {
-    //         if (result.isConfirmed) {
-    //             $.post("{{ route('admin.target.delete', '') }}/" + id, {
-    //                 _token: $('meta[name="csrf-token"]').attr('content')
-    //             }, function (response) {
-    //                 Swal.fire('Deleted!', response.message, 'success');
-    //                 table.ajax.reload();
-    //             }).fail(function () {
-    //                 Swal.fire('Error', 'Could not delete target.', 'error');
-    //             });
-    //         }
-    //     });
-    // }
-
-    // Global function for edit/view actions
     window.handleAction = function (id, action) {
-        $.get("{{ route('admin.target.get', '') }}/" + id, function (response) {
+        $.get("{{ route('admin.target.get', ':id') }}".replace(':id', id), function (response) {
+
             if (action === 'edit') {
                 $('#createEditModalLabel').text('Edit Target');
-                $('#createEditModal input, #createEditModal select').each(function () {
-                    $(this).val(response[$(this).attr('name')]);
-                });
+                $('#target_id').val(id);
+                $('#employee_type').val(response.target.employee.employee_type_id).trigger('change');
+
+                setTimeout(() => {
+                    $('#employee_id').val(response.target.employee_id);
+                }, 500);
+
+                $('#year').val(response.target.year);
+                $('#month').val(response.target.month);
+                $('#unique_lead').val(response.target.unique_lead);
+                $('#customer_visit').val(response.target.customer_visit);
+                $('#aashiyana').val(response.target.aashiyana);
+                $('#order_quantity').val(response.target.order_quantity);
+
                 $('#createEditModal').modal('show');
             } else if (action === 'view') {
-                $('#viewModalLabel').text('Target Details');
-                $('#viewModalBody').html(response.viewContent);
+
+                $('#view_employee_type').text(response.target.employee.employee_type.type_name || '-');
+                $('#view_employee_name').text(response.target.employee.name || '-');
+                $('#view_year').text(response.target.year || '-');
+                $('#view_month').text(response.target.month || '-');
+                $('#view_unique_lead').text(response.target.unique_lead || '0');
+                $('#view_customer_visit').text(response.target.customer_visit || '0');
+                $('#view_aashiyana').text(response.target.aashiyana || '0');
+                $('#view_order_quantity').text(response.target.order_quantity || '0');
+
                 $('#viewModal').modal('show');
             }
         }).fail(function () {
@@ -219,96 +214,9 @@ $(document).ready(function () {
         });
     };
 
-    // Bind Delete Function
+
     window.deleteTarget = deleteTarget;
 });
-
-
-
-//  $(document).ready(function () {
-
-    
-//     function getCookie(name) {
-//         let cookies = document.cookie.split("; ");
-//         for (let i = 0; i < cookies.length; i++) {
-//             let cookie = cookies[i].split("=");
-//             if (cookie[0] === name) {
-//                 return decodeURIComponent(cookie[1]);
-//             }
-//         }
-//         return null;
-//     }
-
-//     function setCookie(name, value) {
-//         document.cookie = name + "=" + encodeURIComponent(value) + "; path=/";
-//     }
-
-//     function loadContent(link) {
-      
-//         $.ajax({
-//             url: '/load-content/' + link,
-//             // url: link,
-//             type: "GET",
-//             success: function (response) {
-//                 $(".dashboard-area").html(response);
-//             },
-//             error: function () {
-//                 $(".dashboard-area").html("<p>Error loading content.</p>");
-//             }
-//         });
-//     }
-
-//     // Restore previously selected link
-//     var selectedLink = getCookie("selectedLink");
-//     if (selectedLink) {
-//         $(".menu-title, .submenu a").removeClass("active");
-//         var linkElement = $('.submenu a[href="' + selectedLink + '"]');
-//         if (linkElement.length) {
-//             linkElement.addClass("active");
-//             var parentMenu = linkElement.closest("ul");
-//             if (parentMenu.length) {
-//                 var parentMenuLi = parentMenu.closest("li");
-//                 parentMenuLi.addClass("menu-open menu-is-opening");
-//                 parentMenu.slideDown();
-//             }
-//         }
-//         loadContent(selectedLink);
-//     } else {
-//         loadContent("dashboard");
-//     }
-
-//     $(".menu-title").click(function () {
-//         var $submenu = $(this).next("ul"); // Target only the next UL (submenu)
-        
-//         if ($submenu.is(":visible")) {
-//             $submenu.slideUp();
-//             $(this).find(".icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
-//         } else {
-//             $(".submenu").slideUp(); // Close all other open menus
-//             $(".menu-title .icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
-            
-//             $submenu.slideDown();
-//             $(this).find(".icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
-//         }
-//     });
-
-//     $(".submenu a").on("click", function (event) {
-//         event.preventDefault();
-
-//         $(".submenu a").removeClass("active");
-//         var link = $(this).attr("href");
-
-//         if (link !== "#") {
-//             setCookie("selectedLink", link);
-//             $(this).addClass("active");
-//             loadContent(link);
-//         }
-//     });
-
-
-    
-// });
-
 
 </script>
 </body>
