@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AssignRoute;
 use App\Models\Dealer;
 use App\Models\TripRoute;
+use App\Models\District;
+use App\Models\EmployeeType;
 use App\Models\DealerTripActivity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +16,14 @@ use Illuminate\Support\Facades\Validator;
 
 class RouteController extends Controller
 {
+    public function index()
+    {
+        $routes = TripRoute::all(); 
+        $districts = District::all(); // Fetch all districts for the filter dropdown
+        $employeeTypes = EmployeeType::all(); // Fetch all employee types for the filter dropdown
+    
+        return view('admin.route.index', compact('routes', 'districts', 'employeeTypes'));
+    }
     public function getTodaysTrip(Request $request)
     {
         try {
