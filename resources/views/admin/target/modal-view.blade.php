@@ -5,42 +5,25 @@
                 <h5 class="modal-title" id="viewModalLabel">Target Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="viewModalBody">
-                <table class="table table-bordered">
-                    <tr>
-                        <th>Employee Type:</th>
-                        <td>{{ $target->employee->employeeType->type_name ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Employee Name:</th>
-                        <td>{{ $target->employee->name ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Year:</th>
-                        <td>{{ $target->year ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Month:</th>
-                        <td>{{ $target->month ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Unique Lead:</th>
-                        <td>{{ $target->unique_lead ?? '0' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Customer Visit:</th>
-                        <td>{{ $target->customer_visit ?? '0' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Aashiyana Count:</th>
-                        <td>{{ $target->aashiyana ?? '0' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Targets in Tons:</th>
-                        <td>{{ $target->order_quantity ?? '0' }}</td>
-                    </tr>
-                </table>
-                
+            <div class="modal-body">
+                <div class="container">
+                    <div class="row mb-2">
+                        <div class="col-md-6"><strong>Employee Type:</strong> <span id="view_employee_type"></span></div>
+                        <div class="col-md-6"><strong>Employee Name:</strong> <span id="view_employee_name"></span></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6"><strong>Year:</strong> <span id="view_year"></span></div>
+                        <div class="col-md-6"><strong>Month:</strong> <span id="view_month"></span></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6"><strong>Unique Lead:</strong> <span id="view_unique_lead"></span></div>
+                        <div class="col-md-6"><strong>Customer Visit:</strong> <span id="view_customer_visit"></span></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6"><strong>Aashiyana Count:</strong> <span id="view_aashiyana"></span></div>
+                        <div class="col-md-6"><strong>Targets in Tons:</strong> <span id="view_order_quantity"></span></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

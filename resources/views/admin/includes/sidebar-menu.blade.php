@@ -27,11 +27,11 @@
                 </ul>
             </li>
             <li>
-                <a class="menu-title">
+                <a class="menu-title"  href="{{ route('admin.route.index') }}">
                     <i class="fa fa-road" aria-hidden="true"></i>
-                    Route Management <span class="icon-right"><i class="fa fa-solid fa-chevron-down"></i></span>
+                    Route Management <span class="icon-right"></span>
                 </a>
-                <ul class="submenu">
+                {{-- <ul class="submenu">
                     <li>
                         <a href="route-management">
                             <i class="fa fa-road" aria-hidden="true"></i>
@@ -44,14 +44,14 @@
                             Create Route <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
                     </li>
-                </ul>
+                </ul> --}}
             </li>
             <li>
-                <a class="menu-title">
+                <a class="menu-title"  href="{{ route('admin.target.index') }}">
                     <i class="fa fa-road" aria-hidden="true"></i>
-                    Target Management <span class="icon-right"><i class="fa fa-solid fa-chevron-down"></i></span>
+                    Target Management <span class="icon-right"></span>
                 </a>
-                <ul class="submenu">
+                {{-- <ul class="submenu">
                     <li>
                         <a href="{{ route('admin.target.index') }}">
                             <i class="fa fa-road" aria-hidden="true"></i>
@@ -64,7 +64,7 @@
                             Create Target <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
                     </li>
-                </ul>
+                </ul> --}}
             </li>
         </ul>
         
