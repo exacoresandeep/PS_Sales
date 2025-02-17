@@ -19,6 +19,9 @@ Route::prefix('admin')->group(function () {
     // Route::get('/route-management', [AdminController::class, 'route_management'])->name('admin.route-management');
     
     Route::get('/routes', [RouteController::class, 'index'])->name('admin.route.index');
+    Route::post('/routes/store', [RouteController::class, 'store'])->name('admin.route.store');
+    Route::post('/routes/update', [RouteController::class, 'update'])->name('admin.route.update');
+
 
     Route::post('/targets/store', [TargetController::class, 'store'])->name('admin.target.store');
     Route::get('/targets', [TargetController::class, 'index'])->name('admin.target.index');
