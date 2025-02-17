@@ -19,6 +19,10 @@
 <!-- Bootstrap 5 JS -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.7.3/dist/alpine.min.js" defer></script>
+
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
 <script>
 
@@ -76,6 +80,52 @@ $(document).ready(function () {
             }
         });
     });
+    var subLocationInput = new Choices('#sub-locations', {
+        delimiter: ',',             
+        editItems: true,            
+        removeItemButton: true,    
+        paste: false,             
+        duplicateItemsAllowed: false, 
+        placeholderValue: 'Enter sub-locations',
+        searchPlaceholderValue: 'Search sub-location',
+    });
+
+    // Clear sub-locations input when the modal is closed
+    $('#createEditRouteModal').on('hidden.bs.modal', function () {
+        subLocationInput.clearStore();  // Clear the Choices store (tags)
+        subLocationInput.clearInput();  // Clear the input field
+    });
+
+    // Clear sub-locations input when the form is saved
+    $('#routeForm').submit(function (e) {
+        $('#sub-locations').val(subLocationInput.getValue(true).join(','));
+        e.preventDefault();
+        
+        // Serialize the form data
+        let formData = $(this).serialize();
+        let routeId = $('#route_id').val();
+        let url = routeId ? "{{ route('admin.route.update') }}" : "{{ route('admin.route.store') }}";
+        
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (response) {
+                Swal.fire('Success', response.message, 'success');
+                $('#createEditRouteModal').modal('hide');  // Hide the modal
+                $('#routeTable').DataTable().ajax.reload();  // Reload the route table
+
+                // Reset the sub-location input after saving
+                subLocationInput.clearStore();
+                subLocationInput.clearInput();
+            },
+            error: function (xhr) {
+                Swal.fire('Error', 'Could not save route.', 'error');
+            }
+        });
+    });
+
 
     $(".menu-title").click(function () {
         var $submenu = $(this).next(".submenu"); // Target the next UL (submenu)
@@ -217,6 +267,7 @@ $(document).ready(function () {
 
     window.deleteTarget = deleteTarget;
 });
+
 
 </script>
 </body>
