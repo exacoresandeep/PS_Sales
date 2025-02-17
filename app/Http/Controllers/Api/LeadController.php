@@ -228,6 +228,7 @@ class LeadController extends Controller
                             return [
                                 'id' => $item->id,
                                 'product_id' => $item->product_id,
+                                'product_name' => $item->product ? $item->product->product_name : null, 
                                 'total_quantity' => $item->total_quantity,
                                 'balance_quantity' => $item->balance_quantity,
                                 'product_details' => $item->product_details,
