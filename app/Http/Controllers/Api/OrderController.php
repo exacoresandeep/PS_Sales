@@ -29,6 +29,7 @@ class OrderController extends Controller
                     ->where('dealer_flag_order',"0")
                     ->with(['dealer:id,dealer_name,dealer_code'])
                     ->select('id', 'total_amount', 'status', 'created_at', 'dealer_id')
+                    ->orderBy('id','desc')
                     ->get()
                     ->map(function ($order) {
                 
