@@ -20,7 +20,11 @@ Route::prefix('admin')->group(function () {
     
     Route::get('/routes', [RouteController::class, 'index'])->name('admin.route.index');
     Route::post('/routes/store', [RouteController::class, 'store'])->name('admin.route.store');
+    Route::post('/routes/list', [RouteController::class, 'routesListing'])->name('admin.route.list');
     Route::post('/routes/update', [RouteController::class, 'update'])->name('admin.route.update');
+    Route::get('/routes/getAllRoutesByDistrict/{district}', [RouteController::class, 'getAllRoutesByDistrict'])->name('admin.route.getAllRoutesByDistrict');
+
+
 
 
     Route::post('/targets/store', [TargetController::class, 'store'])->name('admin.target.store');

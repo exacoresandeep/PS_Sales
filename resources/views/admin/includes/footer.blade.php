@@ -27,38 +27,35 @@
 <script>
 
 $(document).ready(function () {
- 
+    $(".menu-title").click(function () {
+        var $submenu = $(this).next(".submenu"); // Target the next UL (submenu)
+        
+        if ($submenu.is(":visible")) {
+            $submenu.slideUp(); // Hide submenu
+            $(this).find(".icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
+        } else {
+            $(".submenu").slideUp(); // Close all other open menus
+            $(".menu-title .icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
+            
+            $submenu.slideDown(); // Show clicked submenu
+            $(this).find(".icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
+        }
+    });
+
+    $(".submenu a.active").each(function () {
+        $(this).closest(".submenu").slideDown();
+        $(this).closest("li").find(".menu-title .icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
+    });
+
+    // Targets
+
     $('#openCreateModal').click(function () {
         $('#targetForm')[0].reset(); 
         $('#target_id').val(''); 
         $('#createEditModalLabel').text('Create Target');
         $('#createEditModal').modal('show'); 
     });
-    $('#openCreateRouteModal').click(function () {
-        $('#routeForm')[0].reset(); 
-        $('#route_id').val(''); 
-        $('#createEditRouteModalLabel').text('Create Target');
-        $('#createEditRouteModal').modal('show'); 
-    });
-    $('#employee_type').change(function () {
-        let employeeTypeId = $(this).val();
-        $('#employee_id').html('<option value="">Loading...</option>');
-
-        if (employeeTypeId) {
-            $.get("{{ route('admin.getEmployees', '') }}/" + employeeTypeId, function (response) {
-                $('#employee_id').html('<option value="">-Select Employee-</option>');
-                $.each(response, function (index, employee) {
-                    $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
-                });
-            }).fail(function () {
-                Swal.fire('Error', 'Could not load employees.', 'error');
-            });
-        } else {
-            $('#employee_id').html('<option value="">-Select Employee-</option>');
-        }
-    });
-
- 
+     
     $('#targetForm').submit(function (e) {
         e.preventDefault();
         let formData = $(this).serialize();
@@ -80,72 +77,7 @@ $(document).ready(function () {
             }
         });
     });
-    var subLocationInput = new Choices('#sub-locations', {
-        delimiter: ',',             
-        editItems: true,            
-        removeItemButton: true,    
-        paste: false,             
-        duplicateItemsAllowed: false, 
-        placeholderValue: 'Enter sub-locations',
-        searchPlaceholderValue: 'Search sub-location',
-    });
-
-    // Clear sub-locations input when the modal is closed
-    $('#createEditRouteModal').on('hidden.bs.modal', function () {
-        subLocationInput.clearStore();  // Clear the Choices store (tags)
-        subLocationInput.clearInput();  // Clear the input field
-    });
-
-    // Clear sub-locations input when the form is saved
-    $('#routeForm').submit(function (e) {
-        $('#sub-locations').val(subLocationInput.getValue(true).join(','));
-        e.preventDefault();
-        
-        // Serialize the form data
-        let formData = $(this).serialize();
-        let routeId = $('#route_id').val();
-        let url = routeId ? "{{ route('admin.route.update') }}" : "{{ route('admin.route.store') }}";
-        
-        $.ajax({
-            url: url,
-            type: "POST",
-            data: formData,
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (response) {
-                Swal.fire('Success', response.message, 'success');
-                $('#createEditRouteModal').modal('hide');  // Hide the modal
-                $('#routeTable').DataTable().ajax.reload();  // Reload the route table
-
-                // Reset the sub-location input after saving
-                subLocationInput.clearStore();
-                subLocationInput.clearInput();
-            },
-            error: function (xhr) {
-                Swal.fire('Error', 'Could not save route.', 'error');
-            }
-        });
-    });
-
-
-    $(".menu-title").click(function () {
-        var $submenu = $(this).next(".submenu"); // Target the next UL (submenu)
-        
-        if ($submenu.is(":visible")) {
-            $submenu.slideUp(); // Hide submenu
-            $(this).find(".icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
-        } else {
-            $(".submenu").slideUp(); // Close all other open menus
-            $(".menu-title .icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
-            
-            $submenu.slideDown(); // Show clicked submenu
-            $(this).find(".icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
-        }
-    });
-
-    $(".submenu a.active").each(function () {
-        $(this).closest(".submenu").slideDown();
-        $(this).closest("li").find(".menu-title .icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
-    });
+    
     var table = $('#targetTable').DataTable({
         processing: true,
         serverSide: true,
@@ -159,6 +91,7 @@ $(document).ready(function () {
                 d.employee_id = $('#filter_employee').val();
                 d.year = $('#filter_year').val();
                 d.month = $('#filter_month').val();
+                console.log("Sent Data:", d); 
             }
         },
         columns: [
@@ -174,8 +107,25 @@ $(document).ready(function () {
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ]
     });
+    
+    $('#employee_type').change(function () {
+        let employeeTypeId = $(this).val();
+        $('#employee_id').html('<option value="">Loading...</option>');
 
-    $('.filter-sec select').change(function () {
+        if (employeeTypeId) {
+            $.get("{{ route('admin.getEmployees', '') }}/" + employeeTypeId, function (response) {
+                $('#employee_id').html('<option value="">-Select Employee-</option>');
+                $.each(response, function (index, employee) {
+                    $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
+                });
+            }).fail(function () {
+                Swal.fire('Error', 'Could not load employees.', 'error');
+            });
+        } else {
+            $('#employee_id').html('<option value="">-Select Employee-</option>');
+        }
+    });
+    $('.target-filter select').change(function () {
         table.ajax.reload();
     });
 
@@ -266,6 +216,117 @@ $(document).ready(function () {
 
 
     window.deleteTarget = deleteTarget;
+
+    // Routes
+    $('#openCreateRouteModal').click(function () {
+        $('#routeForm')[0].reset(); 
+        $('#route_id').val(''); 
+        $('#createEditRouteModalLabel').text('Create Target');
+        $('#createEditRouteModal').modal('show'); 
+    });
+
+
+
+    // var subLocationInput = new Choices('#sub-locations', {
+    //     delimiter: ',',             
+    //     editItems: true,            
+    //     removeItemButton: true,    
+    //     paste: false,             
+    //     duplicateItemsAllowed: false, 
+    //     placeholderValue: 'Enter sub-locations',
+    //     searchPlaceholderValue: 'Search sub-location',
+    // });
+    let subLocationInput;
+    $('#createEditRouteModal').on('shown.bs.modal', function () {
+        if (!subLocationInput) {
+            subLocationInput = new Choices('#sub-locations', {
+                delimiter: ',',
+                editItems: true,
+                removeItemButton: true,
+                paste: false,
+                duplicateItemsAllowed: false,
+                placeholderValue: 'Enter sub-locations',
+                searchPlaceholderValue: 'Search sub-location'
+            });
+        }
+    });
+
+
+
+    $('#createEditRouteModal').on('hidden.bs.modal', function () {
+        subLocationInput.clearStore();  
+        subLocationInput.clearInput();  
+    });
+
+    $('#routeForm').submit(function (e) {
+        
+        e.preventDefault();
+        let subLocationsArray = subLocationInput.getValue(true);
+        $('#sub-locations').val(JSON.stringify(subLocationsArray)); // Convert array to JSON string
+
+        // Serialize the form data
+        let formData = $(this).serialize();
+        let routeId = $('#route_id').val();
+        let url = routeId ? "{{ route('admin.route.update') }}" : "{{ route('admin.route.store') }}";
+        
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: formData,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (response) {
+                Swal.fire('Success', response.message, 'success');
+                $('#createEditRouteModal').modal('hide');  // Hide the modal
+                $('#routeTable').DataTable().ajax.reload();  // Reload the route table
+
+                // Reset the sub-location input after saving
+                subLocationInput.clearStore();
+                subLocationInput.clearInput();
+            },
+            error: function (xhr) {
+                Swal.fire('Error', 'Could not save route.', 'error');
+            }
+        });
+    });
+
+    var table = $('#routeTable').DataTable({
+        processing: true,
+        serverSide: true,
+        searching: true,
+        ajax: {
+            url: "{{ route('admin.route.list') }}",
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: function (d) {
+                d.district_id = $('#filter_district').val();
+                d.route_name = $('#filter_route').val();
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'district_name', name: 'district_name' }, 
+            { data: 'route_name', name: 'route_name' },
+            { data: 'location_name', name: 'location_name' },
+            { data: 'sub_locations', name: 'sub_locations' },
+            { data: 'action', name: 'action', orderable: false, searchable: false }
+        ]
+    });
+
+    $('#filter_district').change(function () {
+        let districtId = $(this).val();
+        $('#filter_route').html('<option value="">Loading...</option>');
+
+        if (districtId) {
+            $.get("{{ route('admin.route.getAllRoutesByDistrict', '') }}/" + districtId, function (response) {
+                $('#filter_route').html('<option value="">-Select Route-</option>');
+                $.each(response, function (index, route) {
+                    $('#filter_route').append('<option value="' + route.id + '">' + route.route_name + '</option>');
+                });
+            });
+        } else {
+            $('#filter_route').html('<option value="">-Select Route-</option>');
+        }
+    });
 });
 
 
