@@ -284,11 +284,20 @@ class OrderController extends Controller
                 $ordersQuery->whereBetween('created_at', [$financialStartDate, $financialEndDate]);
             }
 
+            // $orders = $ordersQuery->get()->map(function ($order) {
+            //     if ($order->created_at) {
+            //         $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
+            //     }
+            //     return $order;
+            // });
             $orders = $ordersQuery->get()->map(function ($order) {
-                if ($order->created_at) {
-                    $order->created_at = Carbon::createFromFormat('Y-m-d\TH:i:s.u\Z', $order->created_at)->format('d-m-Y');
-                }
-                return $order;
+                return [
+                    'id' => $order->id,
+                    'created_at' => Carbon::parse($order->created_at)->format('d-m-Y'),
+                    'status' => $order->status,
+                    'total_amount' => $order->total_amount,
+                    'dealer' => $order->dealer,
+                ];
             });
             
     
