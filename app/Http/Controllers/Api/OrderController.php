@@ -285,7 +285,9 @@ class OrderController extends Controller
             }
 
             $orders = $ordersQuery->get()->map(function ($order) {
-                $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
+                if ($order->created_at) {
+                    $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
+                }
                 return $order;
             });
     
