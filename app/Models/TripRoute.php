@@ -29,4 +29,8 @@ class TripRoute extends Model
     {
         return $this->hasMany(Dealer::class, 'trip_route_id');
     }
+    public function district()
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
 }

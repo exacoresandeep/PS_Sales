@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\Facades\DataTables;
 
 class RouteController extends Controller
 {
@@ -32,15 +33,19 @@ class RouteController extends Controller
             'location_name' => 'required|string|max:255',
             'sub_locations' => 'required|string', 
         ]);
-        $subLocations = explode(',', $request->sub_locations);
+        $subLocations = json_decode($request->sub_locations, true);
 
-        $subLocations = array_map('trim', $subLocations);
+        if (!is_array($subLocations)) {
+            return response()->json(['message' => 'Invalid sub locations format'], 422);
+        }
+
     
         $route = new TripRoute();
         $route->district_id = $request->district_id;
         $route->route_name = $request->route_name;
         $route->location_name = $request->location_name;
         $route->sub_locations = json_encode($subLocations);
+        $route->status = "1";
         $route->save();
 
         return response()->json(['message' => 'Route created successfully']);
@@ -54,10 +59,11 @@ class RouteController extends Controller
             'location_name' => 'required|string|max:255',
             'sub_locations' => 'required|string',
         ]);
-        $subLocations = explode(',', $request->sub_locations);
+        $subLocations = json_decode($request->sub_locations, true);
 
-        // Clean up each sub-location value (trim whitespace)
-        $subLocations = array_map('trim', $subLocations);
+        if (!is_array($subLocations)) {
+            return response()->json(['message' => 'Invalid sub locations format'], 422);
+        }
 
         $route = TripRoute::findOrFail($request->id);
         
@@ -69,7 +75,35 @@ class RouteController extends Controller
 
         return response()->json(['message' => 'Route updated successfully']);
     }
-
+    public function routesListing(Request $request)
+    {
+        $query = TripRoute::with('district'); 
+    
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('district_name', function ($route) {
+                return optional($route->district)->name ?? '-'; 
+            })
+            ->addColumn('sub_locations', function ($route) {
+                $subLocations = json_decode($route->sub_locations, true);
+                return is_array($subLocations) ? implode(', ', $subLocations) : '-';
+            })
+            ->addColumn('action', function ($route) {
+                return '
+                    <button class="btn btn-sm btn-info" onclick="handleAction(' . $route->id . ', \'view\')" title="View">
+                        <i class="fa fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="handleAction(' . $route->id . ', \'edit\')" title="Edit">
+                        <i class="fa fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteRoute(' . $route->id . ')" title="Delete">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                ';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
+    }
     public function getTodaysTrip(Request $request)
     {
         try {
@@ -438,6 +472,11 @@ class RouteController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+    public function getAllRoutesByDistrict($district_id)
+    {
+        $routes = TripRoute::where('district_id', $district_id)->get(['id', 'route_name']);
+        return response()->json($routes);
     }
     public function getRoutesByDistrict($district_id)
     {
