@@ -9,7 +9,7 @@
         </button>
     </div>
 
-    <div class="filter-sec">
+    <div class="filter-sec target-filter">
         <div class="row">
             <div class="col-md-3">
                 <label>Employee Type</label>

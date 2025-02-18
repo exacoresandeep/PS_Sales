@@ -243,7 +243,7 @@ class OrderController extends Controller
                 'dealer:id,dealer_name as name'  
             ])
             ->where('created_by', $employeeId)
-            ->select('id as order_id', 'created_at', 'status', 'total_amount', 'dealer_id');
+            ->select('id', 'created_at', 'status', 'total_amount', 'dealer_id');
             
             if ($isDate) {
                 $ordersQuery->whereDate('created_at', $parsedDate);
@@ -284,7 +284,10 @@ class OrderController extends Controller
                 $ordersQuery->whereBetween('created_at', [$financialStartDate, $financialEndDate]);
             }
 
-            $orders = $ordersQuery->get();
+            $orders = $ordersQuery->get()->map(function ($order) {
+                $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
+                return $order;
+            });
     
             return response()->json([
                 'success' => true,
