@@ -84,7 +84,7 @@ class OrderController extends Controller
 
             $validatedData = $request->validate([
                 'order_type' => 'required|exists:order_types,id',
-                'customer_type_id' => 'required|exists:customer_types,id',
+                'customer_type_id' => 'nullable|exists:customer_types,id',
                 'order_category' => 'nullable|string',
                 'lead_id' => 'required|exists:leads,id',
                 'dealer_id' => 'nullable|exists:dealers,id',
@@ -96,7 +96,7 @@ class OrderController extends Controller
                 'total_amount' => 'nullable|numeric',
                 'additional_information' => 'nullable|string',
                 'status' => 'nullable|in:Pending,Dispatched,Delivered',
-                'vehicle_category' => 'nullable|string',
+                'vehicle_category_id' => 'nullable|integer',
                 'vehicle_type' => 'nullable|string',
                 'vehicle_number' => 'nullable|string',
                 'driver_name' => 'nullable|string',
@@ -318,6 +318,72 @@ class OrderController extends Controller
         }
     }
 
+    // public function dealerOrderList(Request $request)
+    // {
+    //     try {
+    //         if ($request->has('search_key')) {
+    //             return $this->orderFilter($request);
+    //         }
+
+    //         $employee = Auth::user();
+            
+    //         if($employee)
+    //         {
+    //             $employeeTypeId = $employee->employee_type_id;
+                
+    //             if($employeeTypeId=="1"){
+    //                 $dealerFlagOrder = '0';    
+    //             }
+    //             else if($employeeTypeId=="2"){
+    //                 $dealerFlagOrder = '1';    
+    //             }
+    //             else{
+    //                 $dealerFlagOrder = '0';  
+    //             }
+
+    //             $orders = Order::join('dealers', 'orders.dealer_id', '=', 'dealers.id') 
+    //                 ->where('dealer_flag_order',$dealerFlagOrder)
+    //                 ->where('dealers.approver_id',$employee->id)
+    //                 ->with(['dealer:id,dealer_name'])
+    //                 ->select('orders.id', 'total_amount', 'orders.status', 'orders.created_at', 'orders.dealer_id',)
+    //                 ->get()
+    //                 ->map(function ($order) {
+                
+    //                 $order->total_amount = (float) sprintf("%.2f", $order->total_amount);            
+    //                     return $order;
+    //                 });     
+    //             return response()->json([
+    //                 'success' => true,
+    //                 'statusCode' => 200,
+    //                 'message' => 'Orders fetched successfully',
+    //                 'data' => $orders->map(function ($order) {
+    //                 return [
+    //                         'id' => $order->id,
+    //                         'total_amount' => $order->total_amount,
+    //                         'status' => $order->status,
+    //                         'created_at' => $order->created_at->format('d-m-Y'),
+    //                         'dealer' => [
+    //                             'name' => $order->dealer->dealer_name,
+    //                         ],
+    //                     ];
+    //                 }),
+    //             ], 200);
+    //         }else{
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not Authenticated",
+    //             ], 401);
+    //         }
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function dealerOrderList(Request $request)
     {
         try {
@@ -326,56 +392,50 @@ class OrderController extends Controller
             }
 
             $employee = Auth::user();
-            
-            if($employee)
-            {
-                $employeeTypeId = $employee->employee_type_id;
-                
-                if($employeeTypeId=="1"){
-                    $dealerFlagOrder = '0';    
-                }
-                else if($employeeTypeId=="2"){
-                    $dealerFlagOrder = '1';    
-                }
-                else{
-                    $dealerFlagOrder = '0';  
-                }
 
-                $orders = Order::join('dealers', 'orders.dealer_id', '=', 'dealers.id') 
-                    ->where('dealer_flag_order',$dealerFlagOrder)
-                    ->where('dealers.approver_id',$employee->id)
-                    ->with(['dealer:id,dealer_name'])
-                    ->select('orders.id', 'total_amount', 'orders.status', 'orders.created_at', 'orders.dealer_id',)
-                    ->get()
-                    ->map(function ($order) {
-                
-                    $order->total_amount = (float) sprintf("%.2f", $order->total_amount);            
-                        return $order;
-                    });     
+            if ($employee) {
+                $orders = Order::join('dealers', 'orders.created_by_dealer', '=', 'dealers.id') 
+                        ->where('orders.dealer_flag_order', '1') 
+                        ->select([
+                            'orders.id',
+                            'orders.total_amount',
+                            'orders.status',
+                            'orders.created_at',
+                            'dealers.id as dealer_id',
+                            'dealers.dealer_name',
+                            'dealers.dealer_code'
+                        ])
+                        ->get()
+                        ->map(function ($order) {
+                            $order->total_amount = (float) sprintf("%.2f", $order->total_amount);
+                            return $order;
+                        });
+             
                 return response()->json([
                     'success' => true,
                     'statusCode' => 200,
-                    'message' => 'Orders fetched successfully',
+                    'message' => 'Dealer-created orders fetched successfully',
                     'data' => $orders->map(function ($order) {
-                    return [
+                        return [
                             'id' => $order->id,
                             'total_amount' => $order->total_amount,
                             'status' => $order->status,
-                            'created_at' => $order->created_at->format('d-m-Y'),
+                            'created_at' => $order->created_at->format('d/m/Y'),
                             'dealer' => [
-                                'name' => $order->dealer->dealer_name,
+                                'id' => $order->dealer_id,
+                                'name' => $order->dealer_name,
+                                'code' => $order->dealer_code,
                             ],
                         ];
                     }),
                 ], 200);
-            }else{
+            } else {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 401,
                     'message' => "User not Authenticated",
                 ], 401);
             }
-
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,

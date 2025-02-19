@@ -25,8 +25,6 @@ Route::prefix('admin')->group(function () {
     Route::get('/routes/getAllRoutesByDistrict/{district}', [RouteController::class, 'getAllRoutesByDistrict'])->name('admin.route.getAllRoutesByDistrict');
 
 
-
-
     Route::post('/targets/store', [TargetController::class, 'store'])->name('admin.target.store');
     Route::get('/targets', [TargetController::class, 'index'])->name('admin.target.index');
     Route::post('/targets/list', [TargetController::class, 'targetList'])->name('admin.target.list');
