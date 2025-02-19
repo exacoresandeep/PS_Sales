@@ -14,7 +14,13 @@ class AttendanceController extends Controller
     {
         $employeeId = Auth::id();
         $date = Carbon::today()->format('Y-m-d');
-
+        if (empty($request->latitude) || empty($request->longitude)) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 400,
+                'message' => 'Latitude and longitude are required. Please enable location services.',
+            ]);
+        }
         $attendance = Attendance::where('employee_id', $employeeId)
                                 ->where('date', $date)
                                 ->first();
@@ -65,7 +71,13 @@ class AttendanceController extends Controller
     {
         $employeeId = Auth::id();
         $date = Carbon::today()->format('Y-m-d');
-
+        // if (empty($request->latitude) || empty($request->longitude)) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'statusCode' => 400,
+        //         'message' => 'Latitude and longitude are required. Please enable location services.',
+        //     ]);
+        // }
         $attendance = Attendance::where('employee_id', $employeeId)
                                 ->where('date', $date)
                                 ->whereNotNull('punch_in')

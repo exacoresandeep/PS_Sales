@@ -26,9 +26,9 @@ Route::prefix('v1')->group(function () {
             Route::get('{orderId}', [OrderController::class, 'show']); // order details
             Route::post('/filter', [OrderController::class, 'orderFilter']);
 
-            Route::get('/dealer/list', [OrderController::class, 'dealerOrderList']); // Dealer order list
-            Route::get('/dealer/{orderId}/details', [OrderController::class, 'dealerOrderDetails']); // Dealer order details
-            Route::post('/dealer/{orderId}/status-update', [OrderController::class, 'dealerOrderStatusUpdate']); // Update order status
+            // Route::get('/dealer/list', [OrderController::class, 'dealerOrderList']); // Dealer order list
+            // Route::get('/dealer/{orderId}/details', [OrderController::class, 'dealerOrderDetails']); // Dealer order details
+            // Route::post('/dealer/{orderId}/status-update', [OrderController::class, 'dealerOrderStatusUpdate']); // Update order status
         });
 
         Route::prefix('leads')->group(function () {
