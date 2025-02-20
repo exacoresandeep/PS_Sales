@@ -20,4 +20,5 @@ class ProductDetails extends Model
     {
         return $this->belongsTo(ProductType::class, 'type_id');
     }
+
 }

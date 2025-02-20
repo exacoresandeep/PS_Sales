@@ -96,7 +96,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('trackOrder', [AuthController::class, 'trackOrder']);
         Route::get('dealerOrderList', [OrderController::class, 'dealerOrderList']);
-        Route::get('dealerOrderDetails/{orderId}', [OrderController::class, 'show']); 
+        Route::get('dealerOrderDetails/{orderId}', [OrderController::class, 'dealerOrderDetails']); 
         Route::post('dealerOrderStatusUpdate/{orderId}', [OrderController::class, 'dealerOrderStatusUpdate']); 
 
 
