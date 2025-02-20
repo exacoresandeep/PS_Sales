@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OutstandingPayment;
 use App\Models\ProductType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -467,7 +468,8 @@ class OrderController extends Controller
                 'paymentTerm:id,name',
                 'vehicleCategory:id,vehicle_category_name' 
             ])->findOrFail($orderId);
-
+            $dealerId = $order->created_by_dealer;
+            $totalOutstandingPayments = OutstandingPayment::where('dealer_id', $dealerId)->sum('outstanding_amount');
             $billingDate = $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null;
             $createdAt = Carbon::parse($order->created_at)->format('d/m/Y');
 
@@ -504,6 +506,7 @@ class OrderController extends Controller
                 'vehicle_number' => $order->vehicle_number,
                 'driver_name' => $order->driver_name,
                 'driver_phone' => $order->driver_phone,
+                'total_outstanding_payments' => $totalOutstandingPayments
             ];
 
             return response()->json([
@@ -528,7 +531,7 @@ class OrderController extends Controller
         try {
            
             $validatedData = $request->validate([
-                'status' => 'required|in:Approved,Rejected',
+                'status' => 'required|in:Accepted,Rejected',
             ]);
 
             $order = Order::join('dealers', 'orders.dealer_id', '=', 'dealers.id') 
