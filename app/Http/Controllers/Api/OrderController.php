@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ProductType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -196,11 +197,12 @@ class OrderController extends Controller
                 'lead:id,customer_type,customer_name,phone,address',
                 'lead.customerType:id,name', 
                 'paymentTerm:id,name',
+                'vehicleCategory:id,vehicle_category_name' 
             ])->findOrFail($orderId);
             $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null;
             $order->payment_date = $order->payment_date ? Carbon::parse($order->payment_date)->format('d-m-Y') : null;
             $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
-    
+            $order->vehicle_category_name = $order->vehicleCategory->vehicle_category_name ?? null;
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
@@ -444,6 +446,82 @@ class OrderController extends Controller
             ], 500);
         }
     }
+   
+    public function dealerOrderDetails($orderId)
+    {
+        try {
+            $user = Auth::user();
+
+            if ($user === null) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 400,
+                    'message' => 'You must be logged in to view this order.'
+                ], 400);
+            }
+
+            $order = Order::with([
+                'orderType:id,name',
+                'dealer:id,dealer_name,dealer_code', 
+                'orderItems.product:id,product_name',
+                'paymentTerm:id,name',
+                'vehicleCategory:id,vehicle_category_name' 
+            ])->findOrFail($orderId);
+
+            $billingDate = $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null;
+            $createdAt = Carbon::parse($order->created_at)->format('d/m/Y');
+
+            $orderItems = $order->orderItems->map(function ($item) {
+                $productDetails = collect($item->product_details)->map(function ($detail) {
+                    $productType = ProductType::find($detail['product_type_id']);
+                    return [
+                        'product_type_id' => $detail['product_type_id'],
+                        'type_name' => $productType->type_name ?? null, 
+                        'quantity' => (int) $detail['quantity'],
+                        'rate' => $detail['rate']
+                    ];
+                });
+    
+                return [
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product->product_name ?? null,
+                    'total_quantity' => (int) $item->total_quantity,
+                    'product_details' => $productDetails,
+                ];
+            });
+
+            $response = [
+                'id' => $order->id,
+                'order_type' => $order->orderType->name ?? null,
+                'payment_term' => $order->paymentTerm->name ?? null,
+                'billing_date' => $billingDate,
+                'attachment' => $order->attachment,
+                'total_amount' => $order->total_amount,
+                'additional_information' => $order->additional_information,
+                'created_at' => $createdAt,
+                'order_items' => $orderItems,
+                'vehicle_category' => $order->vehicleCategory->vehicle_category_name ?? null,
+                'vehicle_number' => $order->vehicle_number,
+                'driver_name' => $order->driver_name,
+                'driver_phone' => $order->driver_phone,
+            ];
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Order details fetched successfully',
+                'data' => $response,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     //dealerOrderStatusUpdate
     public function dealerOrderStatusUpdate(Request $request,$orderId){
