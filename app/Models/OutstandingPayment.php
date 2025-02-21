@@ -23,6 +23,11 @@ class OutstandingPayment extends Model
         'payment_amount_applied',
         'status'
     ];
+    protected $casts = [
+        'invoice_date' => 'date',
+        'due_date' => 'date',
+        'payment_date' => 'date'
+    ];
 
     public function dealer()
     {
