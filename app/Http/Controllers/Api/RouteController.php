@@ -661,7 +661,7 @@ class RouteController extends Controller
                 );
     
                 foreach ($selectedCustomers as $customer) {
-                    
+                    if (in_array($customer['location'], $locations)) {
                         RescheduledRouteCustomer::create([
                             'rescheduled_route_id' => $rescheduledRoute->id,
                             'customer_id' => $customer['id'],
@@ -670,7 +670,7 @@ class RouteController extends Controller
                             'location' => $customer['location'],
                             'status' => 'pending'
                         ]);
-                    
+                    }
                 }
             }
     
