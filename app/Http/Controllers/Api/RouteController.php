@@ -647,6 +647,36 @@ class RouteController extends Controller
                 [$routeLocations[$route1], $routeLocations[$route2]] = [$routeLocations[$route2], $routeLocations[$route1]];
             }
     
+            // foreach ($routeLocations as $routeName => $locations) {
+            //     $rescheduledRoute = RescheduledRoute::updateOrCreate(
+            //         [
+            //             'employee_id' => $employeeId,
+            //             'original_route_name' => $routeName,
+            //             'rescheduled_date' => Carbon::now()->toDateString(),
+            //         ],
+            //         [
+            //             'new_route_name' => $routeName,
+            //             'new_locations' => implode(', ', $locations),
+            //         ]
+            //     );
+    
+            //     foreach ($selectedCustomers as $customer) {
+            //         // Only insert customer if their location exists in this route's locations
+            //             // Prevent duplicate entries for the same customer in the same route
+            //             RescheduledRouteCustomer::updateOrCreate(
+            //                 [
+            //                     'rescheduled_route_id' => $rescheduledRoute->id,
+            //                     'customer_id' => $customer['id'],
+            //                 ],
+            //                 [
+            //                     'customer_name' => $customer['customer_name'],
+            //                     'customer_type' => $customer['customer_type'],
+            //                     'location' => $customer['location'],
+            //                     'status' => 'pending'
+            //                 ]
+            //             );
+            //     }
+            // }
             foreach ($routeLocations as $routeName => $locations) {
                 $rescheduledRoute = RescheduledRoute::updateOrCreate(
                     [
@@ -659,24 +689,28 @@ class RouteController extends Controller
                         'new_locations' => implode(', ', $locations),
                     ]
                 );
-    
-                foreach ($selectedCustomers as $customer) {
-                    // Only insert customer if their location exists in this route's locations
-                        // Prevent duplicate entries for the same customer in the same route
-                        RescheduledRouteCustomer::updateOrCreate(
-                            [
-                                'rescheduled_route_id' => $rescheduledRoute->id,
-                                'customer_id' => $customer['id'],
-                            ],
-                            [
-                                'customer_name' => $customer['customer_name'],
-                                'customer_type' => $customer['customer_type'],
-                                'location' => $customer['location'],
-                                'status' => 'pending'
-                            ]
-                        );
+            
+                // ** Filter customers who belong to this route's locations **
+                $filteredCustomers = array_filter($selectedCustomers, function ($customer) use ($locations) {
+                    return in_array($customer['location'], $locations);
+                });
+            
+                foreach ($filteredCustomers as $customer) {
+                    RescheduledRouteCustomer::updateOrCreate(
+                        [
+                            'rescheduled_route_id' => $rescheduledRoute->id,
+                            'customer_id' => $customer['id'],
+                        ],
+                        [
+                            'customer_name' => $customer['customer_name'],
+                            'customer_type' => $customer['customer_type'],
+                            'location' => $customer['location'],
+                            'status' => 'pending'
+                        ]
+                    );
                 }
             }
+            
     
             DB::commit();
     
