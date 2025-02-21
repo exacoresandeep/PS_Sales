@@ -662,7 +662,6 @@ class RouteController extends Controller
     
                 foreach ($selectedCustomers as $customer) {
                     // Only insert customer if their location exists in this route's locations
-                    if (in_array($customer['location'], $locations)) {
                         // Prevent duplicate entries for the same customer in the same route
                         RescheduledRouteCustomer::updateOrCreate(
                             [
@@ -676,7 +675,6 @@ class RouteController extends Controller
                                 'status' => 'pending'
                             ]
                         );
-                    }
                 }
             }
     
