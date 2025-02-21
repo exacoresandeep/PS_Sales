@@ -87,7 +87,7 @@ class LeadController extends Controller
                 'city' => 'required|string',
                 'location' => 'required|string',
                 'district_id' => 'required|exists:districts,id',
-                'trip_route_id' => 'required|exists:trip_route,id',
+                'assigned_route_id' => 'required|exists:assigned_routes,id',
             ]);
 
             $existingLead = Lead::where('phone', $request->phone)->first();
@@ -99,26 +99,26 @@ class LeadController extends Controller
                     'data' =>[],
                 ], 400);
             }
-            $tripRoute = TripRoute::where('id', $request->trip_route_id)
-                        ->where('district_id', $request->district_id)
-                        ->first();
+            // $tripRoute = TripRoute::where('id', $request->trip_route_id)
+            //             ->where('district_id', $request->district_id)
+            //             ->first();
 
-            if (!$tripRoute) {
-                return response()->json([
-                'success' => false,
-                'statusCode' => 404,
-                'message' => 'Trip Route not found for the given district!',
-                ], 404);
-            }
-            $subLocations = json_decode($tripRoute->sub_locations, true) ?? [];
+            // if (!$tripRoute) {
+            //     return response()->json([
+            //     'success' => false,
+            //     'statusCode' => 404,
+            //     'message' => 'Trip Route not found for the given district!',
+            //     ], 404);
+            // }
+            // $subLocations = json_decode($tripRoute->sub_locations, true) ?? [];
 
-            if (!in_array($request->location, $subLocations)) {
-                $subLocations[] = $request->location;
+            // if (!in_array($request->location, $subLocations)) {
+            //     $subLocations[] = $request->location;
 
-                $tripRoute->update([
-                    'sub_locations' => json_encode($subLocations),
-                ]);
-            }
+            //     $tripRoute->update([
+            //         'sub_locations' => json_encode($subLocations),
+            //     ]);
+            // }
 
             $validatedData['created_by'] = Auth::id();
 
@@ -131,8 +131,7 @@ class LeadController extends Controller
                 'sub_location' => $lead->location,
                 'phone' => $lead->phone,
                 'district' => $lead->district->name ?? null,
-                'route_name' => $tripRoute->route_name,
-                'location_name' => $tripRoute->location_name,
+                'assigned_route_id' => $lead->assigned_route_id,
                 'status' => 'Opened',
                 'created_at' => $lead->created_at->format('Y-m-d H:i:s'),
 

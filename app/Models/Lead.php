@@ -17,7 +17,7 @@ class Lead extends Model
         'phone', 
         'address', 
         'district_id', 
-        'trip_route_id', 
+        'assigned_route_id', 
         'type_of_visit', 
         'construction_type', 
         'stage_of_construction', 
