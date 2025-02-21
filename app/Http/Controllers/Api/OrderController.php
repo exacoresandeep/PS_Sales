@@ -629,6 +629,12 @@ class OrderController extends Controller
                 ],
             ], 200);
     
+        }catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 400,
+                'message' => "Validation error",
+            ], 400);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
