@@ -661,15 +661,21 @@ class RouteController extends Controller
                 );
     
                 foreach ($selectedCustomers as $customer) {
+                    // Only insert customer if their location exists in this route's locations
                     if (in_array($customer['location'], $locations)) {
-                        RescheduledRouteCustomer::create([
-                            'rescheduled_route_id' => $rescheduledRoute->id,
-                            'customer_id' => $customer['id'],
-                            'customer_name' => $customer['customer_name'],
-                            'customer_type' => $customer['customer_type'],
-                            'location' => $customer['location'],
-                            'status' => 'pending'
-                        ]);
+                        // Prevent duplicate entries for the same customer in the same route
+                        RescheduledRouteCustomer::updateOrCreate(
+                            [
+                                'rescheduled_route_id' => $rescheduledRoute->id,
+                                'customer_id' => $customer['id'],
+                            ],
+                            [
+                                'customer_name' => $customer['customer_name'],
+                                'customer_type' => $customer['customer_type'],
+                                'location' => $customer['location'],
+                                'status' => 'pending'
+                            ]
+                        );
                     }
                 }
             }
