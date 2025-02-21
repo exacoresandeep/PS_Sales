@@ -408,16 +408,13 @@ class RouteController extends Controller
             ], 500);
         }
     }
-    
-    
     public function currentWeekRoutes()
     {
         try {
-
             $employeeId = Auth::id();
             $today = Carbon::now();
             $weekStart = $today->startOfWeek(Carbon::MONDAY);
-    
+
             $routeMapping = [
                 'Monday' => 'R1',
                 'Tuesday' => 'R2',
@@ -426,17 +423,17 @@ class RouteController extends Controller
                 'Friday' => 'R5',
                 'Saturday' => 'R6',
             ];
-    
+
             $weeklyRoutes = [];
-    
+
             foreach ($routeMapping as $day => $routeName) {
                 $date = $weekStart->copy()->addDays(array_search($day, array_keys($routeMapping)))->format('d/m/y');
-    
+
                 $rescheduledTrip = RescheduledRoute::where('employee_id', $employeeId)
                     ->where('original_route_name', $routeName)
                     ->whereDate('rescheduled_date', '>=', $weekStart->toDateString())
                     ->first();
-    
+
                 if ($rescheduledTrip) {
                     $routeName = $rescheduledTrip->new_route_name;
                     $locations = explode(', ', $rescheduledTrip->new_locations);
@@ -445,23 +442,25 @@ class RouteController extends Controller
                     $trip = AssignRoute::where('employee_id', $employeeId)
                         ->where('route_name', $routeName)
                         ->first();
-    
+
                     if (!$trip) {
                         continue;
                     }
-    
+
                     $locations = explode(', ', $trip->locations);
                     $routeId = $trip->id; 
-    
+                } // <-- **Added missing closing brace here**
+
+                // Fetch Dealers
                 $dealers = Dealer::whereIn('location', $locations)
                     ->get(['id', 'dealer_name as customer_name', 'location'])
                     ->map(function ($dealer) {
                         return array_merge($dealer->toArray(), ['customer_type' => 'Dealer']);
                     });
-    
+
+                // Fetch Leads
                 $leads = Lead::join('customer_types', 'leads.customer_type', '=', 'customer_types.id')
-                    // ->whereIn('leads.location', $locations)
-                    ->where('leads.assigned_route_id', $routeId) 
+                    ->where('leads.assigned_route_id', $routeId)
                     ->where(function ($query) {
                         $query->whereIn('leads.customer_type', [1, 2]) 
                             ->orWhere(function ($q) {
@@ -474,8 +473,11 @@ class RouteController extends Controller
                         'leads.location',
                         'customer_types.name as customer_type'
                     ]);
-    
+
+                // Merge customers
                 $customers = $dealers->merge($leads);
+
+                // Build weekly routes array
                 $weeklyRoutes[] = [
                     'day' => $day,
                     'date' => $date,
@@ -484,14 +486,14 @@ class RouteController extends Controller
                     'customers' => $customers,
                 ];
             }
-    
+
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Weekly routes fetched successfully.',
                 'data' => $weeklyRoutes,
             ], 200);
-    
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -500,6 +502,102 @@ class RouteController extends Controller
             ], 500);
         }
     }
+
+    
+    // public function currentWeekRoutes()
+    // {
+    //     try {
+    //         $employeeId = Auth::id();
+    //         $today = Carbon::now();
+    //         $weekStart = $today->startOfWeek(Carbon::MONDAY);
+    
+    //         $routeMapping = [
+    //             'Monday' => 'R1',
+    //             'Tuesday' => 'R2',
+    //             'Wednesday' => 'R3',
+    //             'Thursday' => 'R4',
+    //             'Friday' => 'R5',
+    //             'Saturday' => 'R6',
+    //         ];
+    
+    //         $weeklyRoutes = [];
+    
+    //         foreach ($routeMapping as $day => $routeName) {
+    //             $date = $weekStart->copy()->addDays(array_search($day, array_keys($routeMapping)))->format('d/m/y');
+    
+    //             $rescheduledTrip = RescheduledRoute::where('employee_id', $employeeId)
+    //                 ->where('original_route_name', $routeName)
+    //                 ->whereDate('rescheduled_date', '>=', $weekStart->toDateString())
+    //                 ->first();
+    
+    //             if ($rescheduledTrip) {
+    //                 $routeName = $rescheduledTrip->new_route_name;
+    //                 $locations = explode(', ', $rescheduledTrip->new_locations);
+    //                 $routeId = $rescheduledTrip->id;
+    //             } else {
+    //                 $trip = AssignRoute::where('employee_id', $employeeId)
+    //                     ->where('route_name', $routeName)
+    //                     ->first();
+    
+    //                 if (!$trip) {
+    //                     continue;
+    //                 }
+    
+    //                 $locations = explode(', ', $trip->locations);
+    //                 $routeId = $trip->id; 
+    //             } // <-- **Added missing closing brace here**
+    
+    //             // Fetch Dealers
+    //             $dealers = Dealer::whereIn('location', $locations)
+    //                 ->get(['id', 'dealer_name as customer_name', 'location'])
+    //                 ->map(function ($dealer) {
+    //                     return array_merge($dealer->toArray(), ['customer_type' => 'Dealer']);
+    //                 });
+    
+    //             // Fetch Leads
+    //             $leads = Lead::join('customer_types', 'leads.customer_type', '=', 'customer_types.id')
+    //                 ->where('leads.assigned_route_id', $routeId)
+    //                 ->where(function ($query) {
+    //                     $query->whereIn('leads.customer_type', [1, 2]) 
+    //                         ->orWhere(function ($q) {
+    //                             $q->where('leads.customer_type', 4)->where('leads.status', 'Follow Up');
+    //                         });
+    //                 })
+    //                 ->get([
+    //                     'leads.id',
+    //                     'leads.customer_name',
+    //                     'leads.location',
+    //                     'customer_types.name as customer_type'
+    //                 ]);
+    
+    //             // Merge customers
+    //             $customers = $dealers->merge($leads);
+    
+    //             // Build weekly routes array
+    //             $weeklyRoutes[] = [
+    //                 'day' => $day,
+    //                 'date' => $date,
+    //                 'route_name' => $routeName,
+    //                 'locations' => $locations,
+    //                 'customers' => $customers,
+    //             ];
+    //         }
+    
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Weekly routes fetched successfully.',
+    //             'data' => $weeklyRoutes,
+    //         ], 200);
+    
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     
     public function routeReschedule(Request $request)
     {
