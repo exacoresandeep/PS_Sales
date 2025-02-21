@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\TargetController;
 use App\Http\Controllers\Api\RouteController;
+use App\Http\Controllers\Api\StockController;
 
 Route::prefix('v1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -29,8 +30,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/dealer/outstanding-payments', [OrderController::class, 'outstandingPaymentsList']); 
             Route::get('/dealer/view-outstanding-payment/{orderId}', [OrderController::class, 'viewOutstandingPaymentOrderDetails']); 
             Route::post('/dealer/outstanding-payment/{id}/add-commitment', [OrderController::class, 'addOutstandingPaymentCommitment']);
-            // Route::get('/dealer/{orderId}/details', [OrderController::class, 'dealerOrderDetails']); // Dealer order details
-            // Route::post('/dealer/{orderId}/status-update', [OrderController::class, 'dealerOrderStatusUpdate']); // Update order status
+         
         });
 
         Route::prefix('leads')->group(function () {
@@ -39,8 +39,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/{customer_type_id}/filter', [LeadController::class, 'getleadsFilter']);
             Route::get('{leadId}', [LeadController::class, 'show']); // Leads details
             Route::post('{leadId}/update', [LeadController::class, 'updateLead']); // Update lead status
-            // Route::post('update-open-lead/{leadId}', [LeadController::class, 'updateOpenLeads']);
-            // Route::post('update-lost-leads/{leadId}', [LeadController::class, 'updateLostLeads']);
+      
 
         });
         Route::prefix('leave')->group(function () {
@@ -78,6 +77,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/punch-out', [AttendanceController::class, 'punchOut']);
             // Route::get('/auto-punch-out', [AttendanceController::class, 'autoPunchOut']);
             Route::get('/today', [AttendanceController::class, 'getTodayAttendance']);
+        });
+        Route::prefix('stock')->group(function () {
+            Route::get('/stock-insights', [StockController::class, 'stockList']);
+            Route::get('/product-stock/{product_details_id}', [StockController::class, 'getProductStockDetails']);
+            Route::get('/stock-filter', [StockController::class, 'stockFilter']);
         });
 
         Route::get('customer-types', [AuthController::class, 'getCustomerTypes']);
