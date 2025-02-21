@@ -26,7 +26,9 @@ Route::prefix('v1')->group(function () {
             Route::get('{orderId}', [OrderController::class, 'show']); // order details
             Route::post('/filter', [OrderController::class, 'orderFilter']);
 
-            // Route::get('/dealer/list', [OrderController::class, 'dealerOrderList']); // Dealer order list
+            Route::get('/dealer/outstanding-payments', [OrderController::class, 'outstandingPaymentsList']); 
+            Route::get('/dealer/view-outstanding-payment/{orderId}', [OrderController::class, 'viewOutstandingPaymentOrderDetails']); 
+            Route::post('/dealer/outstanding-payment/{id}/add-commitment', [OrderController::class, 'addOutstandingPaymentCommitment']);
             // Route::get('/dealer/{orderId}/details', [OrderController::class, 'dealerOrderDetails']); // Dealer order details
             // Route::post('/dealer/{orderId}/status-update', [OrderController::class, 'dealerOrderStatusUpdate']); // Update order status
         });
@@ -66,6 +68,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/routeList', [RouteController::class, 'routeList']);
             Route::post('/routeReschedule', [RouteController::class, 'routeReschedule']);
             Route::get('/todaysRouteSchedule', [RouteController::class, 'todaysRouteSchedule']);
+            Route::get('/currentWeekRoutes', [RouteController::class, 'currentWeekRoutes']);
             Route::post('/changeRouteStatus', [RouteController::class, 'changeRouteStatus']);
             Route::get('/{district_id}', [RouteController::class, 'getRoutesByDistrict']);
 
