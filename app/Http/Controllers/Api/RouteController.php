@@ -413,6 +413,7 @@ class RouteController extends Controller
     public function currentWeekRoutes()
     {
         try {
+
             $employeeId = Auth::id();
             $today = Carbon::now();
             $weekStart = $today->startOfWeek(Carbon::MONDAY);
@@ -451,7 +452,6 @@ class RouteController extends Controller
     
                     $locations = explode(', ', $trip->locations);
                     $routeId = $trip->id; 
-                }
     
                 $dealers = Dealer::whereIn('location', $locations)
                     ->get(['id', 'dealer_name as customer_name', 'location'])
