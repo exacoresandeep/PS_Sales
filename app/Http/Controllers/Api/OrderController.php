@@ -637,6 +637,96 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    public function dealerOrderFilter(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'search_key' => 'required|string|in:All,Pending,Accepted,Rejected',
+            ]);
+
+            $searchKey = $validatedData['search_key'];
+            $employee = Auth::user();
+
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not Authenticated",
+                ], 401);
+            }
+
+            // Get assigned routes for the logged-in employee
+            $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+
+            if (empty($assignedRoutes)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No assigned routes found for the employee.",
+                    'data' => []
+                ], 404);
+            }
+
+            // Get dealers linked to those routes
+            $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
+
+            if (empty($dealers)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No dealers found for the assigned routes.",
+                    'data' => []
+                ], 404);
+            }
+
+            // Fetch dealer-created orders based on the search key
+            $ordersQuery = Order::join('dealers', 'orders.created_by_dealer', '=', 'dealers.id')
+                ->where('orders.dealer_flag_order', '1')
+                ->whereIn('orders.created_by_dealer', $dealers)
+                ->select([
+                    'orders.id',
+                    'orders.total_amount',
+                    'orders.status',
+                    'orders.created_at',
+                    'dealers.id as dealer_id',
+                    'dealers.dealer_name',
+                    'dealers.dealer_code'
+                ]);
+
+            if ($searchKey !== 'All') {
+                $ordersQuery->where('orders.status', $searchKey);
+            }
+
+            $orders = $ordersQuery->get()->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'total_amount' => (float) sprintf("%.2f", $order->total_amount),
+                    'status' => $order->status,
+                    'created_at' => $order->created_at->format('d/m/Y'),
+                    'dealer' => [
+                        'id' => $order->dealer_id,
+                        'name' => $order->dealer_name,
+                        'code' => $order->dealer_code,
+                    ],
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Filtered dealer-created orders fetched successfully",
+                'data' => $orders,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function outstandingPaymentsList()
     {
         try {
