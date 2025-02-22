@@ -39,8 +39,14 @@ class AssignRoute extends Model
     {
         return $this->belongsTo(District::class);
     }
-
-   
+    public function dealers()
+    {
+        return $this->hasMany(Dealer::class, 'assigned_route_id', 'id');
+    }
+    public function leads()
+    {
+        return $this->hasMany(Lead::class, 'assigned_route_id', 'id');
+    }
     public function employee()
     {
         return $this->belongsTo(Employee::class);
