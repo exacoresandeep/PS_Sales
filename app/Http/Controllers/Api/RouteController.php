@@ -655,6 +655,10 @@ class RouteController extends Controller
     
             // Save all (swapped and unchanged) rescheduled routes
             foreach ($routeLocations as $routeName => $locations) {
+                $assignedRoute = $assignedRoutes[$routeName] ?? null;
+                if (!$assignedRoute) {
+                    throw new \Exception("Assigned route not found for: {$routeName}");
+                }
                 $rescheduledRoute = RescheduledRoute::updateOrCreate(
                     [
                         'employee_id' => $employeeId,
@@ -662,6 +666,7 @@ class RouteController extends Controller
                         'rescheduled_date' => Carbon::now()->toDateString(),
                     ],
                     [
+                        'original_assigned_route_id' => $assignedRoute->id,
                         'new_route_name' => $routeName,
                         'new_locations' => implode(', ', $locations),
                     ]
