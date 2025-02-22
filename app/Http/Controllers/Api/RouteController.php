@@ -677,40 +677,7 @@ class RouteController extends Controller
             //             );
             //     }
             // }
-            foreach ($routeLocations as $routeName => $locations) {
-                $rescheduledRoute = RescheduledRoute::updateOrCreate(
-                    [
-                        'employee_id' => $employeeId,
-                        'original_route_name' => $routeName,
-                        'rescheduled_date' => Carbon::now()->toDateString(),
-                    ],
-                    [
-                        'new_route_name' => $routeName,
-                        'new_locations' => implode(', ', $locations),
-                    ]
-                );
-            
-                // ** Filter customers who belong to this route's locations **
-                $filteredCustomers = array_filter($selectedCustomers, function ($customer) use ($locations) {
-                    return in_array($customer['location'], $locations);
-                });
-            
-                foreach ($filteredCustomers as $customer) {
-                    RescheduledRouteCustomer::updateOrCreate(
-                        [
-                            'rescheduled_route_id' => $rescheduledRoute->id,
-                            'customer_id' => $customer['id'],
-                        ],
-                        [
-                            'customer_name' => $customer['customer_name'],
-                            'customer_type' => $customer['customer_type'],
-                            'location' => $customer['location'],
-                            'status' => 'pending'
-                        ]
-                    );
-                }
-            }
-            
+           
     
             DB::commit();
     
