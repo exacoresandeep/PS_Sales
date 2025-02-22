@@ -7,21 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 class RescheduledRouteCustomer extends Model
 {
     use HasFactory;
-
-    protected $table = 'rescheduled_route_customers';
     public $timestamps = false;
-    
     protected $fillable = [
+        'customer_id', 
         'rescheduled_route_id',
-        'customer_id',
-        'customer_name',
-        'customer_type',
-        'location',
-        'status'
+        'customer_type', 
+        'customer_name', 
+        'location', 
+        'route_name', 
+        'assigned_route_id', 
+        'status', 
+        'week_start', 
+        'original_day', 
+        'rescheduled_day',
+        'visited_at'
     ];
-
-    public function rescheduledRoute()
-    {
-        return $this->belongsTo(RescheduledRoute::class);
-    }
+    protected $casts = [
+        'visited_at' => 'date', 
+    ];
 }
