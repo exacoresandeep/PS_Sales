@@ -87,23 +87,21 @@ class StockController extends Controller
         if ($stockRecords->isEmpty()) {
             return response()->json(['message' => 'No stock records found for this product.'], 404);
         }
-
+        $firstStock = $stockRecords->first();
         return response()->json([
             'product_details_id' => $product_details_id,
-            'product_name'       => optional($stockRecords->first()->productDetails)->product_name,
-            'product_type'       => optional($stockRecords->first()->productDetails->productType)->type_name,
-            'item_profile'       => optional($stockRecords->first()->productDetails)->item_profile,
-            'item_thickness'     => optional($stockRecords->first()->productDetails)->item_thickness,
-            'primary_group'      => optional($stockRecords->first()->productDetails)->primary_group,
-            'stock_updated_at'   => optional($stockRecords->first()->productDetails)->stock_updated_at_formatted, // Use formatted date
-            'stocks'             => $stockRecords->map(function ($stock) {
-                return [
-                    'warehouse_id'      => $stock->warehouse_id,
-                    'warehouse_name'    => $stock->warehouse->warehouse_name,
-                    'stock_quantity'    => number_format((float) $stock->quantity, 5, '.', ''),
-                    'availability_status' => $stock->quantity > 0 ? 'In Stock' : 'Out of Stock',
-                ];
-            }),
+            'product_name'       => optional($firstStock->productDetails)->product_name,
+            'product_type'       => optional($firstStock->productDetails->productType)->type_name,
+            'item_profile'       => optional($firstStock->productDetails)->item_profile,
+            'item_thickness'     => optional($firstStock->productDetails)->item_thickness,
+            'primary_group'      => optional($firstStock->productDetails)->primary_group,
+            'stock_updated_at'   => optional($firstStock->productDetails)->stock_updated_at_formatted, // Use formatted date
+            'stocks'             => [
+                'warehouse_id'      => $firstStock->warehouse_id,
+                'warehouse_name'    => $firstStock->warehouse->warehouse_name,
+                'stock_quantity'    => number_format((float) $firstStock->quantity, 5, '.', ''),
+                'availability_status' => $firstStock->quantity > 0 ? 'In Stock' : 'Out of Stock',
+            ],
         ]);
     }
     public function stockFilter(Request $request)
