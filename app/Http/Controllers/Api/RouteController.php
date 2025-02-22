@@ -507,7 +507,7 @@ class RouteController extends Controller
         try {
             $employeeId = Auth::id();
             $today = Carbon::now();
-            $weekStart = $today->startOfWeek(Carbon::MONDAY);
+            $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
     
             $routeMapping = [
                 'Monday' => 'R1',
@@ -628,58 +628,65 @@ class RouteController extends Controller
             $selectedCustomers = $request->input('selected_customers', []);
     
             $assignedRoutes = AssignRoute::where('employee_id', $employeeId)->get()->keyBy('route_name');
-    
+            if ($assignedRoutes->isEmpty()) {
+                throw new \Exception("No assigned routes found for employee.");
+            }
             $routeLocations = [];
             foreach ($assignedRoutes as $route) {
                 $routeLocations[$route->route_name] = explode(', ', $route->locations);
             }
     
+            // Process swaps
             foreach ($swaps as $swap) {
                 [$day1, $day2] = $swap;
     
+                // Get route names from mapping
                 $route1 = $this->getRouteNameFromDay($day1);
                 $route2 = $this->getRouteNameFromDay($day2);
     
+                // Ensure routes exist
                 if (!isset($routeLocations[$route1]) || !isset($routeLocations[$route2])) {
                     throw new \Exception("Invalid route names for swap: {$day1} <-> {$day2}");
                 }
     
+                // Swap locations
                 [$routeLocations[$route1], $routeLocations[$route2]] = [$routeLocations[$route2], $routeLocations[$route1]];
             }
     
-            // foreach ($routeLocations as $routeName => $locations) {
-            //     $rescheduledRoute = RescheduledRoute::updateOrCreate(
-            //         [
-            //             'employee_id' => $employeeId,
-            //             'original_route_name' => $routeName,
-            //             'rescheduled_date' => Carbon::now()->toDateString(),
-            //         ],
-            //         [
-            //             'new_route_name' => $routeName,
-            //             'new_locations' => implode(', ', $locations),
-            //         ]
-            //     );
+            // Save all (swapped and unchanged) rescheduled routes
+            foreach ($routeLocations as $routeName => $locations) {
+                $rescheduledRoute = RescheduledRoute::updateOrCreate(
+                    [
+                        'employee_id' => $employeeId,
+                        'original_route_name' => $routeName,
+                        'rescheduled_date' => Carbon::now()->toDateString(),
+                    ],
+                    [
+                        'new_route_name' => $routeName,
+                        'new_locations' => implode(', ', $locations),
+                    ]
+                );
     
-            //     foreach ($selectedCustomers as $customer) {
-            //         // Only insert customer if their location exists in this route's locations
-            //             // Prevent duplicate entries for the same customer in the same route
-            //             RescheduledRouteCustomer::updateOrCreate(
-            //                 [
-            //                     'rescheduled_route_id' => $rescheduledRoute->id,
-            //                     'customer_id' => $customer['id'],
-            //                 ],
-            //                 [
-            //                     'customer_name' => $customer['customer_name'],
-            //                     'customer_type' => $customer['customer_type'],
-            //                     'location' => $customer['location'],
-            //                     'status' => 'pending'
-            //                 ]
-            //             );
-            //     }
-            // }
-           
+                // Store selected customers in the rescheduled route
+                foreach ($selectedCustomers as $customer) {
+                    if (in_array($customer['location'], $locations)) {
+                        RescheduledRouteCustomer::updateOrCreate(
+                            [
+                                'rescheduled_route_id' => $rescheduledRoute->id,
+                                'customer_id' => $customer['id'],
+                            ],
+                            [
+                                'customer_name' => $customer['customer_name'],
+                                'customer_type' => $customer['customer_type'],
+                                'location' => $customer['location'],
+                                'status' => 'pending'
+                            ]
+                        );
+                    }
+                }
+            }
     
-            DB::commit();
+            DB::commit(); // Commit the transaction
     
             return response()->json([
                 'success' => true,
@@ -688,7 +695,7 @@ class RouteController extends Controller
             ], 200);
     
         } catch (\Exception $e) {
-            DB::rollBack(); 
+            DB::rollBack(); // Rollback in case of error
             return response()->json([
                 'success' => false,
                 'statusCode' => 500,
@@ -696,6 +703,8 @@ class RouteController extends Controller
             ], 500);
         }
     }
+    
+    // Helper function to map days to route names
     private function getRouteNameFromDay($day)
     {
         $routeMapping = [

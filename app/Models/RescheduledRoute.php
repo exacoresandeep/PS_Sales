@@ -21,7 +21,7 @@ class RescheduledRoute extends Model
 
     protected $casts = [
         'rescheduled_date' => 'date',
-        'new_locations' => 'array' 
+        // 'new_locations' => 'array' 
     ];
 
     public function customers()
