@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Activity;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Exception;
 
 class ActivityController extends Controller
 {
@@ -164,4 +166,139 @@ class ActivityController extends Controller
             ], 500);
         }
     }
+    public function activityReportListing(Request $request)
+    {
+        try {
+            $employee = Auth::user();
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+
+            $salesExecutives = Employee::where('district', $employee->district)
+                ->where('employee_type_id', 1) 
+                ->get();
+
+            if ($salesExecutives->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No Sales Executives found in this district.",
+                ], 404);
+            }
+
+            $month = $request->input('month', date('m'));
+            $year = $request->input('year', date('Y'));
+
+            $totalActivitiesForPeriod = 0;
+
+            $reportData = $salesExecutives->map(function ($se) use ($month, $year, &$totalActivitiesForPeriod) {
+                $activityCount = Activity::where('employee_id', $se->id)
+                    ->whereYear('assigned_date', $year)
+                    ->whereMonth('assigned_date', $month)
+                    ->count();
+
+                $totalActivitiesForPeriod += $activityCount;
+
+                return [
+                    'employee_id' => $se->id,
+                    'employee_name' => $se->name,
+                    'employee_code' => $se->employee_code,
+                    'total_activities' => $activityCount,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Activity report listing fetched successfully for $month/$year.",
+                'data' => [
+                    'total_activities_for_period' => $totalActivitiesForPeriod,
+                    'activity_report' => $reportData,
+                ],
+                
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function activityReportDetails(Request $request, $employee_id)
+    {
+        try {
+            $employee = Auth::user();
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+
+            $salesExecutive = Employee::find($employee_id);
+            if (!$salesExecutive || $salesExecutive->district !== $employee->district) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Sales Executive not found in your district.",
+                ], 404);
+            }
+
+            $month = $request->input('month', date('m'));
+            $year = $request->input('year', date('Y'));
+
+            $activities = Activity::where('employee_id', $salesExecutive->id)
+                ->whereYear('assigned_date', $year)
+                ->whereMonth('assigned_date', $month)
+                ->with(['activityType', 'dealer']) 
+                ->get();
+
+            $totalActivities = $activities->count();
+
+            $activityList = $activities->map(function ($activity) {
+                return [
+                    'activity_id' => $activity->id,
+                    'activity_type' => $activity->activityType ? $activity->activityType->name : null,
+                    'dealer_code' => $activity->dealer ? $activity->dealer->dealer_code : null,
+                    'dealer_name' => $activity->dealer ? $activity->dealer->dealer_name : null,
+                    'completed_date' => $activity->status === 'Pending' ? null : ($activity->completed_date ? $activity->completed_date->format('d/m/Y') : null),
+                    'assigned_date' => $activity->status === 'Pending' ? $activity->assigned_date->format('d/m/Y') : null,
+                    'status' => $activity->status,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Activity report details fetched successfully for $month/$year.",
+                'data' =>[
+                    'employee_details' => [
+                        'employee_id' => $salesExecutive->id,
+                        'employee_name' => $salesExecutive->name,
+                        'employee_code' => $salesExecutive->employee_code,
+                        'email' => $salesExecutive->email,
+                        'phone' => $salesExecutive->phone,
+                        'total_activities' => $totalActivities,
+                    ],
+                    'activities' => $activityList,
+                ],        
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 }
