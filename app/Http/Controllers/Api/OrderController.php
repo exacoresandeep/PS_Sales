@@ -1118,8 +1118,10 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Sales report fetched successfully for $month/$year.",
-                'total_sales_for_period' => (float) $totalSalesForPeriod,
-                'data' => $salesReport,
+                'data' => [
+                    'total_sales_for_period' => (float) $totalSalesForPeriod,
+                    'sales_report' => $salesReport,
+                ],
             ], 200);
 
         } catch (Exception $e) {
@@ -1185,15 +1187,17 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Sales report details fetched successfully for $month/$year.",
-                'employee_details' => [
-                    'employee_id' => $salesExecutive->id,
-                    'employee_code' => $salesExecutive->employee_code,
-                    'employee_name' => $salesExecutive->name,
-                    'email' => $salesExecutive->email,
-                    'phone' => $salesExecutive->phone,
-                    'total_sales_amount' => (float) $totalSalesAmount,
+                'data' =>[
+                    'employee_details' => [
+                        'employee_id' => $salesExecutive->id,
+                        'employee_code' => $salesExecutive->employee_code,
+                        'employee_name' => $salesExecutive->name,
+                        'email' => $salesExecutive->email,
+                        'phone' => $salesExecutive->phone,
+                        'total_sales_amount' => (float) $totalSalesAmount,
+                    ],
+                    'orders' => $ordersData,
                 ],
-                'orders' => $ordersData,
             ], 200);
 
         } catch (Exception $e) {
@@ -1262,8 +1266,10 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Order report listing fetched successfully for $month/$year.",
-                'total_orders_for_period' => $totalOrdersForPeriod,
-                'data' => $reportData,
+                'data' => [
+                    'total_orders_for_period' => $totalOrdersForPeriod,
+                    'order_report' => $reportData,
+                ],
             ], 200);
 
         } catch (Exception $e) {
@@ -1324,15 +1330,17 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Order details fetched successfully for $month/$year.",
-                'employee' => [
-                    'id' => $employee->id,
-                    'name' => $employee->name,
-                    'employee_code' => $employee->employee_code,
-                    'email' => $employee->email,
-                    'phone' => $employee->phone,
-                    'total_orders' => $totalOrders,
+                'data' =>[
+                    'employee' => [
+                        'id' => $employee->id,
+                        'name' => $employee->name,
+                        'employee_code' => $employee->employee_code,
+                        'email' => $employee->email,
+                        'phone' => $employee->phone,
+                        'total_orders' => $totalOrders,
+                    ],
+                    'orders' => $orderData,
                 ],
-                'orders' => $orderData,
             ], 200);
     
         } catch (Exception $e) {
@@ -1414,12 +1422,16 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Lead report listing fetched successfully for $month/$year.",
-                'total_leads_for_period' => [
-                    'opened' => $totalOpenedLeads,
-                    'won' => $totalWonLeads,
-                    'lost' => $totalLostLeads,
-                ],
-                'data' => $reportData,
+                
+                'data' => [
+                    'total_leads_for_period' => [
+                        'opened' => $totalOpenedLeads,
+                        'won' => $totalWonLeads,
+                        'lost' => $totalLostLeads,
+                    ],
+                    'lead_report' =>$reportData,
+                ]
+                
             ], 200);
     
         } catch (Exception $e) {
@@ -1500,19 +1512,22 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Lead report details fetched successfully for {$salesExecutive->name}.",
-                'employee' => [
-                    'employee_id' => $salesExecutive->id,
-                    'employee_name' => $salesExecutive->name,
-                    'employee_code' => $salesExecutive->employee_code,
-                    'email' => $salesExecutive->email,
-                    'phone' => $salesExecutive->phone,
+                'data' => [
+                    'employee' => [
+                        'employee_id' => $salesExecutive->id,
+                        'employee_name' => $salesExecutive->name,
+                        'employee_code' => $salesExecutive->employee_code,
+                        'email' => $salesExecutive->email,
+                        'phone' => $salesExecutive->phone,
+                    ],
+                    'total_leads' => [
+                        'opened' => $openedLeads,
+                        'won' => $wonLeads,
+                        'lost' => $lostLeads,
+                    ],
+                    'leads' => $leadDetails,
                 ],
-                'total_leads' => [
-                    'opened' => $openedLeads,
-                    'won' => $wonLeads,
-                    'lost' => $lostLeads,
-                ],
-                'leads' => $leadDetails,
+                    
             ], 200);
 
         } catch (Exception $e) {
