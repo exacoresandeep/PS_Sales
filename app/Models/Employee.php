@@ -13,7 +13,7 @@ class Employee extends Authenticatable
 
     protected $fillable = [
         'employee_code', 'name', 'designation', 'email', 'phone', 
-        'employee_type_id', 'password', 'address', 'photo', 'emergency_contact', 'area', 'reporting_manager'
+        'employee_type_id', 'password', 'address', 'photo', 'emergency_contact', 'district', 'area', 'reporting_manager'
     ];
 
     public function employeeType()

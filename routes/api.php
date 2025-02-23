@@ -83,6 +83,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/product-stock/{product_details_id}', [StockController::class, 'getProductStockDetails']);
             Route::get('/stock-filter', [StockController::class, 'stockFilter']);
         });
+        Route::prefix('report')->group(function () {
+            Route::get('/sereport', [OrderController::class, 'salesExecutiveSalesReport']);
+        });
 
         Route::get('customer-types', [AuthController::class, 'getCustomerTypes']);
         Route::get('order-types', [AuthController::class, 'getOrderTypes']);
