@@ -20,7 +20,6 @@ class StockController extends Controller
         $latitude  = $request->latitude;
         $longitude = $request->longitude;
     
-        // Get the nearest warehouse using Haversine formula
         $nearestWarehouse = Warehouse::select(
             'id',
             'warehouse_name',
@@ -36,15 +35,21 @@ class StockController extends Controller
         ->first();
     
         if (!$nearestWarehouse) {
-            return response()->json(['message' => 'No warehouse found nearby.'], 404);
+            return response()->json([
+                'success' => false,
+                'statusCode' => 404,
+                'message' => 'No warehouse found nearby.',
+            ], 404);
         }
     
-        // Fetch stock items from the nearest warehouse
         $stockItems = ProductStock::with(['productDetails.product', 'productDetails.productType'])
             ->where('warehouse_id', $nearestWarehouse->id)
             ->get();
     
         return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => "Stock list fetched successfully.",
             'warehouse' => [
                 'id'            => $nearestWarehouse->id,
                 'name'          => $nearestWarehouse->warehouse_name,
@@ -53,10 +58,8 @@ class StockController extends Controller
                 'distance_km'   => round($nearestWarehouse->distance, 2),
             ],
             'stocks' => $stockItems->map(function ($stock) {
-                // Convert stock quantity to float for proper comparison
                 $stockQuantity = (float) $stock->quantity;
     
-                // Determine availability status based on stock quantity
                 $availabilityStatus = 'Out of Stock';
                 if ($stockQuantity > 0 && $stockQuantity < 1000) {
                     $availabilityStatus = 'Low Stock';
@@ -72,11 +75,11 @@ class StockController extends Controller
                     'item_thickness'      => $stock->productDetails->item_thickness,
                     'primary_group'       => $stock->productDetails->primary_group,
                     'total_available_qty' => $stock->productDetails->total_available_quantity,
-                    'stock_quantity'      => number_format($stockQuantity, 5, '.', ''), // Format to match DB precision
+                    'stock_quantity'      => number_format($stockQuantity, 5, '.', ''),
                     'availability_status' => $availabilityStatus,
                 ];
             }),
-        ]);
+        ], 200);
     }
     public function getProductStockDetails($product_details_id)
     {
@@ -85,24 +88,33 @@ class StockController extends Controller
             ->get();
 
         if ($stockRecords->isEmpty()) {
-            return response()->json(['message' => 'No stock records found for this product.'], 404);
+            return response()->json([
+                'success' => false,
+                'statusCode' => 404,
+                'message' => 'No stock records found for this product.',
+            ], 404);
         }
         $firstStock = $stockRecords->first();
         return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => 'Product stock details fetched successfully.',
             'product_details_id' => $product_details_id,
             'product_name'       => optional($firstStock->productDetails)->product_name,
             'product_type'       => optional($firstStock->productDetails->productType)->type_name,
             'item_profile'       => optional($firstStock->productDetails)->item_profile,
             'item_thickness'     => optional($firstStock->productDetails)->item_thickness,
             'primary_group'      => optional($firstStock->productDetails)->primary_group,
-            'stock_updated_at'   => optional($firstStock->productDetails)->stock_updated_at_formatted, // Use formatted date
-            'stocks'             => [
-                'warehouse_id'      => $firstStock->warehouse_id,
-                'warehouse_name'    => $firstStock->warehouse->warehouse_name,
-                'stock_quantity'    => number_format((float) $firstStock->quantity, 5, '.', ''),
-                'availability_status' => $firstStock->quantity > 0 ? 'In Stock' : 'Out of Stock',
-            ],
-        ]);
+            'stock_updated_at'   => optional($firstStock->productDetails)->stock_updated_at_formatted,
+            'stocks' => $stockRecords->map(function ($stock) {
+                return [
+                    'warehouse_id'       => $stock->warehouse_id,
+                    'warehouse_name'     => $stock->warehouse->warehouse_name,
+                    'stock_quantity'     => number_format((float) $stock->quantity, 5, '.', ''),
+                    'availability_status' => $stock->quantity > 0 ? 'In Stock' : 'Out of Stock',
+                ];
+            }),
+        ], 200);
     }
     public function stockFilter(Request $request)
     {
@@ -112,10 +124,8 @@ class StockController extends Controller
 
         $searchKey = $request->search_key;
 
-        // Query stock items with related details
         $stockQuery = ProductStock::with(['productDetails.product', 'productDetails.productType', 'warehouse']);
 
-        // Apply filters based on search_key
         if ($searchKey == 'In Stock') {
             $stockQuery->where('quantity', '>=', 1000);
         } elseif ($searchKey == 'Low Stock') {
@@ -127,22 +137,28 @@ class StockController extends Controller
         $stockItems = $stockQuery->get();
 
         if ($stockItems->isEmpty()) {
-            return response()->json(['message' => 'No stock found for the given filter.'], 404);
+            return response()->json([
+                'success' => false,
+                'statusCode' => 404,
+                'message' => 'No stock found for the given filter.',
+            ], 404);
         }
 
         return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => "Stock filter applied successfully for '$searchKey'.",
             'search_key' => $searchKey,
             'stocks' => $stockItems->map(function ($stock) {
                 $stockQuantity = (float) $stock->quantity;
-
-                // Determine availability status
+    
                 $availabilityStatus = 'Out of Stock';
                 if ($stockQuantity > 0 && $stockQuantity < 1000) {
                     $availabilityStatus = 'Low Stock';
                 } elseif ($stockQuantity >= 1000) {
                     $availabilityStatus = 'In Stock';
                 }
-
+    
                 return [
                     'product_details_id'  => $stock->product_details_id,
                     'product_name'        => optional($stock->productDetails)->product_name ?? 'N/A',
@@ -153,7 +169,7 @@ class StockController extends Controller
                     'availability_status' => $availabilityStatus,
                 ];
             }),
-        ]);
+        ], 200);
     }
 
 

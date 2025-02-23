@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\AssignRoute;
 use App\Models\Dealer;
+use App\Models\Lead;
 use App\Models\Employee;
 use App\Models\OutstandingPaymentCommitment;
 use App\Models\OutstandingPayment;
@@ -1062,7 +1063,6 @@ class OrderController extends Controller
     public function salesExecutiveSalesReport(Request $request)
     {
         try {
-            // Get logged-in employee
             $employee = Auth::user();
 
             if (!$employee) {
@@ -1073,11 +1073,9 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            // Fetch Sales Executives in the same district
             $salesExecutives = Employee::where('district', $employee->district)
-                ->where('employee_type_id', 1) // Assuming Sales Executives have employee_type_id = 4
+                ->where('employee_type_id', 1) 
                 ->get();
-
             if ($salesExecutives->isEmpty()) {
                 return response()->json([
                     'success' => false,
@@ -1086,25 +1084,20 @@ class OrderController extends Controller
                 ], 404);
             }
 
-            // Get month and year from request, default to current month & year
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
 
-            // Initialize total sales for the chosen period
             $totalSalesForPeriod = 0;
 
-            // Prepare sales data for each Sales Executive
             $salesReport = $salesExecutives->map(function ($se) use ($month, $year, &$totalSalesForPeriod) {
-                // Fetch delivered orders for this SE within the selected month & year
                 $orders = Order::where('created_by', $se->id)
                     ->where('status', 'delivered')
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
                     ->get();
 
-                // Sum the total invoice amount for delivered orders
                 $totalSales = $orders->sum('invoice_total');
-                $totalSalesForPeriod += $totalSales; // Add to overall total
+                $totalSalesForPeriod += $totalSales; 
 
                 return [
                     'employee_id' => $se->id,
@@ -1114,7 +1107,7 @@ class OrderController extends Controller
                     'orders' => $orders->map(function ($order) {
                         return [
                             'order_id' => $order->id,
-                            'created_at' => $order->created_at->toDateTimeString(), // Proper timestamp format
+                            'created_at' => $order->created_at->toDateTimeString(), 
                             'invoice_total' => (float) $order->invoice_total,
                         ];
                     }),
@@ -1125,7 +1118,7 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Sales report fetched successfully for $month/$year.",
-                'total_sales_for_period' => (float) $totalSalesForPeriod, // Total sales for the chosen period
+                'total_sales_for_period' => (float) $totalSalesForPeriod,
                 'data' => $salesReport,
             ], 200);
 
@@ -1137,6 +1130,403 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    public function salesReportDetails(Request $request, $employee_id)
+    {
+        try {
+            // Get logged-in employee
+            $employee = Auth::user();
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+
+            // Find the Sales Executive
+            $salesExecutive = Employee::where('id', $employee_id)
+                ->where('employee_type_id', 1) // Ensure it's a Sales Executive
+                ->first();
+
+            if (!$salesExecutive) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Sales Executive not found.",
+                ], 404);
+            }
+
+            // Get month & year from request, default to current month & year
+            $month = $request->input('month', date('m'));
+            $year = $request->input('year', date('Y'));
+
+            // Fetch delivered orders for the selected Sales Executive
+            $orders = Order::where('created_by', $salesExecutive->id)
+                ->where('status', 'delivered')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->with('dealer:id,dealer_name') // Load dealer details
+                ->get();
+
+            // Calculate total sales amount for the filtered period
+            $totalSalesAmount = $orders->sum('invoice_total');
+
+            // Format orders data
+            $ordersData = $orders->map(function ($order) {
+                return [
+                    'order_id' => $order->id,
+                    'created_at' => $order->created_at ? $order->created_at->format('d/m/Y') : null,
+                    'dealer_name' => $order->dealer ? $order->dealer->dealer_name : 'N/A',
+                    'invoice_total' => (float) $order->invoice_total,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Sales report details fetched successfully for $month/$year.",
+                'employee_details' => [
+                    'employee_id' => $salesExecutive->id,
+                    'employee_code' => $salesExecutive->employee_code,
+                    'employee_name' => $salesExecutive->name,
+                    'email' => $salesExecutive->email,
+                    'phone' => $salesExecutive->phone,
+                    'total_sales_amount' => (float) $totalSalesAmount,
+                ],
+                'orders' => $ordersData,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function orderReportListing(Request $request)
+    {
+        try {
+            // Get logged-in employee
+            $employee = Auth::user();
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+
+            // Get Sales Executives in the same district
+            $salesExecutives = Employee::where('district', $employee->district)
+                ->where('employee_type_id', 1) // Only Sales Executives
+                ->get();
+
+            if ($salesExecutives->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No Sales Executives found in this district.",
+                ], 404);
+            }
+
+            // Get month & year from request, default to current month & year
+            $month = $request->input('month', date('m'));
+            $year = $request->input('year', date('Y'));
+
+            // Initialize total order count
+            $totalOrdersForPeriod = 0;
+
+            // Fetch order report for each Sales Executive
+            $reportData = $salesExecutives->map(function ($se) use ($month, $year, &$totalOrdersForPeriod) {
+                // Count delivered orders
+                $orderCount = Order::where('created_by', $se->id)
+                    ->where('status', '!=' , 'Pending')
+                    ->whereYear('created_at', $year)
+                    ->whereMonth('created_at', $month)
+                    ->count();
+
+                // Increment total orders for the period
+                $totalOrdersForPeriod += $orderCount;
+
+                return [
+                    'employee_id' => $se->id,
+                    'employee_name' => $se->name,
+                    'employee_code' => $se->employee_code,
+                    'total_orders' => $orderCount,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Order report listing fetched successfully for $month/$year.",
+                'total_orders_for_period' => $totalOrdersForPeriod,
+                'data' => $reportData,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function orderReportDetails(Request $request, $employee_id)
+    {
+        try {
+            // Fetch the employee
+            $employee = Employee::find($employee_id);
+    
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Employee not found.",
+                ], 404);
+            }
+    
+            // Get month & year from request, default to current month & year
+            $month = $request->input('month', date('m'));
+            $year = $request->input('year', date('Y'));
+    
+            // Count total orders where status is not "pending"
+            $totalOrders = Order::where('created_by', $employee->id)
+                ->where('status', '!=', 'Pending')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+    
+            // Fetch orders where status is not "pending"
+            $orders = Order::where('created_by', $employee->id)
+                ->where('status', '!=', 'Pending')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->with('dealer:id,dealer_name') // Load dealer details
+                ->orderBy('created_at', 'desc')
+                ->get();
+    
+            // Format the order data
+            $orderData = $orders->map(function ($order) {
+                return [
+                    'order_id' => $order->id,
+                    'dealer_name' => optional($order->dealer)->dealer_name,
+                    'created_at' => \Carbon\Carbon::parse($order->created_at)->format('d/m/Y'), // Format date
+                    'status' => $order->status,
+                    'amount' => ($order->status === 'Delivered') ? (float) $order->invoice_total : (float) $order->total_amount,
+                ];
+            });
+    
+            // Response data
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Order details fetched successfully for $month/$year.",
+                'employee' => [
+                    'id' => $employee->id,
+                    'name' => $employee->name,
+                    'employee_code' => $employee->employee_code,
+                    'email' => $employee->email,
+                    'phone' => $employee->phone,
+                    'total_orders' => $totalOrders,
+                ],
+                'orders' => $orderData,
+            ], 200);
+    
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    public function leadReportListing(Request $request)
+    {
+        try {
+            $employee = Auth::user();
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+    
+            $salesExecutives = Employee::where('district', $employee->district)
+                ->where('employee_type_id', 1) 
+                ->get();
+    
+            if ($salesExecutives->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No Sales Executives found in this district.",
+                ], 404);
+            }
+    
+            $month = $request->input('month', date('m'));
+            $year = $request->input('year', date('Y'));
+    
+            $totalOpenedLeads = 0;
+            $totalWonLeads = 0;
+            $totalLostLeads = 0;
+    
+            $reportData = $salesExecutives->map(function ($se) use ($month, $year, &$totalOpenedLeads, &$totalWonLeads, &$totalLostLeads) {
+                $openedLeads = Lead::where('created_by', $se->id)
+                    ->whereIn('status', ['Opened', 'Follow Up'])
+                    ->whereYear('created_at', $year)
+                    ->whereMonth('created_at', $month)
+                    ->count();
+    
+                $wonLeads = Lead::where('created_by', $se->id)
+                    ->where('status', 'Won')
+                    ->whereYear('created_at', $year)
+                    ->whereMonth('created_at', $month)
+                    ->count();
+    
+                $lostLeads = Lead::where('created_by', $se->id)
+                    ->where('status', 'Lost')
+                    ->whereYear('created_at', $year)
+                    ->whereMonth('created_at', $month)
+                    ->count();
+    
+                $totalOpenedLeads += $openedLeads;
+                $totalWonLeads += $wonLeads;
+                $totalLostLeads += $lostLeads;
+    
+                return [
+                    'employee_id' => $se->id,
+                    'employee_name' => $se->name,
+                    'employee_code' => $se->employee_code,
+                    'total_leads' => [
+                        'opened' => $openedLeads,
+                        'won' => $wonLeads,
+                        'lost' => $lostLeads,
+                    ],
+                ];
+            });
+    
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Lead report listing fetched successfully for $month/$year.",
+                'total_leads_for_period' => [
+                    'opened' => $totalOpenedLeads,
+                    'won' => $totalWonLeads,
+                    'lost' => $totalLostLeads,
+                ],
+                'data' => $reportData,
+            ], 200);
+    
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function leadReportDetails(Request $request, $employee_id)
+    {
+        try {
+            // Get the logged-in employee
+            $employee = Auth::user();
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+
+            // Find the Sales Executive
+            $salesExecutive = Employee::where('district', $employee->district)
+                ->where('employee_type_id', 1) // Only Sales Executives
+                ->where('id', $employee_id)
+                ->first();
+
+            if (!$salesExecutive) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Sales Executive not found in this district.",
+                ], 404);
+            }
+
+            // Get month & year from request, default to current month & year
+            $month = $request->input('month', date('m'));
+            $year = $request->input('year', date('Y'));
+
+            // Count leads based on status
+            $openedLeads = Lead::where('created_by', $salesExecutive->id)
+                ->whereIn('status', ['Opened', 'Follow Up'])
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            $wonLeads = Lead::where('created_by', $salesExecutive->id)
+                ->where('status', 'Won')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            $lostLeads = Lead::where('created_by', $salesExecutive->id)
+                ->where('status', 'Lost')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+
+            // Fetch the lead details
+            $leadDetails = Lead::where('created_by', $salesExecutive->id)
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->with('customerType') // Load customer type relation
+                ->get()
+                ->map(function ($lead) {
+                    return [
+                        'customer_name' => $lead->customer_name,
+                        'customer_type' => $lead->customerType->name ?? 'N/A',
+                        'created_at' => $lead->created_at->format('d/m/Y'),
+                        'location' => $lead->location,
+                        'status' => $lead->status,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Lead report details fetched successfully for {$salesExecutive->name}.",
+                'employee' => [
+                    'employee_id' => $salesExecutive->id,
+                    'employee_name' => $salesExecutive->name,
+                    'employee_code' => $salesExecutive->employee_code,
+                    'email' => $salesExecutive->email,
+                    'phone' => $salesExecutive->phone,
+                ],
+                'total_leads' => [
+                    'opened' => $openedLeads,
+                    'won' => $wonLeads,
+                    'lost' => $lostLeads,
+                ],
+                'leads' => $leadDetails,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    
+
+
 
     
 }
