@@ -50,35 +50,37 @@ class StockController extends Controller
             'success' => true,
             'statusCode' => 200,
             'message' => "Stock list fetched successfully.",
-            'warehouse' => [
-                'id'            => $nearestWarehouse->id,
-                'name'          => $nearestWarehouse->warehouse_name,
-                'latitude'      => $nearestWarehouse->latitude,
-                'longitude'     => $nearestWarehouse->longitude,
-                'distance_km'   => round($nearestWarehouse->distance, 2),
+            'data' => [
+                'warehouse' => [
+                    'id'            => $nearestWarehouse->id,
+                    'name'          => $nearestWarehouse->warehouse_name,
+                    'latitude'      => $nearestWarehouse->latitude,
+                    'longitude'     => $nearestWarehouse->longitude,
+                    'distance_km'   => round($nearestWarehouse->distance, 2),
+                ],
+                'stocks' => $stockItems->map(function ($stock) {
+                    $stockQuantity = (float) $stock->quantity;
+        
+                    $availabilityStatus = 'Out of Stock';
+                    if ($stockQuantity > 0 && $stockQuantity < 1000) {
+                        $availabilityStatus = 'Low Stock';
+                    } elseif ($stockQuantity >= 1000) {
+                        $availabilityStatus = 'In Stock';
+                    }
+        
+                    return [
+                        'product_details_id'  => $stock->product_details_id,
+                        'product_name'        => $stock->productDetails->product_name,
+                        'product_type'        => optional($stock->productDetails->productType)->type_name,
+                        'item_profile'        => $stock->productDetails->item_profile,
+                        'item_thickness'      => $stock->productDetails->item_thickness,
+                        'primary_group'       => $stock->productDetails->primary_group,
+                        'total_available_qty' => $stock->productDetails->total_available_quantity,
+                        'stock_quantity'      => number_format($stockQuantity, 5, '.', ''),
+                        'availability_status' => $availabilityStatus,
+                    ];
+                }),
             ],
-            'stocks' => $stockItems->map(function ($stock) {
-                $stockQuantity = (float) $stock->quantity;
-    
-                $availabilityStatus = 'Out of Stock';
-                if ($stockQuantity > 0 && $stockQuantity < 1000) {
-                    $availabilityStatus = 'Low Stock';
-                } elseif ($stockQuantity >= 1000) {
-                    $availabilityStatus = 'In Stock';
-                }
-    
-                return [
-                    'product_details_id'  => $stock->product_details_id,
-                    'product_name'        => $stock->productDetails->product_name,
-                    'product_type'        => optional($stock->productDetails->productType)->type_name,
-                    'item_profile'        => $stock->productDetails->item_profile,
-                    'item_thickness'      => $stock->productDetails->item_thickness,
-                    'primary_group'       => $stock->productDetails->primary_group,
-                    'total_available_qty' => $stock->productDetails->total_available_quantity,
-                    'stock_quantity'      => number_format($stockQuantity, 5, '.', ''),
-                    'availability_status' => $availabilityStatus,
-                ];
-            }),
         ], 200);
     }
     public function getProductStockDetails($product_details_id)
@@ -99,21 +101,23 @@ class StockController extends Controller
             'success' => true,
             'statusCode' => 200,
             'message' => 'Product stock details fetched successfully.',
-            'product_details_id' => $product_details_id,
-            'product_name'       => optional($firstStock->productDetails)->product_name,
-            'product_type'       => optional($firstStock->productDetails->productType)->type_name,
-            'item_profile'       => optional($firstStock->productDetails)->item_profile,
-            'item_thickness'     => optional($firstStock->productDetails)->item_thickness,
-            'primary_group'      => optional($firstStock->productDetails)->primary_group,
-            'stock_updated_at'   => optional($firstStock->productDetails)->stock_updated_at_formatted,
-            'stocks' => $stockRecords->map(function ($stock) {
-                return [
-                    'warehouse_id'       => $stock->warehouse_id,
-                    'warehouse_name'     => $stock->warehouse->warehouse_name,
-                    'stock_quantity'     => number_format((float) $stock->quantity, 5, '.', ''),
-                    'availability_status' => $stock->quantity > 0 ? 'In Stock' : 'Out of Stock',
-                ];
-            }),
+            'data' => [
+                'product_details_id' => $product_details_id,
+                'product_name'       => optional($firstStock->productDetails)->product_name,
+                'product_type'       => optional($firstStock->productDetails->productType)->type_name,
+                'item_profile'       => optional($firstStock->productDetails)->item_profile,
+                'item_thickness'     => optional($firstStock->productDetails)->item_thickness,
+                'primary_group'      => optional($firstStock->productDetails)->primary_group,
+                'stock_updated_at'   => optional($firstStock->productDetails)->stock_updated_at_formatted,
+                'stocks' => $stockRecords->map(function ($stock) {
+                    return [
+                        'warehouse_id'       => $stock->warehouse_id,
+                        'warehouse_name'     => $stock->warehouse->warehouse_name,
+                        'stock_quantity'     => number_format((float) $stock->quantity, 5, '.', ''),
+                        'availability_status' => $stock->quantity > 0 ? 'In Stock' : 'Out of Stock',
+                    ];
+                }),
+            ],
         ], 200);
     }
     public function stockFilter(Request $request)
@@ -148,27 +152,29 @@ class StockController extends Controller
             'success' => true,
             'statusCode' => 200,
             'message' => "Stock filter applied successfully for '$searchKey'.",
-            'search_key' => $searchKey,
-            'stocks' => $stockItems->map(function ($stock) {
-                $stockQuantity = (float) $stock->quantity;
-    
-                $availabilityStatus = 'Out of Stock';
-                if ($stockQuantity > 0 && $stockQuantity < 1000) {
-                    $availabilityStatus = 'Low Stock';
-                } elseif ($stockQuantity >= 1000) {
-                    $availabilityStatus = 'In Stock';
-                }
-    
-                return [
-                    'product_details_id'  => $stock->product_details_id,
-                    'product_name'        => optional($stock->productDetails)->product_name ?? 'N/A',
-                    'product_type'        => optional(optional($stock->productDetails)->productType)->type_name ?? 'N/A',
-                    'warehouse_id'        => $stock->warehouse_id,
-                    'warehouse_name'      => optional($stock->warehouse)->warehouse_name ?? 'N/A',
-                    'stock_quantity'      => number_format($stockQuantity, 5, '.', ''),
-                    'availability_status' => $availabilityStatus,
-                ];
-            }),
+            'data' => [
+                'search_key' => $searchKey,
+                'stocks' => $stockItems->map(function ($stock) {
+                    $stockQuantity = (float) $stock->quantity;
+        
+                    $availabilityStatus = 'Out of Stock';
+                    if ($stockQuantity > 0 && $stockQuantity < 1000) {
+                        $availabilityStatus = 'Low Stock';
+                    } elseif ($stockQuantity >= 1000) {
+                        $availabilityStatus = 'In Stock';
+                    }
+        
+                    return [
+                        'product_details_id'  => $stock->product_details_id,
+                        'product_name'        => optional($stock->productDetails)->product_name ?? 'N/A',
+                        'product_type'        => optional(optional($stock->productDetails)->productType)->type_name ?? 'N/A',
+                        'warehouse_id'        => $stock->warehouse_id,
+                        'warehouse_name'      => optional($stock->warehouse)->warehouse_name ?? 'N/A',
+                        'stock_quantity'      => number_format($stockQuantity, 5, '.', ''),
+                        'availability_status' => $availabilityStatus,
+                    ];
+                }),
+            ],
         ], 200);
     }
 
