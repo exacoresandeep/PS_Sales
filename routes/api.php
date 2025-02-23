@@ -96,8 +96,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/lead-report-listing', [OrderController::class, 'leadReportListing']);
             Route::get('/sales-executive/{employee_id}/lead-report', [OrderController::class, 'leadReportDetails']);
 
-            
-
+            //Activity Report
+            Route::get('/activity-report-listing', [ActivityController::class, 'activityReportListing']);
+            Route::get('/sales-executive/{employee_id}/activity-report', [ActivityController::class, 'activityReportDetails']);
 
         });
 
