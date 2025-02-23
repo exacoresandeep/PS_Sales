@@ -25,7 +25,9 @@ class Activity extends Model
     ];
     protected $casts = [
         'attachments' => 'array', 
+        'completed_date' => 'date',
     ];
+    
 
     public function activityType()
     {
