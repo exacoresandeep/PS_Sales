@@ -208,7 +208,6 @@ class AuthController extends Controller
     public function getDealers(Request $request)
     {
         try {
-            // Get the logged-in employee
             $user = Auth::user();
     
             if (!$user) {
@@ -219,7 +218,6 @@ class AuthController extends Controller
                 ], 401);
             }
     
-            // Get assigned route IDs for the current user
             $assignedRouteIds = AssignRoute::where('employee_id', $user->id)->pluck('id')->toArray();
     
             if (empty($assignedRouteIds)) {
@@ -231,7 +229,6 @@ class AuthController extends Controller
                 ], 404);
             }
     
-            // Query dealers based on assigned routes
             $query = Dealer::select(
                 'id as dealer_id',
                 'dealer_code',
@@ -244,9 +241,8 @@ class AuthController extends Controller
                 'state',
                 'district',
                 'taluk'
-            )->whereIn('assigned_route_id', $assignedRouteIds); // Check dealers in assigned routes
+            )->whereIn('assigned_route_id', $assignedRouteIds);
     
-            // Apply search filter if provided
             if ($request->has('search_key') && !empty($request->search_key)) {
                 $searchKey = $request->search_key;
     
@@ -256,7 +252,6 @@ class AuthController extends Controller
                 });
             }
     
-            // Fetch dealers
             $data = $query->orderBy('dealer_name', 'asc')->get();
     
             return response()->json([
