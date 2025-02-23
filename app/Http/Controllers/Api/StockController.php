@@ -109,14 +109,12 @@ class StockController extends Controller
                 'item_thickness'     => optional($firstStock->productDetails)->item_thickness,
                 'primary_group'      => optional($firstStock->productDetails)->primary_group,
                 'stock_updated_at'   => optional($firstStock->productDetails)->stock_updated_at_formatted,
-                'stocks' => $stockRecords->map(function ($stock) {
-                    return [
-                        'warehouse_id'       => $stock->warehouse_id,
-                        'warehouse_name'     => $stock->warehouse->warehouse_name,
-                        'stock_quantity'     => number_format((float) $stock->quantity, 5, '.', ''),
-                        'availability_status' => $stock->quantity > 0 ? 'In Stock' : 'Out of Stock',
-                    ];
-                }),
+                'stocks' => $stockRecords->count() > 0 ? [
+                    'warehouse_id'       => $firstStock->warehouse_id,
+                    'warehouse_name'     => $firstStock->warehouse->warehouse_name,
+                    'stock_quantity'     => number_format((float) $firstStock->quantity, 5, '.', ''),
+                    'availability_status' => $firstStock->quantity > 0 ? 'In Stock' : 'Out of Stock',
+                ] : null,
             ],
         ], 200);
     }
