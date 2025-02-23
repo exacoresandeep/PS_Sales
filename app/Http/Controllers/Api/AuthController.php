@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderType;
 use App\Models\Dealer;
 use App\Models\Product;
+use App\Models\AssignRoute;
 use App\Models\ProductType;
 use App\Models\PaymentTerms;
 use App\Models\ProductDetails;
@@ -155,47 +156,116 @@ class AuthController extends Controller
     }
 
     // Fetch Dealers
+    // public function getDealers(Request $request)
+    // {
+    //     try {
+            
+    //         $user = Auth::user();
+    //         if ($user !== null) {
+    //             $query = Dealer::select(
+    //                 'id as dealer_id',
+    //                 'dealer_code',
+    //                 'dealer_name',
+    //                 'phone',
+    //                 'email',
+    //                 'address',
+    //                 'user_zone',
+    //                 'pincode',
+    //                 'state',
+    //                 'district',
+    //                 'taluk'
+    //             )->where('approver_id',$user->id);
+
+                
+    //             if ($request->has('search_key') && !empty($request->search_key)) {
+    //                 $searchKey = $request->search_key;
+    
+    //                 $query->where(function ($q) use ($searchKey) {
+    //                     $q->where('dealer_code', 'like', '%' . $searchKey . '%')
+    //                       ->orWhere('dealer_name', 'like', '%' . $searchKey . '%');
+    //                 });
+    //             }
+    
+    //             $data = $query->orderBy('dealer_name', 'asc')->get();
+    //         } else {
+    //             $data = [];
+    //         }
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Dealers fetched successfully',
+    //             'data' => $data,
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function getDealers(Request $request)
     {
         try {
-            
+            // Get the logged-in employee
             $user = Auth::user();
-            if ($user !== null) {
-                $query = Dealer::select(
-                    'id as dealer_id',
-                    'dealer_code',
-                    'dealer_name',
-                    'phone',
-                    'email',
-                    'address',
-                    'user_zone',
-                    'pincode',
-                    'state',
-                    'district',
-                    'taluk'
-                )->where('approver_id',$user->id);
-
-                
-                if ($request->has('search_key') && !empty($request->search_key)) {
-                    $searchKey = $request->search_key;
     
-                    $query->where(function ($q) use ($searchKey) {
-                        $q->where('dealer_code', 'like', '%' . $searchKey . '%')
-                          ->orWhere('dealer_name', 'like', '%' . $searchKey . '%');
-                    });
-                }
-    
-                $data = $query->orderBy('dealer_name', 'asc')->get();
-            } else {
-                $data = [];
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
             }
-
+    
+            // Get assigned route IDs for the current user
+            $assignedRouteIds = AssignRoute::where('employee_id', $user->id)->pluck('id')->toArray();
+    
+            if (empty($assignedRouteIds)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'No assigned routes found for this user.',
+                    'data' => [],
+                ], 404);
+            }
+    
+            // Query dealers based on assigned routes
+            $query = Dealer::select(
+                'id as dealer_id',
+                'dealer_code',
+                'dealer_name',
+                'phone',
+                'email',
+                'address',
+                'user_zone',
+                'pincode',
+                'state',
+                'district',
+                'taluk'
+            )->whereIn('assigned_route_id', $assignedRouteIds); // Check dealers in assigned routes
+    
+            // Apply search filter if provided
+            if ($request->has('search_key') && !empty($request->search_key)) {
+                $searchKey = $request->search_key;
+    
+                $query->where(function ($q) use ($searchKey) {
+                    $q->where('dealer_code', 'like', '%' . $searchKey . '%')
+                      ->orWhere('dealer_name', 'like', '%' . $searchKey . '%');
+                });
+            }
+    
+            // Fetch dealers
+            $data = $query->orderBy('dealer_name', 'asc')->get();
+    
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
-                'message' => 'Dealers fetched successfully',
+                'message' => 'Dealers fetched successfully.',
                 'data' => $data,
             ], 200);
+    
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -204,7 +274,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
+    
     // Fetch Products
     public function getProducts()
     {
