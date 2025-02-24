@@ -436,10 +436,11 @@ class RouteController extends Controller
                     // dd($rescheduledCustomers);
     
                 } else {
+                    dd($employeeId);
                     $trip = AssignRoute::where('employee_id', $employeeId)
                         ->where('route_name', $routeName)
                         ->first();
-                        dd($trip->toSql(), $trip->getBindings());
+                        // dd($trip->toSql(), $trip->getBindings());
                     if (!$trip) {
                         continue;
                     }
