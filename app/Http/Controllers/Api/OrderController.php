@@ -1528,7 +1528,6 @@ class OrderController extends Controller
     public function orderReportDetails(Request $request, $employee_id)
     {
         try {
-            // Fetch the employee
             $employee = Employee::find($employee_id);
     
             if (!$employee) {
@@ -1539,38 +1538,33 @@ class OrderController extends Controller
                 ], 404);
             }
     
-            // Get month & year from request, default to current month & year
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
     
-            // Count total orders where status is not "pending"
             $totalOrders = Order::where('created_by', $employee->id)
                 ->where('status', '!=', 'Pending')
                 ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->count();
     
-            // Fetch orders where status is not "pending"
             $orders = Order::where('created_by', $employee->id)
                 ->where('status', '!=', 'Pending')
                 ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
-                ->with('dealer:id,dealer_name') // Load dealer details
+                ->with('dealer:id,dealer_name') 
                 ->orderBy('created_at', 'desc')
                 ->get();
     
-            // Format the order data
             $orderData = $orders->map(function ($order) {
                 return [
                     'order_id' => $order->id,
                     'dealer_name' => optional($order->dealer)->dealer_name,
-                    'created_at' => \Carbon\Carbon::parse($order->created_at)->format('d/m/Y'), // Format date
+                    'created_at' => \Carbon\Carbon::parse($order->created_at)->format('d/m/Y'), 
                     'status' => $order->status,
                     'amount' => ($order->status === 'Delivered') ? (float) $order->invoice_total : (float) $order->total_amount,
                 ];
             });
     
-            // Response data
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
