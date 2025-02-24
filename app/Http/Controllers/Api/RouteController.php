@@ -591,8 +591,8 @@ class RouteController extends Controller
                 'assign_date' => $assignDate,
                 'assigned_route_id' => $route['assigned_route_id'],
                 'route_name' => $route['route_name'],
-                'locations' => $route['locations'],
-                'customers' => $route['customers'] ?? [],
+                'locations' => json_encode($route['locations']),
+                'customers' => json_encode($route['customers'] ?? []),
             ]);
     
             $rescheduledRoutes[] = $reschedule;
