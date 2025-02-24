@@ -425,15 +425,10 @@ class RouteController extends Controller
                 if ($rescheduledRoute) {
                     $routeName = $rescheduledRoute->route_name;
                     $assignedRouteId = $rescheduledRoute->assigned_route_id;
-                    $locations = is_array($rescheduledRoute->locations) ? $rescheduledRoute->locations : [];
-    
-                    // Convert customers to an array of associative arrays
-                    // $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
-                    //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
-                    // }); 
-                    $rescheduledCustomers = collect(json_decode($rescheduledRoute->customers, true) ?? [])->map(function ($customer) {
-                        return (array) $customer + ['scheduled' => true]; // Ensure associative array format
-                    });
+                    $locations = json_decode($rescheduledRoute->locations ?? '[]', true); // Decode locations
+                
+                    // Decode customers safely
+                    $rescheduledCustomers = collect(json_decode($rescheduledRoute->customers ?? '[]', true));
                     
     
                 } else {
@@ -521,8 +516,6 @@ class RouteController extends Controller
     }
     
     
-
-    
     public function routeReschedule(Request $request)
     {
         // Validate input format
@@ -591,8 +584,8 @@ class RouteController extends Controller
                 'assign_date' => $assignDate,
                 'assigned_route_id' => $route['assigned_route_id'],
                 'route_name' => $route['route_name'],
-                'locations' => json_encode($route['locations']),
-                'customers' => json_encode($route['customers'] ?? []),
+                'locations' => json_encode($route['locations']), // Encode locations
+                'customers' => json_encode($route['customers'] ?? []), // Encode customers
             ]);
     
             $rescheduledRoutes[] = $reschedule;
