@@ -428,7 +428,12 @@ class RouteController extends Controller
                     $locations = is_array($rescheduledRoute->locations) ? $rescheduledRoute->locations : [];
     
                     // Convert customers to an array of associative arrays
-                    $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
+                    // $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
+                    //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
+                    // });
+                    $rescheduledCustomers = collect(
+                        is_array($rescheduledRoute->customers) ? $rescheduledRoute->customers : json_decode($rescheduledRoute->customers, true) ?? []
+                    )->map(function ($customer) {
                         return (array) $customer + ['scheduled' => true]; // Ensure associative array format
                     });
     
