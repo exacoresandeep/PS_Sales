@@ -416,31 +416,27 @@ class RouteController extends Controller
                 $locations = [];
                 $routeName = $defaultRouteName;
                 $assignedRouteId = null;
-                
+    
                 $rescheduledRoute = RescheduledRoute::where('employee_id', $employeeId)
                     ->where('day', $day)
                     ->whereBetween('assign_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
                     ->first();
-                
+    
                 if ($rescheduledRoute) {
                     $routeName = $rescheduledRoute->route_name;
                     $assignedRouteId = $rescheduledRoute->assigned_route_id;
                     $locations = is_array($rescheduledRoute->locations) ? $rescheduledRoute->locations : [];
     
-                    // Ensure customers is always an array before mapping
+                    // Convert customers to an array of associative arrays
                     $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
-                        return is_array($customer) ? array_merge($customer, ['scheduled' => true]) : 
-                               array_merge((array) $customer, ['scheduled' => true]);
+                        return (array) $customer + ['scheduled' => true]; // Ensure associative array format
                     });
-                    
-                    // dd($rescheduledCustomers);
     
                 } else {
-                    // dd($employeeId);
                     $trip = AssignRoute::where('employee_id', $employeeId)
                         ->where('route_name', $routeName)
                         ->first();
-                        // dd($trip->toSql(), $trip->getBindings());
+    
                     if (!$trip) {
                         continue;
                     }
@@ -450,13 +446,14 @@ class RouteController extends Controller
                     $rescheduledCustomers = collect([]);
                 }
     
-                // Fetch all customers (dealers + leads) assigned to this route
+                // Fetch all dealers assigned to this route
                 $dealers = Dealer::where('assigned_route_id', $assignedRouteId)
                     ->get(['id', 'dealer_name as customer_name', 'location'])
                     ->map(function ($dealer) {
                         return array_merge($dealer->toArray(), ['customer_type' => 'Dealer', 'scheduled' => false]);
                     });
     
+                // Fetch all leads assigned to this route
                 $leads = Lead::join('customer_types', 'leads.customer_type', '=', 'customer_types.id')
                     ->where('leads.assigned_route_id', $assignedRouteId)
                     ->where(function ($query) {
@@ -475,19 +472,19 @@ class RouteController extends Controller
                         return array_merge($lead->toArray(), ['scheduled' => false]);
                     });
     
-                // Ensure $rescheduledCustomers is a Collection before using firstWhere()
+                // Ensure rescheduledCustomers is a collection of associative arrays
                 $rescheduledCustomers = collect($rescheduledCustomers);
-                
     
                 // Merge all customers, ensuring only rescheduled ones are marked as scheduled
                 $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
-                    $rescheduled = $rescheduledCustomers->firstWhere('id', $customer['id']);
+                    $rescheduled = $rescheduledCustomers->firstWhere('id', (int) $customer['id']); // Ensure ID consistency
+    
                     if ($rescheduled) {
                         return array_merge($customer, ['scheduled' => true]);
                     }
                     return $customer;
                 });
-                dd($customers);
+    
                 // Calculate the date for the day in the current week
                 $dayIndex = array_search($day, array_keys($routeMapping));
                 $date = $weekStart->copy()->addDays($dayIndex)->format('d/m/y');
@@ -501,7 +498,6 @@ class RouteController extends Controller
                     'customers' => $customers->values(),
                 ];
             }
-            // dd($weeklyRoutes);
     
             return response()->json([
                 'success' => true,
@@ -519,6 +515,7 @@ class RouteController extends Controller
             ], 500);
         }
     }
+    
     
 
     
