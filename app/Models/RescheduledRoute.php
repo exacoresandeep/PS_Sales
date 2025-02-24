@@ -11,12 +11,32 @@ class RescheduledRoute extends Model
     use HasFactory;
 
     protected $table = 'rescheduled_routes';
-    public $timestamps = false;
-    protected $fillable = ['employee_id','assigned_route_id', 'original_day', 'week_start', 'rescheduled_day', 'route_name', 'locations'];
 
+    protected $fillable = [
+        'employee_id',
+        'day',
+        'assign_date',
+        'assigned_route_id',
+        'route_name',
+        'locations',
+        'customers', 
+    ];
+
+    protected $casts = [
+        'assign_date' => 'date', 
+        'locations' => 'array', 
+        'customers' => 'array', 
+    ];
+
+   
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function assignedRoute()
+    {
+        return $this->belongsTo(AssignRoute::class, 'assigned_route_id');
     }
 }
 
