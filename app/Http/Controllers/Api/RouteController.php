@@ -498,6 +498,7 @@ class RouteController extends Controller
                     'customers' => $customers->values(),
                 ];
             }
+            dd($weeklyRoutes);
     
             return response()->json([
                 'success' => true,
