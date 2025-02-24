@@ -461,14 +461,13 @@ class RouteController extends Controller
                 }
     
                 // Fetch all dealers assigned to this route
-                $dealers = Dealer::where('assigned_route_id', $assignedRouteId)
+                $dealers = collect(Dealer::where('assigned_route_id', $assignedRouteId)
                     ->get(['id', 'dealer_name as customer_name', 'location'])
                     ->map(function ($dealer) {
                         return array_merge($dealer->toArray(), ['customer_type' => 'Dealer', 'scheduled' => false]);
-                    });
-    
-                // Fetch all leads assigned to this route
-                $leads = Lead::join('customer_types', 'leads.customer_type', '=', 'customer_types.id')
+                    }));
+
+                $leads = collect(Lead::join('customer_types', 'leads.customer_type', '=', 'customer_types.id')
                     ->where('leads.assigned_route_id', $assignedRouteId)
                     ->where(function ($query) {
                         $query->whereIn('leads.customer_type', [1, 2])
@@ -484,20 +483,34 @@ class RouteController extends Controller
                     ])
                     ->map(function ($lead) {
                         return array_merge($lead->toArray(), ['scheduled' => false]);
-                    });
+                    }));
+
     
                 // Ensure rescheduledCustomers is a collection of associative arrays
-                $rescheduledCustomers = collect($rescheduledCustomers);
+                // $rescheduledCustomers = collect($rescheduledCustomers);
     
                 // Merge all customers, ensuring only rescheduled ones are marked as scheduled
-                $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
-                    $rescheduled = $rescheduledCustomers->firstWhere('id', (int) $customer['id']); // Ensure ID consistency
+                // $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
+                //     $rescheduled = $rescheduledCustomers->firstWhere('id', (int) $customer['id']); // Ensure ID consistency
     
+                //     if ($rescheduled) {
+                //         return array_merge($customer, ['scheduled' => true]);
+                //     }
+                //     return $customer;
+                // });
+                $rescheduledCustomers = collect($rescheduledCustomers ?? []);
+
+                $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
+                    // $rescheduled = $rescheduledCustomers->firstWhere('id', (int) $customer['id']); // Ensure ID consistency
+                    $rescheduled = collect($rescheduledCustomers)->firstWhere('id', (int) $customer['id']);
+
+                
                     if ($rescheduled) {
                         return array_merge($customer, ['scheduled' => true]);
                     }
                     return $customer;
                 });
+                
     
                 // Calculate the date for the day in the current week
                 $dayIndex = array_search($day, array_keys($routeMapping));
