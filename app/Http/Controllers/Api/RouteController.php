@@ -699,62 +699,64 @@ class RouteController extends Controller
     //     }
     // }
     public function changeRouteStatus(Request $request)
-{
-    try {
-        // Validate request
-        $request->validate([
-            'customer_id' => 'required|integer',
-            'customer_type' => 'required|string',
-        ]);
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'customer_id' => 'required|integer',
+                'customer_type' => 'required|string',
+            ]);
 
-        $customerId = (int) $request->customer_id;
-        $customerType = $request->customer_type;
+            $customerId = (int) $request->customer_id;
+            $customerType = $request->customer_type;
 
-        // Normalize customer type: Treat all non-'Dealer' types as leads
-        $isDealer = ($customerType === 'Dealer');
+            // Normalize customer type: Treat all non-'Dealer' types as leads
+            $isDealer = ($customerType === 'Dealer');
 
-        // Find the rescheduled route containing the given customer
-        $rescheduledRoute = RescheduledRoute::whereJsonContains('customers', json_encode([['id' => $customerId]]))->first();
+            // Find the rescheduled route containing the given customer
+            // $rescheduledRoute = RescheduledRoute::whereJsonContains('customers', json_encode([['id' => $customerId]]))->first();
+            $rescheduledRoute = RescheduledRoute::whereRaw("JSON_CONTAINS(customers, ?)", [json_encode(['id' => $customerId])])->first();
 
-        if (!$rescheduledRoute) {
+
+            if (!$rescheduledRoute) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'Customer not found in rescheduled routes.',
+                ], 404);
+            }
+
+            // Decode customers (ensure it is an array)
+            $customers = collect(json_decode($rescheduledRoute->customers, true)); // Convert JSON to array
+
+            // Use map() to update the correct customer
+            $updatedCustomers = $customers->map(function ($customer) use ($customerId, $isDealer) {
+                if (isset($customer['id']) && $customer['id'] == $customerId &&
+                    ($isDealer ? ($customer['customer_type'] === 'Dealer') : ($customer['customer_type'] !== 'Dealer'))) {
+                    $customer['status'] = 'Completed';
+                    $customer['visited_at'] = Carbon::now()->toDateTimeString();
+                }
+                return $customer;
+            });
+
+            // Save updated customers back into rescheduled route (convert back to JSON)
+            $rescheduledRoute->update(['customers' => json_encode($updatedCustomers)]);
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Customer visit status updated successfully.',
+            ], 200);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'statusCode' => 404,
-                'message' => 'Customer not found in rescheduled routes.',
-            ], 404);
+                'statusCode' => 500,
+                'message' => 'Error updating customer status.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // Decode customers (ensure it is an array)
-        $customers = collect(json_decode($rescheduledRoute->customers, true)); // Convert JSON to array
-
-        // Use map() to update the correct customer
-        $updatedCustomers = $customers->map(function ($customer) use ($customerId, $isDealer) {
-            if (isset($customer['id']) && $customer['id'] == $customerId &&
-                ($isDealer ? ($customer['customer_type'] === 'Dealer') : ($customer['customer_type'] !== 'Dealer'))) {
-                $customer['status'] = 'Completed';
-                $customer['visited_at'] = Carbon::now()->toDateTimeString();
-            }
-            return $customer;
-        });
-
-        // Save updated customers back into rescheduled route (convert back to JSON)
-        $rescheduledRoute->update(['customers' => json_encode($updatedCustomers)]);
-
-        return response()->json([
-            'success' => true,
-            'statusCode' => 200,
-            'message' => 'Customer visit status updated successfully.',
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'statusCode' => 500,
-            'message' => 'Error updating customer status.',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
 
     
         
