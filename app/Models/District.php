@@ -9,10 +9,14 @@ class District extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'status'];
+    protected $fillable = ['regions_id', 'name', 'status'];
 
     public function tripRoutes()
     {
         return $this->hasMany(TripRoute::class);
+    }
+    public function region()
+    {
+        return $this->belongsTo(Regions::class);
     }
 }

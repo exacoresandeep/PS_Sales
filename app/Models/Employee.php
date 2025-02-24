@@ -28,5 +28,14 @@ class Employee extends Authenticatable
     {
         return $this->hasMany(Attendance::class);
     }
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
+
+    public function region()
+    {
+        return $this->hasOneThrough(Regions::class, District::class, 'id', 'id', 'district_id', 'regions_id');
+    }
     
 }
