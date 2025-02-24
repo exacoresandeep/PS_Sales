@@ -417,7 +417,7 @@ class RouteController extends Controller
                 $routeName = $defaultRouteName;
                 $assignedRouteId = null;
     
-                // Check if the route has been rescheduled in the current week
+                
                 $rescheduledRoute = RescheduledRoute::where('employee_id', $employeeId)
                     ->where('day', $day)
                     ->whereBetween('assign_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
@@ -431,7 +431,7 @@ class RouteController extends Controller
                     // Ensure customers is always an array before mapping
                     $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
                         return is_array($customer) ? array_merge($customer, ['scheduled' => true]) : 
-                               (object) array_merge((array) $customer, ['scheduled' => true]);
+                               array_merge((array) $customer, ['scheduled' => true]);
                     });
     
                 } else {
@@ -478,12 +478,8 @@ class RouteController extends Controller
     
                 // Merge all customers, ensuring only rescheduled ones are marked as scheduled
                 $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
-                    // Find rescheduled customer by ID **AND** Customer Type
-                    $rescheduled = $rescheduledCustomers->first(function ($res) use ($customer) {
-                        return $res['id'] == $customer['id'] && $res['customer_type'] == $customer['customer_type'];
-                    });
-                
-                    if (!empty($rescheduled)) {
+                    $rescheduled = $rescheduledCustomers->firstWhere('id', $customer['id']);
+                    if ($rescheduled) {
                         return array_merge($customer, ['scheduled' => true]);
                     }
                     return $customer;
