@@ -120,7 +120,6 @@ Route::prefix('v1')->group(function () {
 
         Route::post('logout', [AuthController::class, 'logout']);
         
-        
         Route::get('getVehicleCategory', [AuthController::class, 'getVehicleCategory']);
         Route::post('getVehicleTypeByCategory', [AuthController::class, 'getVehicleTypeByCategory']);
 
@@ -129,7 +128,6 @@ Route::prefix('v1')->group(function () {
         Route::get('dealerOrderDetails/{orderId}', [OrderController::class, 'dealerOrderDetails']); 
         Route::post('dealerOrderStatusUpdate/{orderId}', [OrderController::class, 'dealerOrderStatusUpdate']); 
         Route::get('dealerOrderFilter', [OrderController::class, 'dealerOrderFilter']); 
-
 
         // Route::post('/fileUpload', [AuthController::class, 'uploadFile']);
         
