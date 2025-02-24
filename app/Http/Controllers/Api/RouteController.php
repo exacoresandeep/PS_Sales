@@ -545,8 +545,8 @@ class RouteController extends Controller
     
     public function routeReschedule(Request $request)
     {
-        // Validate input format
-        if (!is_array($request->all())) {
+        // Validate that the 'routes' key exists and is an array
+        if (!is_array($request->input('routes'))) {
             return response()->json([
                 'success' => false,
                 'statusCode' => 400,
@@ -554,15 +554,15 @@ class RouteController extends Controller
                 'data' => null
             ], 400);
         }
-    
+
         $rescheduledRoutes = [];
         $alreadyRescheduledRoutes = [];
-    
+
         // Get start and end of the current week
         $startOfWeek = Carbon::now()->startOfWeek()->format('Y-m-d');
         $endOfWeek = Carbon::now()->endOfWeek()->format('Y-m-d');
-    
-        foreach ($request->all() as $route) {
+
+        foreach ($request->input('routes') as $route) {
             // Validate route input
             $validator = Validator::make($route, [
                 'employee_id' => 'required|integer',
@@ -573,7 +573,7 @@ class RouteController extends Controller
                 'locations' => 'required|array',
                 'customers' => 'nullable|array',
             ]);
-    
+
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -584,16 +584,16 @@ class RouteController extends Controller
                     ]
                 ], 422);
             }
-    
+
             // Convert date format (DD/MM/YY → YYYY-MM-DD)
             $assignDate = Carbon::createFromFormat('d/m/y', $route['date'])->format('Y-m-d');
-    
+
             // Check if the same `employee_id` & `assigned_route_id` is already rescheduled within the current week
             $alreadyRescheduled = RescheduledRoute::where('employee_id', $route['employee_id'])
                 ->where('assigned_route_id', $route['assigned_route_id'])
                 ->whereBetween('assign_date', [$startOfWeek, $endOfWeek])
                 ->exists();
-    
+
             if ($alreadyRescheduled) {
                 // Collect routes that were already rescheduled in the current week
                 $alreadyRescheduledRoutes[] = [
@@ -603,7 +603,7 @@ class RouteController extends Controller
                 ];
                 continue; // Skip inserting this route
             }
-    
+
             // Insert new rescheduled route
             $reschedule = RescheduledRoute::create([
                 'employee_id' => $route['employee_id'],
@@ -615,10 +615,9 @@ class RouteController extends Controller
                 'customers' => json_encode($route['customers'] ?? []), // Convert array to JSON
             ]);
 
-    
             $rescheduledRoutes[] = $reschedule;
         }
-    
+
         if (!empty($alreadyRescheduledRoutes)) {
             return response()->json([
                 'success' => false,
@@ -629,16 +628,14 @@ class RouteController extends Controller
                 ]
             ], 400);
         }
-    
+
         return response()->json([
             'success' => true,
             'statusCode' => 200,
             'message' => 'Routes rescheduled successfully.',
-            // 'data' => [
-            //     'rescheduled_routes' => $rescheduledRoutes
-            // ]
         ], 200);
     }
+
     // public function changeRouteStatus(Request $request)
     // {
     //     try {
