@@ -634,9 +634,9 @@ class RouteController extends Controller
             'success' => true,
             'statusCode' => 200,
             'message' => 'Routes rescheduled successfully.',
-            'data' => [
-                'rescheduled_routes' => $rescheduledRoutes
-            ]
+            // 'data' => [
+            //     'rescheduled_routes' => $rescheduledRoutes
+            // ]
         ], 200);
     }
     // public function changeRouteStatus(Request $request)
