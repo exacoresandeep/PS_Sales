@@ -427,22 +427,15 @@ class RouteController extends Controller
                     $assignedRouteId = $rescheduledRoute->assigned_route_id;
                     $locations = is_array($rescheduledRoute->locations) ? $rescheduledRoute->locations : [];
     
-                    // Convert customers to an array of associative arrays
-                    // $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
-                    //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
-                    // });
-                    // $rescheduledCustomers = collect(
-                    //     is_array($rescheduledRoute->customers) ? $rescheduledRoute->customers : $rescheduledRoute->customers ?? []
-                    // )->map(function ($customer) {
-                    //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
-                    // });
-                    $rescheduledCustomers = collect(
-                        is_string($rescheduledRoute->customers) ? json_decode($rescheduledRoute->customers, true) ?? [] : $rescheduledRoute->customers
-                    )->map(function ($customer) {
-                        return (array) $customer + ['scheduled' => true]; // Ensure associative array format
+                    // Ensure customers are decoded properly
+                    $rescheduledCustomers = is_array($rescheduledRoute->customers)
+                        ? collect($rescheduledRoute->customers)
+                        : collect(json_decode($rescheduledRoute->customers, true) ?? []);
+    
+                    // Mark rescheduled customers as scheduled
+                    $rescheduledCustomers = $rescheduledCustomers->map(function ($customer) {
+                        return array_merge($customer, ['scheduled' => true]);
                     });
-                  
-                    
     
                 } else {
                     $trip = AssignRoute::where('employee_id', $employeeId)
@@ -483,9 +476,6 @@ class RouteController extends Controller
                     ->map(function ($lead) {
                         return array_merge($lead->toArray(), ['scheduled' => false]);
                     });
-    
-                // Ensure rescheduledCustomers is a collection of associative arrays
-                $rescheduledCustomers = collect($rescheduledCustomers);
     
                 // Merge all customers, ensuring only rescheduled ones are marked as scheduled
                 $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
