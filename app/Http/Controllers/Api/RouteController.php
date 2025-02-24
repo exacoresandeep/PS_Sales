@@ -10,7 +10,7 @@ use App\Models\District;
 use App\Models\EmployeeType;
 use App\Models\DealerTripActivity;
 use App\Models\RescheduledRoute;
-use App\Models\RescheduledRouteCustomer;
+// use App\Models\RescheduledRouteCustomer;
 use App\Models\Lead;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +20,7 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Collection;
 
 
 class RouteController extends Controller
@@ -431,16 +432,16 @@ class RouteController extends Controller
                     // $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
                     //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
                     // }); 
-                    // $rescheduledCustomers = collect(json_decode($rescheduledRoute->customers, true) ?? [])->map(function ($customer) {
-                    //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
-                    // });
-                    $rescheduledCustomers = collect(
-                        is_string($rescheduledRoute->customers) 
-                            ? json_decode($rescheduledRoute->customers, true) 
-                            : $rescheduledRoute->customers
-                    )->map(function ($customer) {
+                    $rescheduledCustomers = collect(json_decode($rescheduledRoute->customers, true) ?? [])->map(function ($customer) {
                         return (array) $customer + ['scheduled' => true]; // Ensure associative array format
                     });
+                    // $rescheduledCustomers = collect(
+                    //     is_string($rescheduledRoute->customers) 
+                    //         ? json_decode($rescheduledRoute->customers, true) 
+                    //         : $rescheduledRoute->customers
+                    // )->map(function ($customer) {
+                    //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
+                    // });
                     
                     
                     
