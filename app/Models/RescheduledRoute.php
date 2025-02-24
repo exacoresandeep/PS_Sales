@@ -22,11 +22,11 @@ class RescheduledRoute extends Model
         'customers', 
     ];
 
-    protected $casts = [
-        'assign_date' => 'date', 
-        'locations' => 'array', 
-        'customers' => 'array', 
-    ];
+    // protected $casts = [
+    //     'assign_date' => 'date', 
+    //     // 'locations' => 'array', 
+    //     // 'customers' => 'array', 
+    // ];
 
    
     public function employee()
