@@ -393,127 +393,129 @@ class RouteController extends Controller
     }
 
     public function currentWeekRoutes()
-{
-    try {
-        $employeeId = Auth::id();
-        $today = Carbon::now();
-        $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
-        $weekEnd = $today->copy()->endOfWeek(Carbon::SUNDAY);
-
-        $routeMapping = [
-            'Monday' => 'R1',
-            'Tuesday' => 'R2',
-            'Wednesday' => 'R3',
-            'Thursday' => 'R4',
-            'Friday' => 'R5',
-            'Saturday' => 'R6',
-        ];
-
-        $weeklyRoutes = [];
-
-        foreach ($routeMapping as $day => $defaultRouteName) {
-            $customers = collect();
-            $locations = [];
-            $routeName = $defaultRouteName;
-            $assignedRouteId = null;
-
-            // Check if the route has been rescheduled in the current week
-            $rescheduledRoute = RescheduledRoute::where('employee_id', $employeeId)
-                ->where('day', $day)
-                ->whereBetween('assign_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
-                ->first();
-
-            if ($rescheduledRoute) {
-                $routeName = $rescheduledRoute->route_name;
-                $assignedRouteId = $rescheduledRoute->assigned_route_id;
-                $locations = $rescheduledRoute->locations;
-
-                // Ensure customers is a collection
-                $rescheduledCustomers = collect($rescheduledRoute->customers)->map(function ($customer) {
-                    return array_merge($customer, ['scheduled' => true]);
-                });
-
-            } else {
-                $trip = AssignRoute::where('employee_id', $employeeId)
-                    ->where('route_name', $routeName)
-                    ->first();
-
-                if (!$trip) {
-                    continue;
-                }
-
-                $locations = explode(', ', $trip->locations);
-                $assignedRouteId = $trip->id;
-                $rescheduledCustomers = collect([]);
-            }
-
-            // Fetch all customers (dealers + leads) assigned to this route
-            $dealers = Dealer::where('assigned_route_id', $assignedRouteId)
-                ->get(['id', 'dealer_name as customer_name', 'location'])
-                ->map(function ($dealer) {
-                    return array_merge($dealer->toArray(), ['customer_type' => 'Dealer', 'scheduled' => false]);
-                });
-
-            $leads = Lead::join('customer_types', 'leads.customer_type', '=', 'customer_types.id')
-                ->where('leads.assigned_route_id', $assignedRouteId)
-                ->where(function ($query) {
-                    $query->whereIn('leads.customer_type', [1, 2])
-                        ->orWhere(function ($q) {
-                            $q->where('leads.customer_type', 4)->where('leads.status', 'Follow Up');
-                        });
-                })
-                ->get([
-                    'leads.id',
-                    'leads.customer_name',
-                    'leads.location',
-                    'customer_types.name as customer_type'
-                ])
-                ->map(function ($lead) {
-                    return array_merge($lead->toArray(), ['scheduled' => false]);
-                });
-
-            // Ensure $rescheduledCustomers is a Collection before using firstWhere()
-            $rescheduledCustomers = collect($rescheduledCustomers);
-
-            // Merge all customers, ensuring only rescheduled ones are marked as scheduled
-            $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
-                $rescheduled = $rescheduledCustomers->firstWhere('id', $customer['id']);
-                if ($rescheduled) {
-                    return array_merge($customer, ['scheduled' => true]);
-                }
-                return $customer;
-            });
-
-            // Calculate the date for the day in the current week
-            $dayIndex = array_search($day, array_keys($routeMapping));
-            $date = $weekStart->copy()->addDays($dayIndex)->format('d/m/y');
-
-            $weeklyRoutes[] = [
-                'day' => $day,
-                'date' => $date,
-                'assigned_route_id' => $assignedRouteId,
-                'route_name' => $routeName,
-                'locations' => $locations,
-                'customers' => $customers->values(),
+    {
+        try {
+            $employeeId = Auth::id();
+            $today = Carbon::now();
+            $weekStart = $today->copy()->startOfWeek(Carbon::MONDAY);
+            $weekEnd = $today->copy()->endOfWeek(Carbon::SUNDAY);
+    
+            $routeMapping = [
+                'Monday' => 'R1',
+                'Tuesday' => 'R2',
+                'Wednesday' => 'R3',
+                'Thursday' => 'R4',
+                'Friday' => 'R5',
+                'Saturday' => 'R6',
             ];
+    
+            $weeklyRoutes = [];
+    
+            foreach ($routeMapping as $day => $defaultRouteName) {
+                $customers = collect();
+                $locations = [];
+                $routeName = $defaultRouteName;
+                $assignedRouteId = null;
+    
+                // Check if the route has been rescheduled in the current week
+                $rescheduledRoute = RescheduledRoute::where('employee_id', $employeeId)
+                    ->where('day', $day)
+                    ->whereBetween('assign_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
+                    ->first();
+    
+                if ($rescheduledRoute) {
+                    $routeName = $rescheduledRoute->route_name;
+                    $assignedRouteId = $rescheduledRoute->assigned_route_id;
+                    $locations = is_array($rescheduledRoute->locations) ? $rescheduledRoute->locations : [];
+    
+                    // Ensure customers is always an array before mapping
+                    $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
+                        return is_array($customer) ? array_merge($customer, ['scheduled' => true]) : 
+                               (object) array_merge((array) $customer, ['scheduled' => true]);
+                    });
+    
+                } else {
+                    $trip = AssignRoute::where('employee_id', $employeeId)
+                        ->where('route_name', $routeName)
+                        ->first();
+    
+                    if (!$trip) {
+                        continue;
+                    }
+    
+                    $locations = explode(', ', $trip->locations);
+                    $assignedRouteId = $trip->id;
+                    $rescheduledCustomers = collect([]);
+                }
+    
+                // Fetch all customers (dealers + leads) assigned to this route
+                $dealers = Dealer::where('assigned_route_id', $assignedRouteId)
+                    ->get(['id', 'dealer_name as customer_name', 'location'])
+                    ->map(function ($dealer) {
+                        return array_merge($dealer->toArray(), ['customer_type' => 'Dealer', 'scheduled' => false]);
+                    });
+    
+                $leads = Lead::join('customer_types', 'leads.customer_type', '=', 'customer_types.id')
+                    ->where('leads.assigned_route_id', $assignedRouteId)
+                    ->where(function ($query) {
+                        $query->whereIn('leads.customer_type', [1, 2])
+                            ->orWhere(function ($q) {
+                                $q->where('leads.customer_type', 4)->where('leads.status', 'Follow Up');
+                            });
+                    })
+                    ->get([
+                        'leads.id',
+                        'leads.customer_name',
+                        'leads.location',
+                        'customer_types.name as customer_type'
+                    ])
+                    ->map(function ($lead) {
+                        return array_merge($lead->toArray(), ['scheduled' => false]);
+                    });
+    
+                // Ensure $rescheduledCustomers is a Collection before using firstWhere()
+                $rescheduledCustomers = collect($rescheduledCustomers);
+    
+                // Merge all customers, ensuring only rescheduled ones are marked as scheduled
+                $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
+                    $rescheduled = $rescheduledCustomers->firstWhere('id', $customer['id']);
+                    if ($rescheduled) {
+                        return array_merge($customer, ['scheduled' => true]);
+                    }
+                    return $customer;
+                });
+    
+                // Calculate the date for the day in the current week
+                $dayIndex = array_search($day, array_keys($routeMapping));
+                $date = $weekStart->copy()->addDays($dayIndex)->format('d/m/y');
+    
+                $weeklyRoutes[] = [
+                    'day' => $day,
+                    'date' => $date,
+                    'assigned_route_id' => $assignedRouteId,
+                    'route_name' => $routeName,
+                    'locations' => $locations,
+                    'customers' => $customers->values(),
+                ];
+            }
+    
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Weekly routes fetched successfully.',
+                'data' => $weeklyRoutes,
+            ], 200);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => 'Error fetching weekly routes.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'statusCode' => 200,
-            'message' => 'Weekly routes fetched successfully.',
-            'data' => $weeklyRoutes,
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'statusCode' => 500,
-            'message' => 'Error fetching weekly routes.',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
+    
 
     
     public function routeReschedule(Request $request)
