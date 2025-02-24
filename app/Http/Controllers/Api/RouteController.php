@@ -478,8 +478,12 @@ class RouteController extends Controller
     
                 // Merge all customers, ensuring only rescheduled ones are marked as scheduled
                 $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
-                    $rescheduled = $rescheduledCustomers->firstWhere('id', $customer['id']);
-                    if ($rescheduled) {
+                    // Find rescheduled customer by ID **AND** Customer Type
+                    $rescheduled = $rescheduledCustomers->first(function ($res) use ($customer) {
+                        return $res['id'] == $customer['id'] && $res['customer_type'] == $customer['customer_type'];
+                    });
+                
+                    if (!empty($rescheduled)) {
                         return array_merge($customer, ['scheduled' => true]);
                     }
                     return $customer;
