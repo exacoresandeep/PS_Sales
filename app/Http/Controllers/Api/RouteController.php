@@ -474,11 +474,12 @@ class RouteController extends Controller
 
             // Ensure $rescheduledCustomers is a Collection before using firstWhere()
             // $rescheduledCustomers = collect($rescheduledCustomers);
-            if (!$rescheduledRoute) {
-                $rescheduledCustomers = collect([]);
-            } else {
-                $rescheduledCustomers = collect($rescheduledRoute->customers); // ✅ Correct
-            }
+            $rescheduledCustomers = collect($rescheduledRoute->customers)->map(function ($customer) {
+                if (is_array($customer)) {
+                    return array_merge($customer, ['scheduled' => true]);
+                }
+                return $customer;
+            });
 
             // Merge all customers, ensuring only rescheduled ones are marked as scheduled
             $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
