@@ -432,10 +432,12 @@ class RouteController extends Controller
                     //     return (array) $customer + ['scheduled' => true]; // Ensure associative array format
                     // });
                     $rescheduledCustomers = collect(
-                        is_array($rescheduledRoute->customers) ? $rescheduledRoute->customers : json_decode($rescheduledRoute->customers, true) ?? []
+                        is_array($rescheduledRoute->customers) ? $rescheduledRoute->customers : $rescheduledRoute->customers ?? []
                     )->map(function ($customer) {
                         return (array) $customer + ['scheduled' => true]; // Ensure associative array format
                     });
+                  
+                    
     
                 } else {
                     $trip = AssignRoute::where('employee_id', $employeeId)
