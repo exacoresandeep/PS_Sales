@@ -425,7 +425,7 @@ class RouteController extends Controller
                 if ($rescheduledRoute) {
                     $routeName = $rescheduledRoute->route_name;
                     $assignedRouteId = $rescheduledRoute->assigned_route_id;
-                    $locations = is_array($rescheduledRoute->locations) ? $rescheduledRoute->locations : [];
+                    $locations = json_decode($rescheduledRoute->locations, true) ?? [];
     
                     // Convert customers to an array of associative arrays
                     // $rescheduledCustomers = collect($rescheduledRoute->customers ?? [])->map(function ($customer) {
@@ -434,6 +434,7 @@ class RouteController extends Controller
                     $rescheduledCustomers = collect(json_decode($rescheduledRoute->customers, true) ?? [])->map(function ($customer) {
                         return (array) $customer + ['scheduled' => true]; // Ensure associative array format
                     });
+                    
                     
     
                 } else {
