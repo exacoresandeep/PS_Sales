@@ -416,13 +416,12 @@ class RouteController extends Controller
                 $locations = [];
                 $routeName = $defaultRouteName;
                 $assignedRouteId = null;
-    
                 
                 $rescheduledRoute = RescheduledRoute::where('employee_id', $employeeId)
                     ->where('day', $day)
                     ->whereBetween('assign_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
                     ->first();
-    
+                
                 if ($rescheduledRoute) {
                     $routeName = $rescheduledRoute->route_name;
                     $assignedRouteId = $rescheduledRoute->assigned_route_id;
@@ -433,12 +432,14 @@ class RouteController extends Controller
                         return is_array($customer) ? array_merge($customer, ['scheduled' => true]) : 
                                array_merge((array) $customer, ['scheduled' => true]);
                     });
+                    
+                    dd($rescheduledCustomers);
     
                 } else {
                     $trip = AssignRoute::where('employee_id', $employeeId)
                         ->where('route_name', $routeName)
                         ->first();
-    
+                        dd($trip->toSql(), $trip->getBindings());
                     if (!$trip) {
                         continue;
                     }
@@ -498,7 +499,7 @@ class RouteController extends Controller
                     'customers' => $customers->values(),
                 ];
             }
-            dd($weeklyRoutes);
+            // dd($weeklyRoutes);
     
             return response()->json([
                 'success' => true,
