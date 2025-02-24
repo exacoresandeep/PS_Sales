@@ -477,7 +477,7 @@ class RouteController extends Controller
     
                 // Ensure $rescheduledCustomers is a Collection before using firstWhere()
                 $rescheduledCustomers = collect($rescheduledCustomers);
-                dd($rescheduledCustomers);
+                
     
                 // Merge all customers, ensuring only rescheduled ones are marked as scheduled
                 $customers = $dealers->merge($leads)->map(function ($customer) use ($rescheduledCustomers) {
@@ -487,7 +487,7 @@ class RouteController extends Controller
                     }
                     return $customer;
                 });
-    
+                dd($customers);
                 // Calculate the date for the day in the current week
                 $dayIndex = array_search($day, array_keys($routeMapping));
                 $date = $weekStart->copy()->addDays($dayIndex)->format('d/m/y');
