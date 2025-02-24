@@ -311,7 +311,8 @@ class RouteController extends Controller
             if ($rescheduledRoute) {
                 $routeName = $rescheduledRoute->route_name;
                 $assignedRouteId = $rescheduledRoute->assigned_route_id;
-                $locations = $rescheduledRoute->locations;
+                // $locations = $rescheduledRoute->locations;
+                $locations = json_decode($rescheduledRoute->locations, true);
 
                 $scheduledCustomers = collect(json_decode($rescheduledRoute->customers ?? '[]', true))->map(function ($customer) {
                     return array_merge($customer, ['scheduled' => true]);
@@ -586,7 +587,7 @@ class RouteController extends Controller
             return response()->json([
                 'success' => false,
                 'statusCode' => 400,
-                'message' => 'Some routes were already rescheduled this week.',
+                'message' => 'This Week Already Rescheduled',
                 'data' => [
                     'already_rescheduled' => $alreadyRescheduledRoutes
                 ]
