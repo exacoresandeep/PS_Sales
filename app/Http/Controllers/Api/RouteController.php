@@ -433,7 +433,7 @@ class RouteController extends Controller
                                array_merge((array) $customer, ['scheduled' => true]);
                     });
                     
-                    dd($rescheduledCustomers);
+                    // dd($rescheduledCustomers);
     
                 } else {
                     $trip = AssignRoute::where('employee_id', $employeeId)
