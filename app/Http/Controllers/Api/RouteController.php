@@ -436,7 +436,7 @@ class RouteController extends Controller
                     // dd($rescheduledCustomers);
     
                 } else {
-                    dd($employeeId);
+                    // dd($employeeId);
                     $trip = AssignRoute::where('employee_id', $employeeId)
                         ->where('route_name', $routeName)
                         ->first();
@@ -476,6 +476,7 @@ class RouteController extends Controller
                     });
     
                 // Ensure $rescheduledCustomers is a Collection before using firstWhere()
+                dd($rescheduledCustomers);
                 $rescheduledCustomers = collect($rescheduledCustomers);
     
                 // Merge all customers, ensuring only rescheduled ones are marked as scheduled
