@@ -100,10 +100,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/activity-report-listing', [ActivityController::class, 'activityReportListing']);
             Route::get('/sales-executive/{employee_id}/activity-report', [ActivityController::class, 'activityReportDetails']);
 
-            //Sales Overview Report
-            Route::get('/sales-overview-report', [OrderController::class, 'salesOverviewReportList']);
-            Route::get('/leads-overview-report', [OrderController::class, 'leadsOverviewReportList']);
-            Route::get('/orders-overview-report', [OrderController::class, 'ordersOverviewReportList']);
+            // //Sales Overview Report
+            // Route::get('/sales-overview-report', [OrderController::class, 'salesOverviewReportList']);
+            // Route::get('/leads-overview-report', [OrderController::class, 'leadsOverviewReportList']);
+            // Route::get('/orders-overview-report', [OrderController::class, 'ordersOverviewReportList']);
 
         });
 
