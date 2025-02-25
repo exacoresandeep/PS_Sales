@@ -1430,8 +1430,6 @@ class OrderController extends Controller
     }
 
 
-
-
    
     // public function salesExecutiveSalesReport(Request $request)
     // {
