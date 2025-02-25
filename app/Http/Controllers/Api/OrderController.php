@@ -2516,6 +2516,7 @@ class OrderController extends Controller
                 ->get()
                 ->map(function ($lead) {
                     return [
+                        'id' => $lead->id,
                         'customer_name' => $lead->customer_name,
                         'customer_type' => optional($lead->customerType)->name ?? 'N/A',
                         'created_at' => $lead->created_at->format('d/m/Y'),
