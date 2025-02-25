@@ -1458,7 +1458,7 @@ class OrderController extends Controller
     {
         try {
             $employee = Auth::user();
-
+    
             if (!$employee) {
                 return response()->json([
                     'success' => false,
@@ -1466,20 +1466,16 @@ class OrderController extends Controller
                     'message' => "User not authenticated.",
                 ], 401);
             }
-
-            // Default to current month & year
+    
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
-
-            // Initialize total sales count
+    
             $totalSalesForPeriod = 0;
-
             if ($employee->employee_type_id == 3) { 
-                // DSM Case: Fetch all SEs in the same district as DSM
-                $salesExecutives = Employee::where('district', $employee->district)
-                    ->where('employee_type_id', 1) // SEs
+                $salesExecutives = Employee::where('district_id', $employee->district_id)
+                    ->where('employee_type_id', 1)
                     ->get();
-
+    
                 if ($salesExecutives->isEmpty()) {
                     return response()->json([
                         'success' => false,
@@ -1487,18 +1483,17 @@ class OrderController extends Controller
                         'message' => "No Sales Executives found in this district.",
                     ], 404);
                 }
-
-                // Generate sales report for DSM
+    
                 $salesReport = $salesExecutives->map(function ($se) use ($month, $year, &$totalSalesForPeriod) {
                     $orders = Order::where('created_by', $se->id)
                         ->where('status', 'Delivered')
                         ->whereYear('created_at', $year)
                         ->whereMonth('created_at', $month)
                         ->get();
-
+    
                     $totalSales = $orders->sum('invoice_total');
                     $totalSalesForPeriod += $totalSales;
-
+    
                     return [
                         'employee_id' => $se->id,
                         'employee_name' => $se->name,
@@ -1513,12 +1508,12 @@ class OrderController extends Controller
                         }),
                     ];
                 });
+    
             } elseif ($employee->employee_type_id == 4) { 
-                // RSM Case: Fetch all ASOs and DSMs in the RSM's region
                 $region = Regions::whereHas('districts', function ($query) use ($employee) {
                     $query->where('id', $employee->district_id);
                 })->first();
-
+    
                 if (!$region) {
                     return response()->json([
                         'success' => false,
@@ -1526,12 +1521,12 @@ class OrderController extends Controller
                         'message' => "Region not found for the employee's district.",
                     ], 404);
                 }
-
+    
                 $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
                 $employees = Employee::whereIn('district_id', $districtsInRegion)
                     ->whereIn('employee_type_id', [2, 3])
                     ->get();
-
+    
                 if ($employees->isEmpty()) {
                     return response()->json([
                         'success' => false,
@@ -1539,27 +1534,68 @@ class OrderController extends Controller
                         'message' => "No Sales Executives or Area Sales Officers found in this region.",
                     ], 404);
                 }
-
+    
                 $salesReport = $employees->map(function ($emp) use ($month, $year, &$totalSalesForPeriod) {
                     $orders = Order::where('created_by', $emp->id)
                         ->where('status', 'Delivered')
                         ->whereYear('created_at', $year)
                         ->whereMonth('created_at', $month)
                         ->get();
-
+    
                     $totalSales = $orders->sum('invoice_total');
                     $totalSalesForPeriod += $totalSales;
-
-                    if ($emp->employee_type_id == 1) {
-                        $employeeType = 'Sales Executive';
-                    } elseif ($emp->employee_type_id == 2) {
-                        $employeeType = 'Area Sales Officer';
-                    } elseif ($emp->employee_type_id == 3) { 
-                        $employeeType = 'District Sales Manager';
-                    } else {
-                        $employeeType = 'Unknown';
-                    }
-                  
+    
+                    $employeeType = match ($emp->employee_type_id) {
+                        1 => 'Sales Executive',
+                        2 => 'Area Sales Officer',
+                        3 => 'District Sales Manager',
+                        default => 'Unknown',
+                    };
+    
+                    return [
+                        'employee_id' => $emp->id,
+                        'employee_name' => $emp->name,
+                        'employee_code' => $emp->employee_code,
+                        'employee_type_id' => $emp->employee_type_id,
+                        'employee_type' => $employeeType,
+                        'total_sales_report' => (float) $totalSales,
+                        'orders' => $orders->map(function ($order) {
+                            return [
+                                'order_id' => $order->id,
+                                'created_at' => $order->created_at ? $order->created_at->format('d/m/Y') : null,
+                                'invoice_total' => (float) $order->invoice_total,
+                            ];
+                        }),
+                    ];
+                });
+    
+            } elseif ($employee->employee_type_id == 5) { 
+                $employees = Employee::whereIn('employee_type_id', [3, 4])->get();
+    
+                if ($employees->isEmpty()) {
+                    return response()->json([
+                        'success' => false,
+                        'statusCode' => 404,
+                        'message' => "No District Sales Managers or Regional Sales Managers found.",
+                    ], 404);
+                }
+    
+                $salesReport = $employees->map(function ($emp) use ($month, $year, &$totalSalesForPeriod) {
+                    $orders = Order::where('created_by', $emp->id)
+                        ->where('status', 'Delivered')
+                        ->whereYear('created_at', $year)
+                        ->whereMonth('created_at', $month)
+                        ->get();
+    
+                    $totalSales = $orders->sum('invoice_total');
+                    $totalSalesForPeriod += $totalSales;
+    
+                    $employeeType = match ($emp->employee_type_id) {
+                        3 => 'District Sales Manager',
+                        4 => 'Regional Sales Manager',
+                        default => 'Unknown',
+                    };
+    
                     return [
                         'employee_id' => $emp->id,
                         'employee_name' => $emp->name,
@@ -1577,7 +1613,7 @@ class OrderController extends Controller
                     ];
                 });
             }
-
+    
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
@@ -1587,7 +1623,7 @@ class OrderController extends Controller
                     'sales_report' => $salesReport,
                 ],
             ], 200);
-
+    
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1596,20 +1632,27 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    
 
     public function salesReportDetails(Request $request, $employee_id)
     {
         try {
-            // Get logged-in employee
             $employee = Auth::user();
     
-            // Check the role of the logged-in employee and set allowed employee types
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+    
             if ($employee->employee_type_id == 3) { 
-                // DSM can only see Sales Executives (SE)
                 $allowedEmployeeTypes = [1]; 
             } elseif ($employee->employee_type_id == 4) { 
-                // RSM can see both ASOs and DSMs
                 $allowedEmployeeTypes = [2, 3]; 
+            } elseif ($employee->employee_type_id == 5) { 
+                $allowedEmployeeTypes = [3, 4]; 
             } else {
                 return response()->json([
                     'success' => false,
@@ -1618,35 +1661,30 @@ class OrderController extends Controller
                 ], 403);
             }
     
-            // Find the Sales Executive, ASO, or DSM based on allowed employee types
             $salesEmployee = Employee::where('id', $employee_id)
                 ->whereIn('employee_type_id', $allowedEmployeeTypes)
                 ->first();
-    dd($salesEmployee);
+    
             if (!$salesEmployee) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 404,
-                    'message' => "Sales Executive, ASO, or DSM not found.",
+                    'message' => "Employee not found or access not allowed.",
                 ], 404);
             }
     
-            // Get month & year from request, default to current month & year
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
     
-            // Fetch delivered orders for the selected Sales Employee
             $orders = Order::where('created_by', $salesEmployee->id)
                 ->where('status', 'Delivered')
                 ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
-                ->with('dealer:id,dealer_name') // Load dealer details
+                ->with('dealer:id,dealer_name') 
                 ->get();
     
-            // Calculate total sales amount for the filtered period
             $totalSalesAmount = $orders->sum('invoice_total');
     
-            // Format orders data
             $ordersData = $orders->map(function ($order) {
                 return [
                     'order_id' => $order->id,
@@ -1681,6 +1719,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    
     
 
     public function orderReportListing(Request $request)
