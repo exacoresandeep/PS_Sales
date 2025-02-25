@@ -1722,11 +1722,147 @@ class OrderController extends Controller
     
     
 
+    // public function orderReportListing(Request $request)
+    // {
+    //     try {
+    //         // Get logged-in employee
+    //         $employee = Auth::user();
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated.",
+    //             ], 401);
+    //         }
+
+    //         // Get Sales Executives in the same district
+    //         $salesExecutives = Employee::where('district', $employee->district)
+    //             ->where('employee_type_id', 1) // Only Sales Executives
+    //             ->get();
+
+    //         if ($salesExecutives->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No Sales Executives found in this district.",
+    //             ], 404);
+    //         }
+
+    //         // Get month & year from request, default to current month & year
+    //         $month = $request->input('month', date('m'));
+    //         $year = $request->input('year', date('Y'));
+
+    //         // Initialize total order count
+    //         $totalOrdersForPeriod = 0;
+
+    //         // Fetch order report for each Sales Executive
+    //         $reportData = $salesExecutives->map(function ($se) use ($month, $year, &$totalOrdersForPeriod) {
+    //             // Count delivered orders
+    //             $orderCount = Order::where('created_by', $se->id)
+    //                 ->where('status', '!=' , 'Pending')
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
+
+    //             // Increment total orders for the period
+    //             $totalOrdersForPeriod += $orderCount;
+
+    //             return [
+    //                 'employee_id' => $se->id,
+    //                 'employee_name' => $se->name,
+    //                 'employee_code' => $se->employee_code,
+    //                 'total_orders' => $orderCount,
+    //             ];
+    //         });
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => "Order report listing fetched successfully for $month/$year.",
+    //             'data' => [
+    //                 'total_orders_for_period' => $totalOrdersForPeriod,
+    //                 'order_report' => $reportData,
+    //             ],
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+    // public function orderReportDetails(Request $request, $employee_id)
+    // {
+    //     try {
+    //         $employee = Employee::find($employee_id);
+    
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "Employee not found.",
+    //             ], 404);
+    //         }
+    
+    //         $month = $request->input('month', date('m'));
+    //         $year = $request->input('year', date('Y'));
+    
+    //         $totalOrders = Order::where('created_by', $employee->id)
+    //             ->where('status', '!=', 'Pending')
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->count();
+    
+    //         $orders = Order::where('created_by', $employee->id)
+    //             ->where('status', '!=', 'Pending')
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->with('dealer:id,dealer_name') 
+    //             ->orderBy('created_at', 'desc')
+    //             ->get();
+    
+    //         $orderData = $orders->map(function ($order) {
+    //             return [
+    //                 'order_id' => $order->id,
+    //                 'dealer_name' => optional($order->dealer)->dealer_name,
+    //                 'created_at' => \Carbon\Carbon::parse($order->created_at)->format('d/m/Y'), 
+    //                 'status' => $order->status,
+    //                 'amount' => ($order->status === 'Delivered') ? (float) $order->invoice_total : (float) $order->total_amount,
+    //             ];
+    //         });
+    
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => "Order details fetched successfully for $month/$year.",
+    //             'data' =>[
+    //                 'employee' => [
+    //                     'id' => $employee->id,
+    //                     'name' => $employee->name,
+    //                     'employee_code' => $employee->employee_code,
+    //                     'email' => $employee->email,
+    //                     'phone' => $employee->phone,
+    //                     'total_orders' => $totalOrders,
+    //                 ],
+    //                 'orders' => $orderData,
+    //             ],
+    //         ], 200);
+    
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function orderReportListing(Request $request)
     {
         try {
-            // Get logged-in employee
             $employee = Auth::user();
+
             if (!$employee) {
                 return response()->json([
                     'success' => false,
@@ -1735,42 +1871,50 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            // Get Sales Executives in the same district
-            $salesExecutives = Employee::where('district', $employee->district)
-                ->where('employee_type_id', 1) // Only Sales Executives
+            if ($employee->employee_type_id == 3) { 
+                $allowedEmployeeTypes = [1]; 
+            } elseif ($employee->employee_type_id == 4) { 
+                $allowedEmployeeTypes = [2, 3]; 
+            } elseif ($employee->employee_type_id == 5) { 
+                $allowedEmployeeTypes = [3, 4]; 
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => "Unauthorized access.",
+                ], 403);
+            }
+
+            $employees = Employee::whereIn('employee_type_id', $allowedEmployeeTypes)
+                ->where('district', $employee->district)
                 ->get();
 
-            if ($salesExecutives->isEmpty()) {
+            if ($employees->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 404,
-                    'message' => "No Sales Executives found in this district.",
+                    'message' => "No employees found in this district.",
                 ], 404);
             }
 
-            // Get month & year from request, default to current month & year
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
 
-            // Initialize total order count
             $totalOrdersForPeriod = 0;
 
-            // Fetch order report for each Sales Executive
-            $reportData = $salesExecutives->map(function ($se) use ($month, $year, &$totalOrdersForPeriod) {
-                // Count delivered orders
-                $orderCount = Order::where('created_by', $se->id)
-                    ->where('status', '!=' , 'Pending')
+            $reportData = $employees->map(function ($emp) use ($month, $year, &$totalOrdersForPeriod) {
+                $orderCount = Order::where('created_by', $emp->id)
+                    ->where('status', '!=', 'Pending')
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
                     ->count();
 
-                // Increment total orders for the period
                 $totalOrdersForPeriod += $orderCount;
 
                 return [
-                    'employee_id' => $se->id,
-                    'employee_name' => $se->name,
-                    'employee_code' => $se->employee_code,
+                    'employee_id' => $emp->id,
+                    'employee_name' => $emp->name,
+                    'employee_code' => $emp->employee_code,
                     'total_orders' => $orderCount,
                 ];
             });
@@ -1796,25 +1940,51 @@ class OrderController extends Controller
     public function orderReportDetails(Request $request, $employee_id)
     {
         try {
-            $employee = Employee::find($employee_id);
-    
+            $loggedInEmployee = Auth::user();
+
+            if (!$loggedInEmployee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated.",
+                ], 401);
+            }
+
+            if ($loggedInEmployee->employee_type_id == 3) { 
+                $allowedEmployeeTypes = [1]; 
+            } elseif ($loggedInEmployee->employee_type_id == 4) { 
+                $allowedEmployeeTypes = [2, 3]; 
+            } elseif ($loggedInEmployee->employee_type_id == 5) { 
+                $allowedEmployeeTypes = [3, 4]; 
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => "Unauthorized access.",
+                ], 403);
+            }
+
+            $employee = Employee::whereIn('employee_type_id', $allowedEmployeeTypes)
+                ->where('id', $employee_id)
+                ->first();
+
             if (!$employee) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 404,
-                    'message' => "Employee not found.",
+                    'message' => "Employee not found or access denied.",
                 ], 404);
             }
-    
+
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
-    
+
             $totalOrders = Order::where('created_by', $employee->id)
                 ->where('status', '!=', 'Pending')
                 ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->count();
-    
+
             $orders = Order::where('created_by', $employee->id)
                 ->where('status', '!=', 'Pending')
                 ->whereYear('created_at', $year)
@@ -1822,7 +1992,7 @@ class OrderController extends Controller
                 ->with('dealer:id,dealer_name') 
                 ->orderBy('created_at', 'desc')
                 ->get();
-    
+
             $orderData = $orders->map(function ($order) {
                 return [
                     'order_id' => $order->id,
@@ -1832,12 +2002,12 @@ class OrderController extends Controller
                     'amount' => ($order->status === 'Delivered') ? (float) $order->invoice_total : (float) $order->total_amount,
                 ];
             });
-    
+
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Order details fetched successfully for $month/$year.",
-                'data' =>[
+                'data' => [
                     'employee' => [
                         'id' => $employee->id,
                         'name' => $employee->name,
@@ -1849,7 +2019,7 @@ class OrderController extends Controller
                     'orders' => $orderData,
                 ],
             ], 200);
-    
+
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1858,89 +2028,295 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+
     
+    // public function leadReportListing(Request $request)
+    // {
+    //     try {
+    //         $employee = Auth::user();
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated.",
+    //             ], 401);
+    //         }
+    
+    //         $salesExecutives = Employee::where('district', $employee->district)
+    //             ->where('employee_type_id', 1) 
+    //             ->get();
+    
+    //         if ($salesExecutives->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No Sales Executives found in this district.",
+    //             ], 404);
+    //         }
+    
+    //         $month = $request->input('month', date('m'));
+    //         $year = $request->input('year', date('Y'));
+    
+    //         $totalOpenedLeads = 0;
+    //         $totalWonLeads = 0;
+    //         $totalLostLeads = 0;
+    
+    //         $reportData = $salesExecutives->map(function ($se) use ($month, $year, &$totalOpenedLeads, &$totalWonLeads, &$totalLostLeads) {
+    //             $openedLeads = Lead::where('created_by', $se->id)
+    //                 ->whereIn('status', ['Opened', 'Follow Up'])
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
+    
+    //             $wonLeads = Lead::where('created_by', $se->id)
+    //                 ->where('status', 'Won')
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
+    
+    //             $lostLeads = Lead::where('created_by', $se->id)
+    //                 ->where('status', 'Lost')
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
+    
+    //             $totalOpenedLeads += $openedLeads;
+    //             $totalWonLeads += $wonLeads;
+    //             $totalLostLeads += $lostLeads;
+    
+    //             return [
+    //                 'employee_id' => $se->id,
+    //                 'employee_name' => $se->name,
+    //                 'employee_code' => $se->employee_code,
+    //                 'total_leads' => [
+    //                     'opened' => $openedLeads,
+    //                     'won' => $wonLeads,
+    //                     'lost' => $lostLeads,
+    //                 ],
+    //             ];
+    //         });
+    
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => "Lead report listing fetched successfully for $month/$year.",
+                
+    //             'data' => [
+    //                 'total_leads_for_period' => [
+    //                     'opened' => $totalOpenedLeads,
+    //                     'won' => $totalWonLeads,
+    //                     'lost' => $totalLostLeads,
+    //                 ],
+    //                 'lead_report' =>$reportData,
+    //             ]
+                
+    //         ], 200);
+    
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+    // public function leadReportDetails(Request $request, $employee_id)
+    // {
+    //     try {
+    //         // Get the logged-in employee
+    //         $employee = Auth::user();
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated.",
+    //             ], 401);
+    //         }
+    //         if ($employee->employee_type_id == 3) { 
+    //             // DSM can only see Sales Executives (SE)
+    //             $allowedEmployeeTypes = [1]; 
+    //         } elseif ($employee->employee_type_id == 4) { 
+    //             // RSM can see both ASOs and DSM
+    //             $allowedEmployeeTypes = [2, 3]; 
+    //         } else {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 403,
+    //                 'message' => "Unauthorized access.",
+    //             ], 403);
+    //         }
+    //         // Find the Sales Executive
+    //         $salesEmployee = Employee::where('id', $employee_id)
+    //             ->whereIn('employee_type_id', $allowedEmployeeTypes)
+    //             ->first();
+
+    //         if (!$salesEmployee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "Employee not found or not authorized.",
+    //             ], 404);
+    //         }
+
+    //         // Get month & year from request, default to current month & year
+    //         $month = $request->input('month', date('m'));
+    //         $year = $request->input('year', date('Y'));
+
+    //         // Count leads based on status
+    //         $openedLeads = Lead::where('created_by', $salesEmployee->id)
+    //             ->whereIn('status', ['Opened', 'Follow Up'])
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->count();
+
+    //         $wonLeads = Lead::where('created_by', $salesEmployee->id)
+    //             ->where('status', 'Won')
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->count();
+
+    //         $lostLeads = Lead::where('created_by', $salesEmployee->id)
+    //             ->where('status', 'Lost')
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->count();
+
+    //         // Fetch the lead details
+    //         $leadDetails = Lead::where('created_by', $salesEmployee->id)
+    //             ->whereYear('created_at', $year)
+    //             ->whereMonth('created_at', $month)
+    //             ->with('customerType') // Load customer type relation
+    //             ->get()
+    //             ->map(function ($lead) {
+    //                 return [
+    //                     'customer_name' => $lead->customer_name,
+    //                     'customer_type' => $lead->customerType->name ?? 'N/A',
+    //                     'created_at' => $lead->created_at->format('d/m/Y'),
+    //                     'location' => $lead->location,
+    //                     'status' => $lead->status,
+    //                 ];
+    //             });
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => "Lead report details fetched successfully for {$salesEmployee->name}.",
+    //             'data' => [
+    //                 'employee' => [
+    //                     'employee_id' => $salesEmployee->id,
+    //                     'employee_name' => $salesEmployee->name,
+    //                     'employee_code' => $salesEmployee->employee_code,
+    //                     'email' => $salesEmployee->email,
+    //                     'phone' => $salesEmployee->phone,
+    //                 ],
+    //                 'total_leads' => [
+    //                     'opened' => $openedLeads,
+    //                     'won' => $wonLeads,
+    //                     'lost' => $lostLeads,
+    //                 ],
+    //                 'leads' => $leadDetails,
+    //             ],
+                    
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function leadReportListing(Request $request)
     {
         try {
-            $employee = Auth::user();
-            if (!$employee) {
+            $loggedInEmployee = Auth::user();
+
+            if (!$loggedInEmployee) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 401,
                     'message' => "User not authenticated.",
                 ], 401);
             }
-    
-            $salesExecutives = Employee::where('district', $employee->district)
-                ->where('employee_type_id', 1) 
+            if ($loggedInEmployee->employee_type_id == 3) { 
+                $allowedEmployeeTypes = [1]; 
+            } elseif ($loggedInEmployee->employee_type_id == 4) { 
+                $allowedEmployeeTypes = [2, 3]; 
+            } elseif ($loggedInEmployee->employee_type_id == 5) { 
+                $allowedEmployeeTypes = [3, 4]; 
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => "Unauthorized access.",
+                ], 403);
+            }
+
+            $employees = Employee::whereIn('employee_type_id', $allowedEmployeeTypes)
+                ->where('district_id', $loggedInEmployee->district_id)
                 ->get();
-    
-            if ($salesExecutives->isEmpty()) {
+            if ($employees->isEmpty()) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 404,
-                    'message' => "No Sales Executives found in this district.",
+                    'message' => "No employees found in this district.",
                 ], 404);
             }
-    
+
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
-    
+
             $totalOpenedLeads = 0;
             $totalWonLeads = 0;
             $totalLostLeads = 0;
-    
-            $reportData = $salesExecutives->map(function ($se) use ($month, $year, &$totalOpenedLeads, &$totalWonLeads, &$totalLostLeads) {
-                $openedLeads = Lead::where('created_by', $se->id)
+
+            $reportData = $employees->map(function ($employee) use ($month, $year, &$totalOpenedLeads, &$totalWonLeads, &$totalLostLeads) {
+                $openedLeads = Lead::where('created_by', $employee->id)
                     ->whereIn('status', ['Opened', 'Follow Up'])
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
                     ->count();
-    
-                $wonLeads = Lead::where('created_by', $se->id)
+                $wonLeads = Lead::where('created_by', $employee->id)
                     ->where('status', 'Won')
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
                     ->count();
-    
-                $lostLeads = Lead::where('created_by', $se->id)
+
+                $lostLeads = Lead::where('created_by', $employee->id)
                     ->where('status', 'Lost')
                     ->whereYear('created_at', $year)
                     ->whereMonth('created_at', $month)
                     ->count();
-    
+
                 $totalOpenedLeads += $openedLeads;
                 $totalWonLeads += $wonLeads;
                 $totalLostLeads += $lostLeads;
-    
+                $total_leads = $openedLeads+$wonLeads+$lostLeads;
+
                 return [
-                    'employee_id' => $se->id,
-                    'employee_name' => $se->name,
-                    'employee_code' => $se->employee_code,
-                    'total_leads' => [
-                        'opened' => $openedLeads,
-                        'won' => $wonLeads,
-                        'lost' => $lostLeads,
-                    ],
+                    'employee_id' => $employee->id,
+                    'employee_name' => $employee->name,
+                    'employee_code' => $employee->employee_code,
+                    'total_leads' => $total_leads,
                 ];
             });
-    
+
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => "Lead report listing fetched successfully for $month/$year.",
-                
                 'data' => [
                     'total_leads_for_period' => [
                         'opened' => $totalOpenedLeads,
                         'won' => $totalWonLeads,
                         'lost' => $totalLostLeads,
                     ],
-                    'lead_report' =>$reportData,
-                ]
-                
+                    'lead_report' => $reportData,
+                ],
             ], 200);
-    
+
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1952,21 +2328,27 @@ class OrderController extends Controller
     public function leadReportDetails(Request $request, $employee_id)
     {
         try {
-            // Get the logged-in employee
-            $employee = Auth::user();
-            if (!$employee) {
+            // Get logged-in user
+            $loggedInEmployee = Auth::user();
+
+            if (!$loggedInEmployee) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 401,
                     'message' => "User not authenticated.",
                 ], 401);
             }
-            if ($employee->employee_type_id == 3) { 
-                // DSM can only see Sales Executives (SE)
+
+            // Define allowed employee types based on logged-in user's role
+            if ($loggedInEmployee->employee_type_id == 3) { 
+                // DSM can view Sales Executives
                 $allowedEmployeeTypes = [1]; 
-            } elseif ($employee->employee_type_id == 4) { 
-                // RSM can see both ASOs and DSM
+            } elseif ($loggedInEmployee->employee_type_id == 4) { 
+                // RSM can view ASOs and DSMs
                 $allowedEmployeeTypes = [2, 3]; 
+            } elseif ($loggedInEmployee->employee_type_id == 5) { 
+                // Sales Manager can view DSMs and RSMs
+                $allowedEmployeeTypes = [3, 4]; 
             } else {
                 return response()->json([
                     'success' => false,
@@ -1974,7 +2356,8 @@ class OrderController extends Controller
                     'message' => "Unauthorized access.",
                 ], 403);
             }
-            // Find the Sales Executive
+
+            // Find the employee within the allowed types
             $salesEmployee = Employee::where('id', $employee_id)
                 ->whereIn('employee_type_id', $allowedEmployeeTypes)
                 ->first();
@@ -1991,35 +2374,28 @@ class OrderController extends Controller
             $month = $request->input('month', date('m'));
             $year = $request->input('year', date('Y'));
 
-            // Count leads based on status
-            $openedLeads = Lead::where('created_by', $salesEmployee->id)
-                ->whereIn('status', ['Opened', 'Follow Up'])
+            // Fetch lead counts
+            $leadCounts = Lead::where('created_by', $salesEmployee->id)
                 ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
-                ->count();
+                ->selectRaw("
+                    SUM(CASE WHEN status IN ('Opened', 'Follow Up') THEN 1 ELSE 0 END) as opened,
+                    SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) as won,
+                    SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost
+                ")
+                ->first();
 
-            $wonLeads = Lead::where('created_by', $salesEmployee->id)
-                ->where('status', 'Won')
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->count();
-
-            $lostLeads = Lead::where('created_by', $salesEmployee->id)
-                ->where('status', 'Lost')
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->count();
-
-            // Fetch the lead details
+            // Fetch lead details
             $leadDetails = Lead::where('created_by', $salesEmployee->id)
                 ->whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
                 ->with('customerType') // Load customer type relation
+                ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($lead) {
                     return [
                         'customer_name' => $lead->customer_name,
-                        'customer_type' => $lead->customerType->name ?? 'N/A',
+                        'customer_type' => optional($lead->customerType)->name ?? 'N/A',
                         'created_at' => $lead->created_at->format('d/m/Y'),
                         'location' => $lead->location,
                         'status' => $lead->status,
@@ -2039,13 +2415,12 @@ class OrderController extends Controller
                         'phone' => $salesEmployee->phone,
                     ],
                     'total_leads' => [
-                        'opened' => $openedLeads,
-                        'won' => $wonLeads,
-                        'lost' => $lostLeads,
+                        'opened' => (int) $leadCounts->opened,
+                        'won' => (int) $leadCounts->won,
+                        'lost' => (int) $leadCounts->lost,
                     ],
                     'leads' => $leadDetails,
                 ],
-                    
             ], 200);
 
         } catch (Exception $e) {
@@ -2057,309 +2432,311 @@ class OrderController extends Controller
         }
     }
 
-    public function salesOverviewReportList(Request $request)
-    {
-        try {
-            $employee = Auth::user();
 
-            if (!$employee) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 401,
-                    'message' => "User not authenticated.",
-                ], 401);
-            }
 
-            // Default to current month & year
-            $month = $request->input('month', date('m'));
-            $year = $request->input('year', date('Y'));
+    // public function salesOverviewReportList(Request $request)
+    // {
+    //     try {
+    //         $employee = Auth::user();
 
-            // Get the RSM's region
-            $region = Regions::whereHas('districts', function ($query) use ($employee) {
-                $query->where('id', $employee->district_id);
-            })->first();
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated.",
+    //             ], 401);
+    //         }
 
-            if (!$region) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "Region not found for the employee's district.",
-                ], 404);
-            }
+    //         // Default to current month & year
+    //         $month = $request->input('month', date('m'));
+    //         $year = $request->input('year', date('Y'));
 
-            // Get all districts in the RSM's region
-            $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
-            // dd($districtsInRegion);
-            // Get Sales Executives (SEs) & Area Sales Officers (ASOs) in this region
-            $employees = Employee::whereIn('district_id', $districtsInRegion)
-                ->whereIn('employee_type_id', [2, 3]) //  2 = ASO, 1 = DSM
-                ->get();
+    //         // Get the RSM's region
+    //         $region = Regions::whereHas('districts', function ($query) use ($employee) {
+    //             $query->where('id', $employee->district_id);
+    //         })->first();
 
-            if ($employees->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "No Sales Executives or Area Sales Officers found in this region.",
-                ], 404);
-            }
+    //         if (!$region) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "Region not found for the employee's district.",
+    //             ], 404);
+    //         }
 
-            // Initialize total sales count
-            $totalSalesForPeriod = 0;
+    //         // Get all districts in the RSM's region
+    //         $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
+    //         // dd($districtsInRegion);
+    //         // Get Sales Executives (SEs) & Area Sales Officers (ASOs) in this region
+    //         $employees = Employee::whereIn('district_id', $districtsInRegion)
+    //             ->whereIn('employee_type_id', [2, 3]) //  2 = ASO, 1 = DSM
+    //             ->get();
 
-            // Generate sales report
-            $salesReport = $employees->map(function ($emp) use ($month, $year, &$totalSalesForPeriod) {
-                // Get all delivered orders for this employee
-                $orders = Order::where('created_by', $emp->id)
-                    ->where('status', 'Delivered')
-                    ->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month)
-                    ->get();
+    //         if ($employees->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No Sales Executives or Area Sales Officers found in this region.",
+    //             ], 404);
+    //         }
 
-                // Sum total sales for this employee
-                $totalSales = $orders->sum('invoice_total');
-                $totalSalesForPeriod += $totalSales; // Add to overall total
+    //         // Initialize total sales count
+    //         $totalSalesForPeriod = 0;
 
-                return [
-                    'employee_id' => $emp->id,
-                    'employee_name' => $emp->name,
-                    'employee_code' => $emp->employee_code,
-                    'employee_type_id' =>$emp->employee_type_id,
-                    'employee_type' => ($emp->employee_type_id == 1) ? 'Sales Executive' : 'Area Sales Officer',
-                    'total_sales_report' => (float) $totalSales,
-                    'orders' => $orders->map(function ($order) {
-                        return [
-                            'order_id' => $order->id,
-                            'created_at' =>  $order->created_at ? $order->created_at->format('d/m/Y') : null,
-                            'invoice_total' => (float) $order->invoice_total,
-                        ];
-                    }),
-                ];
-            });
+    //         // Generate sales report
+    //         $salesReport = $employees->map(function ($emp) use ($month, $year, &$totalSalesForPeriod) {
+    //             // Get all delivered orders for this employee
+    //             $orders = Order::where('created_by', $emp->id)
+    //                 ->where('status', 'Delivered')
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->get();
 
-            return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => "Sales report fetched successfully for $month/$year.",
-                'data' => [
-                    'total_sales_for_period' => (float) $totalSalesForPeriod,
-                    'sales_report' => $salesReport,
-                ],
-            ], 200);
+    //             // Sum total sales for this employee
+    //             $totalSales = $orders->sum('invoice_total');
+    //             $totalSalesForPeriod += $totalSales; // Add to overall total
 
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'statusCode' => 500,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-    public function leadsOverviewReportList(Request $request)
-    {
-        try {
-            $employee = Auth::user();
-            if (!$employee) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 401,
-                    'message' => "User not authenticated.",
-                ], 401);
-            }
+    //             return [
+    //                 'employee_id' => $emp->id,
+    //                 'employee_name' => $emp->name,
+    //                 'employee_code' => $emp->employee_code,
+    //                 'employee_type_id' =>$emp->employee_type_id,
+    //                 'employee_type' => ($emp->employee_type_id == 1) ? 'Sales Executive' : 'Area Sales Officer',
+    //                 'total_sales_report' => (float) $totalSales,
+    //                 'orders' => $orders->map(function ($order) {
+    //                     return [
+    //                         'order_id' => $order->id,
+    //                         'created_at' =>  $order->created_at ? $order->created_at->format('d/m/Y') : null,
+    //                         'invoice_total' => (float) $order->invoice_total,
+    //                     ];
+    //                 }),
+    //             ];
+    //         });
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => "Sales report fetched successfully for $month/$year.",
+    //             'data' => [
+    //                 'total_sales_for_period' => (float) $totalSalesForPeriod,
+    //                 'sales_report' => $salesReport,
+    //             ],
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+    // public function leadsOverviewReportList(Request $request)
+    // {
+    //     try {
+    //         $employee = Auth::user();
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated.",
+    //             ], 401);
+    //         }
     
-            // Get the RSM's region
-            $region = Regions::whereHas('districts', function ($query) use ($employee) {
-                $query->where('id', $employee->district_id);
-            })->first();
+    //         // Get the RSM's region
+    //         $region = Regions::whereHas('districts', function ($query) use ($employee) {
+    //             $query->where('id', $employee->district_id);
+    //         })->first();
     
-            if (!$region) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "Region not found for the employee's district.",
-                ], 404);
-            }
+    //         if (!$region) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "Region not found for the employee's district.",
+    //             ], 404);
+    //         }
     
-            // Get all districts in the RSM's region
-            $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
+    //         // Get all districts in the RSM's region
+    //         $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
     
-            // Get all SEs & ASOs in this region
-            $employees = Employee::whereIn('district_id', $districtsInRegion)
-                ->whereIn('employee_type_id', [2, 3]) // 1 = Sales Executive, 2 = Area Sales Officer
-                ->get();
+    //         // Get all SEs & ASOs in this region
+    //         $employees = Employee::whereIn('district_id', $districtsInRegion)
+    //             ->whereIn('employee_type_id', [2, 3]) // 1 = Sales Executive, 2 = Area Sales Officer
+    //             ->get();
     
-            if ($employees->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "No Sales Executives or ASOs found in this region.",
-                ], 404);
-            }
+    //         if ($employees->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No Sales Executives or ASOs found in this region.",
+    //             ], 404);
+    //         }
     
-            // Default to current month and year
-            $month = $request->input('month', date('m'));
-            $year = $request->input('year', date('Y'));
+    //         // Default to current month and year
+    //         $month = $request->input('month', date('m'));
+    //         $year = $request->input('year', date('Y'));
     
-            $totalOpenedLeads = 0;
-            $totalWonLeads = 0;
-            $totalLostLeads = 0;
+    //         $totalOpenedLeads = 0;
+    //         $totalWonLeads = 0;
+    //         $totalLostLeads = 0;
     
-            $reportData = $employees->map(function ($emp) use ($month, $year, &$totalOpenedLeads, &$totalWonLeads, &$totalLostLeads) {
-                $openedLeads = Lead::where('created_by', $emp->id)
-                    ->whereIn('status', ['Opened', 'Follow Up'])
-                    ->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month)
-                    ->count();
+    //         $reportData = $employees->map(function ($emp) use ($month, $year, &$totalOpenedLeads, &$totalWonLeads, &$totalLostLeads) {
+    //             $openedLeads = Lead::where('created_by', $emp->id)
+    //                 ->whereIn('status', ['Opened', 'Follow Up'])
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
     
-                $wonLeads = Lead::where('created_by', $emp->id)
-                    ->where('status', 'Won')
-                    ->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month)
-                    ->count();
+    //             $wonLeads = Lead::where('created_by', $emp->id)
+    //                 ->where('status', 'Won')
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
     
-                $lostLeads = Lead::where('created_by', $emp->id)
-                    ->where('status', 'Lost')
-                    ->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month)
-                    ->count();
+    //             $lostLeads = Lead::where('created_by', $emp->id)
+    //                 ->where('status', 'Lost')
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
     
-                // Update total counts
-                $totalOpenedLeads += $openedLeads;
-                $totalWonLeads += $wonLeads;
-                $totalLostLeads += $lostLeads;
+    //             // Update total counts
+    //             $totalOpenedLeads += $openedLeads;
+    //             $totalWonLeads += $wonLeads;
+    //             $totalLostLeads += $lostLeads;
     
-                return [
-                    'employee_id' => $emp->id,
-                    'employee_name' => $emp->name,
-                    'employee_code' => $emp->employee_code,
-                    'employee_type_id' => $emp->employee_type_id,
-                    'employee_type' => ($emp->employee_type_id == 1) ? 'Sales Executive' : 'Area Sales Officer',
-                    'total_leads' => [
-                        'opened' => $openedLeads,
-                        'won' => $wonLeads,
-                        'lost' => $lostLeads,
-                    ],
-                ];
-            });
+    //             return [
+    //                 'employee_id' => $emp->id,
+    //                 'employee_name' => $emp->name,
+    //                 'employee_code' => $emp->employee_code,
+    //                 'employee_type_id' => $emp->employee_type_id,
+    //                 'employee_type' => ($emp->employee_type_id == 1) ? 'Sales Executive' : 'Area Sales Officer',
+    //                 'total_leads' => [
+    //                     'opened' => $openedLeads,
+    //                     'won' => $wonLeads,
+    //                     'lost' => $lostLeads,
+    //                 ],
+    //             ];
+    //         });
     
-            return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => "Lead report listing fetched successfully for $month/$year.",
-                'data' => [
-                    'total_leads_for_period' => [
-                        'opened' => $totalOpenedLeads,
-                        'won' => $totalWonLeads,
-                        'lost' => $totalLostLeads,
-                    ],
-                    'lead_report' => $reportData,
-                ]
-            ], 200);
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => "Lead report listing fetched successfully for $month/$year.",
+    //             'data' => [
+    //                 'total_leads_for_period' => [
+    //                     'opened' => $totalOpenedLeads,
+    //                     'won' => $totalWonLeads,
+    //                     'lost' => $totalLostLeads,
+    //                 ],
+    //                 'lead_report' => $reportData,
+    //             ]
+    //         ], 200);
     
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'statusCode' => 500,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-    public function ordersOverviewReportList(Request $request)
-    {
-        try {
-            // Get logged-in employee
-            $employee = Auth::user();
-            if (!$employee) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 401,
-                    'message' => "User not authenticated.",
-                ], 401);
-            }
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+    // public function ordersOverviewReportList(Request $request)
+    // {
+    //     try {
+    //         // Get logged-in employee
+    //         $employee = Auth::user();
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated.",
+    //             ], 401);
+    //         }
 
-            // Ensure the user is an RSM
-            if ($employee->employee_type_id != 4) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 403,
-                    'message' => "Unauthorized access. Only RSMs can view this report.",
-                ], 403);
-            }
+    //         // Ensure the user is an RSM
+    //         if ($employee->employee_type_id != 4) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 403,
+    //                 'message' => "Unauthorized access. Only RSMs can view this report.",
+    //             ], 403);
+    //         }
 
-            // Get the RSM's region
-            $region = Regions::whereHas('districts', function ($query) use ($employee) {
-                $query->where('id', $employee->district_id);
-            })->first();
+    //         // Get the RSM's region
+    //         $region = Regions::whereHas('districts', function ($query) use ($employee) {
+    //             $query->where('id', $employee->district_id);
+    //         })->first();
 
-            if (!$region) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "Region not found for the employee's district.",
-                ], 404);
-            }
+    //         if (!$region) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "Region not found for the employee's district.",
+    //             ], 404);
+    //         }
 
-            // Get all districts in the RSM's region
-            $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
+    //         // Get all districts in the RSM's region
+    //         $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
 
-            // Fetch ASOs (2) and DSMs (3) in this region
-            $employees = Employee::whereIn('district_id', $districtsInRegion)
-                ->whereIn('employee_type_id', [2, 3]) // ASO = 2, DSM = 3
-                ->get();
+    //         // Fetch ASOs (2) and DSMs (3) in this region
+    //         $employees = Employee::whereIn('district_id', $districtsInRegion)
+    //             ->whereIn('employee_type_id', [2, 3]) // ASO = 2, DSM = 3
+    //             ->get();
 
-            if ($employees->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "No ASOs or DSMs found in this region.",
-                ], 404);
-            }
+    //         if ($employees->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No ASOs or DSMs found in this region.",
+    //             ], 404);
+    //         }
 
-            // Get month & year from request, default to current month & year
-            $month = $request->input('month', date('m'));
-            $year = $request->input('year', date('Y'));
+    //         // Get month & year from request, default to current month & year
+    //         $month = $request->input('month', date('m'));
+    //         $year = $request->input('year', date('Y'));
 
-            // Initialize total order count
-            $totalOrdersForPeriod = 0;
+    //         // Initialize total order count
+    //         $totalOrdersForPeriod = 0;
 
-            // Fetch order report for each ASO and DSM
-            $reportData = $employees->map(function ($emp) use ($month, $year, &$totalOrdersForPeriod) {
-                // Count delivered orders
-                $orderCount = Order::where('created_by', $emp->id)
-                    ->where('status', '!=', 'Pending')
-                    ->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month)
-                    ->count();
+    //         // Fetch order report for each ASO and DSM
+    //         $reportData = $employees->map(function ($emp) use ($month, $year, &$totalOrdersForPeriod) {
+    //             // Count delivered orders
+    //             $orderCount = Order::where('created_by', $emp->id)
+    //                 ->where('status', '!=', 'Pending')
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $month)
+    //                 ->count();
 
-                // Increment total orders for the period
-                $totalOrdersForPeriod += $orderCount;
+    //             // Increment total orders for the period
+    //             $totalOrdersForPeriod += $orderCount;
 
-                return [
-                    'employee_id' => $emp->id,
-                    'employee_name' => $emp->name,
-                    'employee_code' => $emp->employee_code,
-                    'employee_type' => $emp->employee_type_id == 2 ? 'ASO' : 'DSM',
-                    'total_orders' => $orderCount,
-                ];
-            });
+    //             return [
+    //                 'employee_id' => $emp->id,
+    //                 'employee_name' => $emp->name,
+    //                 'employee_code' => $emp->employee_code,
+    //                 'employee_type' => $emp->employee_type_id == 2 ? 'ASO' : 'DSM',
+    //                 'total_orders' => $orderCount,
+    //             ];
+    //         });
 
-            return response()->json([
-                'success' => true,
-                'statusCode' => 200,
-                'message' => "Order report listing for ASOs and DSMs fetched successfully for $month/$year.",
-                'data' => [
-                    'total_orders_for_period' => $totalOrdersForPeriod,
-                    'order_report' => $reportData,
-                ],
-            ], 200);
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => "Order report listing for ASOs and DSMs fetched successfully for $month/$year.",
+    //             'data' => [
+    //                 'total_orders_for_period' => $totalOrdersForPeriod,
+    //                 'order_report' => $reportData,
+    //             ],
+    //         ], 200);
 
-        } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'statusCode' => 500,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
 
 
