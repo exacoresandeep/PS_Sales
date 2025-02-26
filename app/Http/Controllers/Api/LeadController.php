@@ -139,9 +139,9 @@ class LeadController extends Controller
        
         
             $lead = Lead::with(['customerType', 'district', 'assignRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
-                        ->where('created_by', Auth::id()) 
-                        ->findOrFail($leadId);
-        // dd($query->toSql(), $query->getBindings());
+                        ->where('created_by', Auth::id()) ;
+                        // ->findOrFail($leadId);
+        dd($lead->toSql(), $lead->getBindings());
 
             $leadWonOrders = $lead->orders->where('source', 'lead_won');
             $paymentTerms = $leadWonOrders
