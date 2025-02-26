@@ -50,4 +50,8 @@ class Lead extends Model
     {
         return $this->hasMany(Order::class, 'lead_id');
     }
+    public function assignRoute()
+    {
+        return $this->belongsTo(AssignRoute::class, 'assigned_route_id');
+    }
 }
