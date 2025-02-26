@@ -137,12 +137,18 @@ class LeadController extends Controller
     {
         try {
        
-        
             $lead = Lead::with(['customerType', 'district', 'assignRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
+            if (!$lead) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'Lead not found!',
+                ], 404);
+            }
         // dd($query->toSql(), $query->getBindings());
-dd($lead);
+
             $leadWonOrders = $lead->orders->where('source', 'lead_won');
             $paymentTerms = $leadWonOrders
                 ->pluck('paymentTerm')
