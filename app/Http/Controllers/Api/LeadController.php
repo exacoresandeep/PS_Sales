@@ -99,26 +99,7 @@ class LeadController extends Controller
                     'data' =>[],
                 ], 400);
             }
-            // $tripRoute = TripRoute::where('id', $request->trip_route_id)
-            //             ->where('district_id', $request->district_id)
-            //             ->first();
-
-            // if (!$tripRoute) {
-            //     return response()->json([
-            //     'success' => false,
-            //     'statusCode' => 404,
-            //     'message' => 'Trip Route not found for the given district!',
-            //     ], 404);
-            // }
-            // $subLocations = json_decode($tripRoute->sub_locations, true) ?? [];
-
-            // if (!in_array($request->location, $subLocations)) {
-            //     $subLocations[] = $request->location;
-
-            //     $tripRoute->update([
-            //         'sub_locations' => json_encode($subLocations),
-            //     ]);
-            // }
+         
 
             $validatedData['created_by'] = Auth::id();
 
@@ -697,12 +678,5 @@ class LeadController extends Controller
             ], 500);
         }
     }
-
-
-
-
-  
-
-
 
 }

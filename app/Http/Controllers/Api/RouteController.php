@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
-
+use Exception;
 
 class RouteController extends Controller
 {
@@ -702,6 +702,88 @@ class RouteController extends Controller
             ], 500);
         }
     }
+
+    public function getRoutesReport(Request $request)
+    {
+        $employeeId = $request->input('employee_id');
+        $month = $request->input('month', Carbon::now()->month);
+        $year = $request->input('year', Carbon::now()->year);
+
+        $routes = RescheduledRoute::whereMonth('assign_date', $month)
+            ->whereYear('assign_date', $year)
+            ->when($employeeId, function ($query) use ($employeeId) {
+                $query->where('employee_id', $employeeId);
+            })
+            ->get();
+
+        $formattedRoutes = $routes->map(function ($route) {
+            $customers = json_decode($route->customers, true) ?? [];
+
+            $status = collect($customers)->contains(function ($customer) {
+                return isset($customer['scheduled']) && $customer['scheduled'] === true &&
+                    isset($customer['status']) && $customer['status'] === 'Pending';
+            }) ? 'Pending' : 'Completed';
+
+            return [
+                'id' => $route->id,
+                'route_name' => $route->route_name,
+                'locations' => json_decode($route->locations, true) ?? [],
+                'day' => $route->day,
+                'assign_date' => Carbon::parse($route->assign_date)->format('d/m/Y'),
+                'status' => $status,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'data' => $formattedRoutes,
+        ], 200);
+    }
+    public function getRouteDetails(Request $request, $routeId)
+    {
+        try {
+            $route = RescheduledRoute::findOrFail($routeId);
+    
+            $customers = json_decode($route->customers, true) ?? [];
+    
+            $routeSummary = collect($customers)->map(function ($customer) {
+                return [
+                    'customer_name' => $customer['customer_name'] ?? null,
+                    'location' => $customer['location'] ?? null,
+                    'customer_type' => $customer['customer_type'] ?? null,
+                    'status' => $customer['status'] ?? null,
+                    'completed_at' => ($customer['status'] === 'Completed' && isset($customer['visited_at']))
+                        ? Carbon::parse($customer['visited_at'])->format('d/m/Y H:i:s')
+                        : null,
+                ];
+            });
+    
+            // Format response
+            $response = [
+                'day' => $route->day,
+                'assign_date' => Carbon::parse($route->assign_date)->format('d/m/Y'),
+                'month' => Carbon::parse($route->assign_date)->format('F'),
+                'year' => Carbon::parse($route->assign_date)->format('Y'),
+                'route_summary' => $routeSummary,
+            ];
+    
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'data' => $response,
+            ], 200);
+    
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+
 
 
 }
