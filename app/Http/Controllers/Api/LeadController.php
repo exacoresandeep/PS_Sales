@@ -139,9 +139,9 @@ class LeadController extends Controller
        
         
             $lead = Lead::with(['customerType', 'district', 'assignRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
-                        ->where('created_by', Auth::id()) ;
-                        // ->findOrFail($leadId);
-        dd($lead->toSql(), $lead->getBindings());
+                        ->where('created_by', Auth::id()) 
+                        ->findOrFail($leadId);
+        // dd($query->toSql(), $query->getBindings());
 
             $leadWonOrders = $lead->orders->where('source', 'lead_won');
             $paymentTerms = $leadWonOrders
@@ -222,7 +222,8 @@ class LeadController extends Controller
                     ];
                 }),
             ];
-
+            dd($leadData);
+            dd($query->toSql(), $query->getBindings());
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
