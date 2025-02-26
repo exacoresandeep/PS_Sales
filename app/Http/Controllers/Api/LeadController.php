@@ -142,7 +142,7 @@ class LeadController extends Controller
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
         // dd($query->toSql(), $query->getBindings());
-
+dd($lead);
             $leadWonOrders = $lead->orders->where('source', 'lead_won');
             $paymentTerms = $leadWonOrders
                 ->pluck('paymentTerm')
@@ -222,8 +222,8 @@ class LeadController extends Controller
                     ];
                 }),
             ];
-            dd($leadData);
-            dd($query->toSql(), $query->getBindings());
+            // dd($leadData);
+            // dd($query->toSql(), $query->getBindings());
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
