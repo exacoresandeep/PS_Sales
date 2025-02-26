@@ -120,6 +120,52 @@ class ActivityController extends Controller
             ], 500);
         }
     }
+    // public function viewActivity($activityId)
+    // {
+    //     try {
+    //         $user = Auth::user();
+    //         if ($user === null) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 400,
+    //                 'message' => 'Unauthorized access',
+    //             ], 400);
+    //         }
+
+    //         $activity = Activity::with(['activityType', 'dealer']) 
+    //             ->find($activityId);
+
+    //         if (!$activity) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => 'Activity not found',
+    //             ], 404);
+    //         }
+
+    //         if ($activity->employee_id !== $user->id) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 400,
+    //                 'message' => 'Forbidden: You can only view your own activities.',
+    //             ], 400);
+    //         }
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Activity retrieved successfully!',
+    //             'data' => $activity,
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function viewActivity($activityId)
     {
         try {
@@ -132,7 +178,7 @@ class ActivityController extends Controller
                 ], 400);
             }
 
-            $activity = Activity::with(['activityType', 'dealer']) 
+            $activity = Activity::with(['activityType', 'dealer'])
                 ->find($activityId);
 
             if (!$activity) {
@@ -143,12 +189,37 @@ class ActivityController extends Controller
                 ], 404);
             }
 
-            if ($activity->employee_id !== $user->id) {
+            $activityEmployee = Employee::find($activity->employee_id);
+            if (!$activityEmployee) {
                 return response()->json([
                     'success' => false,
-                    'statusCode' => 400,
+                    'statusCode' => 404,
+                    'message' => 'Activity creator not found',
+                ], 404);
+            }
+
+            if (!in_array($user->employee_type_id, [1, 3])) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'Forbidden: You do not have permission to view this activity.',
+                ], 403);
+            }
+
+            if ($user->employee_type_id === 1 && $activity->employee_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
                     'message' => 'Forbidden: You can only view your own activities.',
-                ], 400);
+                ], 403);
+            }
+
+            if ($user->employee_type_id === 3 && !in_array($activityEmployee->employee_type_id, [1, 3])) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'Forbidden: You can only view activities of SEs and your own.',
+                ], 403);
             }
 
             return response()->json([
@@ -166,6 +237,7 @@ class ActivityController extends Controller
             ], 500);
         }
     }
+
     public function activityReportListing(Request $request)
     {
         try {
