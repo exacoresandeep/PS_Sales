@@ -51,4 +51,8 @@ class AssignRoute extends Model
     {
         return $this->belongsTo(Employee::class);
     }
+    public function assignRoute()
+    {
+        return $this->belongsTo(AssignRoute::class, 'assigned_route_id');
+    }
 }
