@@ -483,7 +483,6 @@ class OrderController extends Controller
                 ], 401);
             }
     
-            // Get all assigned route IDs for the logged-in employee
             $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
     
             if (empty($assignedRoutes)) {
@@ -495,7 +494,6 @@ class OrderController extends Controller
                 ], 404);
             }
     
-            // Get all dealers that belong to these assigned routes
             $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
     
             if (empty($dealers)) {
@@ -507,7 +505,6 @@ class OrderController extends Controller
                 ], 404);
             }
     
-            // Fetch orders created by these dealers
             $orders = Order::join('dealers', 'orders.created_by_dealer', '=', 'dealers.id')
                 ->where('orders.dealer_flag_order', '1')
                 ->whereIn('orders.created_by_dealer', $dealers)
@@ -520,7 +517,7 @@ class OrderController extends Controller
                     'dealers.dealer_name',
                     'dealers.dealer_code'
                 ])
-                ->get() // Fetch results
+                ->get() 
                 ->map(function ($order) {
                     $order->total_amount = (float) sprintf("%.2f", $order->total_amount);
                     return $order;
@@ -555,7 +552,6 @@ class OrderController extends Controller
     }
     
 
-    //dealerOrderStatusUpdate
     public function dealerOrderStatusUpdate(Request $request, $orderId)
     {
         try {
@@ -665,7 +661,6 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            // Get assigned routes for the logged-in employee
             $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
 
             if (empty($assignedRoutes)) {
@@ -677,7 +672,6 @@ class OrderController extends Controller
                 ], 404);
             }
 
-            // Get dealers linked to those routes
             $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
 
             if (empty($dealers)) {
@@ -689,7 +683,6 @@ class OrderController extends Controller
                 ], 404);
             }
 
-            // Fetch dealer-created orders based on the search key
             $ordersQuery = Order::join('dealers', 'orders.created_by_dealer', '=', 'dealers.id')
                 ->where('orders.dealer_flag_order', '1')
                 ->whereIn('orders.created_by_dealer', $dealers)

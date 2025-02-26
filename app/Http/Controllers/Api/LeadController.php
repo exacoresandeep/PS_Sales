@@ -99,26 +99,7 @@ class LeadController extends Controller
                     'data' =>[],
                 ], 400);
             }
-            // $tripRoute = TripRoute::where('id', $request->trip_route_id)
-            //             ->where('district_id', $request->district_id)
-            //             ->first();
-
-            // if (!$tripRoute) {
-            //     return response()->json([
-            //     'success' => false,
-            //     'statusCode' => 404,
-            //     'message' => 'Trip Route not found for the given district!',
-            //     ], 404);
-            // }
-            // $subLocations = json_decode($tripRoute->sub_locations, true) ?? [];
-
-            // if (!in_array($request->location, $subLocations)) {
-            //     $subLocations[] = $request->location;
-
-            //     $tripRoute->update([
-            //         'sub_locations' => json_encode($subLocations),
-            //     ]);
-            // }
+         
 
             $validatedData['created_by'] = Auth::id();
 
@@ -155,9 +136,13 @@ class LeadController extends Controller
     public function show($leadId)
     {
         try {
-            $lead = Lead::with(['customerType', 'district', 'tripRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
+       
+        
+            $lead = Lead::with(['customerType', 'district', 'assignRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
                         ->where('created_by', Auth::id()) 
                         ->findOrFail($leadId);
+        // dd($query->toSql(), $query->getBindings());
+
             $leadWonOrders = $lead->orders->where('source', 'lead_won');
             $paymentTerms = $leadWonOrders
                 ->pluck('paymentTerm')
@@ -169,6 +154,7 @@ class LeadController extends Controller
                         'name' => $paymentTerm->name,
                     ];
                 })->values(); 
+
             $paymentTerms = $paymentTerms->count() === 1 ? $paymentTerms->first() : ($paymentTerms->isEmpty() ? null : $paymentTerms);
             $dealers = $leadWonOrders
                 ->pluck('dealer')
@@ -196,10 +182,10 @@ class LeadController extends Controller
                     'id' => $lead->district->id,
                     'name' => $lead->district->name,
                 ] : null,
-                'trip_route' => $lead->tripRoute ? [
-                    'id' => $lead->tripRoute->id,
-                    'route_name' => $lead->tripRoute->route_name,
-                    'location_name' => $lead->tripRoute->location_name,
+                'trip_route' => $lead->assignRoute ? [
+                    'id' => $lead->assignRoute->id,
+                    'route_name' => $lead->assignRoute->route_name,
+                    'location_name' => $lead->assignRoute->location_name,
                 ] : null,
                 'type_of_visit' => $lead->type_of_visit,
                 'construction_type' => $lead->construction_type,
@@ -697,12 +683,5 @@ class LeadController extends Controller
             ], 500);
         }
     }
-
-
-
-
-  
-
-
 
 }

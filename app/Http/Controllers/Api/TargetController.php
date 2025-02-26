@@ -56,7 +56,6 @@ class TargetController extends Controller
         $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
         $employeeId = Auth::id();
        
-        // DB::enableQueryLog();
         $targetQuery = Target::where('employee_id', $employeeId)
                             ->where('month', $month)
                             ->where('year', $year);
@@ -66,13 +65,11 @@ class TargetController extends Controller
         $uniqueLeadsQuery = Lead::where('created_by', $employeeId)
                                 ->whereYear('created_at', $year)
                                 ->whereMonth('created_at', $month);
-            // dd($uniqueLeadsQuery->toSql(), $uniqueLeadsQuery->getBindings());
         $uniqueLeads = $uniqueLeadsQuery->count();
         $aashiyanaQuery = Order::where('created_by', $employeeId)
                             ->whereYear('created_at', $year)
                             ->whereMonth('created_at', $month)
                             ->where('payment_terms_id', 3);
-        // dd($aashiyanaQuery->toSql(), $aashiyanaQuery->getBindings());
 
         $aashiyanaCount = $aashiyanaQuery->count();
 

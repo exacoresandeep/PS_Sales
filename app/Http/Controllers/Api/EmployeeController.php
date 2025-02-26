@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 // use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Exception;
 
 class EmployeeController extends Controller
 {
@@ -96,5 +97,48 @@ class EmployeeController extends Controller
         $employees = Employee::where('employee_type_id', $employeeTypeId)->get();
         return response()->json($employees);
     }
+    public function filterEmployeesByType(Request $request)
+    {
+        try {
+            $request->validate([
+                'employee_type_id' => 'required|integer|in:1,2'
+            ]);
+
+            $employees = Employee::with('district:id,name')
+                ->where('employee_type_id', $request->employee_type_id)
+                ->select('id as employee_id', 'employee_code', 'name', 'email', 'phone', 'designation', 'employee_type_id', 'district_id')
+                ->get()
+                ->map(function ($employee) {
+                    return [
+                        'employee_id' => $employee->employee_id,
+                        'employee_code' => $employee->employee_code,
+                        'name' => $employee->name,
+                        'email' => $employee->email,
+                        'phone' => $employee->phone,
+                        'designation' => $employee->designation,
+                        'employee_type_id' => $employee->employee_type_id,
+                        'district_id' => $employee->district_id,
+                        'district_name' => $employee->district->name ?? null 
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Employees fetched successfully',
+                'data' => $employees,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 }
+
+
+

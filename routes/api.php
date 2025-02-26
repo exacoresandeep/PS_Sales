@@ -18,6 +18,7 @@ Route::prefix('v1')->group(function () {
 
         Route::post('employees', [EmployeeController::class, 'store']);
         Route::get('employee', [EmployeeController::class, 'show']);
+        Route::get('employees/filter', [EmployeeController::class, 'filterEmployeesByType']);
         Route::post('/fileUpload', [AuthController::class, 'fileUpload']);
         Route::get('/filter', [AuthController::class, 'getFilteredOrders']);
 
@@ -99,6 +100,9 @@ Route::prefix('v1')->group(function () {
             //Activity Report
             Route::get('/activity-report-listing', [ActivityController::class, 'activityReportListing']);
             Route::get('/sales-executive/{employee_id}/activity-report', [ActivityController::class, 'activityReportDetails']);
+
+            Route::get('/routes-report', [RouteController::class, 'getRoutesReport']);
+            Route::get('/routes-details/{routeId}', [RouteController::class, 'getRouteDetails']);
 
 
         });

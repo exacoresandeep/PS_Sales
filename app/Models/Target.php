@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Target extends Model
 {
-    use HasFactory, SoftDeletes; // Add SoftDeletes trait
+    use HasFactory, SoftDeletes; 
 
     protected $table = 'targets';
 
