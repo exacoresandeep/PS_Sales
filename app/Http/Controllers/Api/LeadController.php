@@ -132,14 +132,42 @@ class LeadController extends Controller
             ], 500);
         }
     }
-
     public function show($leadId)
     {
         try {
-       
+            $employee = Auth::user();
+            $allowedEmployeeTypes = [];
+
+            switch ($employee->employee_type_id) {
+                case 1: 
+                    $allowedEmployeeTypes = [1]; 
+                    break;
+                case 2: 
+                    $allowedEmployeeTypes = [2]; 
+                    break;
+                case 3: 
+                    $allowedEmployeeTypes = [1, 3]; 
+                    break;
+                case 4: 
+                    $allowedEmployeeTypes = [2, 3, 4]; 
+                    break;
+                case 5:
+                    $allowedEmployeeTypes = [1, 2, 3, 4, 5]; 
+                    break;
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'statusCode' => 403,
+                        'message' => "Unauthorized access.",
+                    ], 403);
+            }
+
             $lead = Lead::with(['customerType', 'district', 'assignRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
-                        ->where('created_by', Auth::id()) 
-                        ->findOrFail($leadId);
+                ->whereHas('createdBy', function ($query) use ($allowedEmployeeTypes) {
+                    $query->whereIn('employee_type_id', $allowedEmployeeTypes);
+                })
+                ->findOrFail($leadId);
+                // dd($lead->toSql(), $lead->getBindings());
             if (!$lead) {
                 return response()->json([
                     'success' => false,
@@ -147,32 +175,35 @@ class LeadController extends Controller
                     'message' => 'Lead not found!',
                 ], 404);
             }
-        // dd($query->toSql(), $query->getBindings());
 
             $leadWonOrders = $lead->orders->where('source', 'lead_won');
+
             $paymentTerms = $leadWonOrders
                 ->pluck('paymentTerm')
                 ->unique('id')
-                ->filter() 
+                ->filter()
                 ->map(function ($paymentTerm) {
                     return [
                         'id' => $paymentTerm->id,
                         'name' => $paymentTerm->name,
                     ];
-                })->values(); 
-
+                })
+                ->values();
             $paymentTerms = $paymentTerms->count() === 1 ? $paymentTerms->first() : ($paymentTerms->isEmpty() ? null : $paymentTerms);
+
             $dealers = $leadWonOrders
                 ->pluck('dealer')
                 ->unique('id')
-                ->filter() 
+                ->filter()
                 ->map(function ($dealer) {
                     return [
                         'id' => $dealer->id,
                         'name' => $dealer->dealer_name,
                     ];
-                })->values();
+                })
+                ->values();
             $dealers = $dealers->count() === 1 ? $dealers->first() : ($dealers->isEmpty() ? null : $dealers);
+
             $leadData = [
                 'id' => $lead->id,
                 'customer_type' => $lead->customerType ? [
@@ -210,7 +241,7 @@ class LeadController extends Controller
                 'payment_terms' => $paymentTerms,
                 'dealers' => $dealers,
                 'orders' => $leadWonOrders->map(function ($order) {
-                return [
+                    return [
                         'id' => $order->id,
                         'total_amount' => $order->total_amount,
                         'status' => $order->status,
@@ -219,7 +250,7 @@ class LeadController extends Controller
                             return [
                                 'id' => $item->id,
                                 'product_id' => $item->product_id,
-                                'product_name' => $item->product ? $item->product->product_name : null, 
+                                'product_name' => $item->product ? $item->product->product_name : null,
                                 'total_quantity' => $item->total_quantity,
                                 'balance_quantity' => $item->balance_quantity,
                                 'product_details' => $item->product_details,
@@ -228,15 +259,13 @@ class LeadController extends Controller
                     ];
                 }),
             ];
-            // dd($leadData);
-            // dd($query->toSql(), $query->getBindings());
+
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Lead retrieved successfully!',
                 'data' => $leadData,
             ], 200);
-
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -245,6 +274,120 @@ class LeadController extends Controller
             ], 500);
         }
     }
+
+
+    // public function show($leadId)
+    // {
+    //     try {
+       
+    //         $lead = Lead::with(['customerType', 'district', 'assignRoute', 'orders.orderItems.product', 'orders.paymentTerm', 'orders.dealer'])
+    //                     ->where('created_by', Auth::id()) 
+    //                     ->findOrFail($leadId);
+    //         if (!$lead) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => 'Lead not found!',
+    //             ], 404);
+    //         }
+    //     // dd($query->toSql(), $query->getBindings());
+
+    //         $leadWonOrders = $lead->orders->where('source', 'lead_won');
+    //         $paymentTerms = $leadWonOrders
+    //             ->pluck('paymentTerm')
+    //             ->unique('id')
+    //             ->filter() 
+    //             ->map(function ($paymentTerm) {
+    //                 return [
+    //                     'id' => $paymentTerm->id,
+    //                     'name' => $paymentTerm->name,
+    //                 ];
+    //             })->values(); 
+
+    //         $paymentTerms = $paymentTerms->count() === 1 ? $paymentTerms->first() : ($paymentTerms->isEmpty() ? null : $paymentTerms);
+    //         $dealers = $leadWonOrders
+    //             ->pluck('dealer')
+    //             ->unique('id')
+    //             ->filter() 
+    //             ->map(function ($dealer) {
+    //                 return [
+    //                     'id' => $dealer->id,
+    //                     'name' => $dealer->dealer_name,
+    //                 ];
+    //             })->values();
+    //         $dealers = $dealers->count() === 1 ? $dealers->first() : ($dealers->isEmpty() ? null : $dealers);
+    //         $leadData = [
+    //             'id' => $lead->id,
+    //             'customer_type' => $lead->customerType ? [
+    //                 'id' => $lead->customerType->id,
+    //                 'name' => $lead->customerType->name,
+    //             ] : null,
+    //             'customer_name' => $lead->customer_name,
+    //             'city' => $lead->city,
+    //             'location' => $lead->location,
+    //             'phone' => $lead->phone,
+    //             'address' => $lead->address,
+    //             'district' => $lead->district ? [
+    //                 'id' => $lead->district->id,
+    //                 'name' => $lead->district->name,
+    //             ] : null,
+    //             'trip_route' => $lead->assignRoute ? [
+    //                 'id' => $lead->assignRoute->id,
+    //                 'route_name' => $lead->assignRoute->route_name,
+    //                 'location_name' => $lead->assignRoute->location_name,
+    //             ] : null,
+    //             'type_of_visit' => $lead->type_of_visit,
+    //             'construction_type' => $lead->construction_type,
+    //             'stage_of_construction' => $lead->stage_of_construction,
+    //             'follow_up_date' => $lead->follow_up_date,
+    //             'lead_score' => $lead->lead_score,
+    //             'lead_source' => $lead->lead_source,
+    //             'source_name' => $lead->source_name,
+    //             'total_quantity' => $lead->total_quantity,
+    //             'lost_volume' => $lead->lost_volume,
+    //             'lost_to_competitor' => $lead->lost_to_competitor,
+    //             'reason_for_lost' => $lead->reason_for_lost,
+    //             'status' => $lead->status,
+    //             'created_by' => $lead->created_by,
+    //             'created_at' => $lead->created_at,
+    //             'payment_terms' => $paymentTerms,
+    //             'dealers' => $dealers,
+    //             'orders' => $leadWonOrders->map(function ($order) {
+    //             return [
+    //                     'id' => $order->id,
+    //                     'total_amount' => $order->total_amount,
+    //                     'status' => $order->status,
+    //                     'billing_date' => $order->billing_date,
+    //                     'order_items' => $order->orderItems->map(function ($item) {
+    //                         return [
+    //                             'id' => $item->id,
+    //                             'product_id' => $item->product_id,
+    //                             'product_name' => $item->product ? $item->product->product_name : null, 
+    //                             'total_quantity' => $item->total_quantity,
+    //                             'balance_quantity' => $item->balance_quantity,
+    //                             'product_details' => $item->product_details,
+    //                         ];
+    //                     }),
+    //                 ];
+    //             }),
+    //         ];
+    //         // dd($leadData);
+    //         // dd($query->toSql(), $query->getBindings());
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Lead retrieved successfully!',
+    //             'data' => $leadData,
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     public function updateLead(Request $request, $leadId)
     {

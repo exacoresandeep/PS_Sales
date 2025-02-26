@@ -54,4 +54,8 @@ class Lead extends Model
     {
         return $this->belongsTo(AssignRoute::class, 'assigned_route_id');
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(Employee::class, 'created_by');
+    }
 }
