@@ -661,10 +661,50 @@ class RouteController extends Controller
         $routes = TripRoute::where('district_id', $district_id)->get();
         return response()->json($routes);
     }
+    // public function getRoutesByDistrict($district_id)
+    // {
+    //     try {
+                
+    //         $employee = Auth::user();
+
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated.",
+    //             ], 401);
+    //         }
+    //         $routes = AssignRoute::where('district_id', $district_id)
+    //             ->where('employee_id', $employee->id)
+    //             ->select('id as assign_route_id', 'route_name', 'locations')
+    //             ->get();
+
+    //         if ($routes->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 400,
+    //                 'message' => 'No routes found for the given district.',
+    //                 'data' => [],
+    //             ], 400);
+    //         }
+          
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Routes fetched successfully',
+    //             'data' => $routes,
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function getRoutesByDistrict($district_id)
     {
         try {
-                
             $employee = Auth::user();
 
             if (!$employee) {
@@ -674,10 +714,20 @@ class RouteController extends Controller
                     'message' => "User not authenticated.",
                 ], 401);
             }
-            $routes = AssignRoute::where('district_id', $district_id)
-                ->where('employee_id', $employee->id)
-                ->select('id as assign_route_id', 'route_name', 'locations')
-                ->get();
+
+            // Base query for routes
+            $query = AssignRoute::where('district_id', $district_id)
+                ->select('id as assign_route_id', 'route_name', 'locations');
+
+            // Apply filters based on employee type
+            if (in_array($employee->employee_type_id, [1, 2])) {
+                // SE & ASO: Fetch only their assigned routes
+                $query->where('employee_id', $employee->id);
+            }
+            // DSM, RSM, NSM (3, 4, 5) fetch all routes for the given district
+
+            // Execute the query
+            $routes = $query->get();
 
             if ($routes->isEmpty()) {
                 return response()->json([
@@ -687,13 +737,14 @@ class RouteController extends Controller
                     'data' => [],
                 ], 400);
             }
-          
+
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Routes fetched successfully',
                 'data' => $routes,
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -702,6 +753,7 @@ class RouteController extends Controller
             ], 500);
         }
     }
+
 
     public function getRoutesReport(Request $request)
     {

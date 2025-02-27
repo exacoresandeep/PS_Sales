@@ -741,14 +741,58 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
     public function getDistricts()
     {
         try {
-            $districts = DB::table('districts')
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => 'Unauthorized access',
+                ], 401);
+            }
+
+            $query = DB::table('districts')
                 ->select('id as district_id', 'name as district_name')
-                ->orderBy('name', 'asc')
-                ->get();
+                ->orderBy('name', 'asc');
+
+            switch ($user->employee_type_id) {
+                case 1: 
+                case 2:
+                case 3: 
+                    $query->where('id', $user->district_id);
+                    break;
+
+                case 4: 
+                    $region = \App\Models\Regions::whereHas('districts', function ($query) use ($user) {
+                        $query->where('id', $user->district_id);
+                    })->first();
+
+                    if (!$region) {
+                        return response()->json([
+                            'success' => false,
+                            'statusCode' => 404,
+                            'message' => "Region not found for the employee's district.",
+                        ], 404);
+                    }
+
+                    $query->where('regions_id', $region->id);
+                    break;
+
+                case 5: 
+                    break;
+
+                default:
+                    return response()->json([
+                        'success' => false,
+                        'statusCode' => 403,
+                        'message' => 'Forbidden: Unauthorized access to districts',
+                    ], 403);
+            }
+
+            $districts = $query->get();
 
             return response()->json([
                 'success' => true,
@@ -756,6 +800,7 @@ class AuthController extends Controller
                 'message' => 'Districts fetched successfully',
                 'data' => $districts,
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -764,7 +809,5 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-
 
 }
