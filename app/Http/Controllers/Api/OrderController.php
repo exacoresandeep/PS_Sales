@@ -2740,11 +2740,20 @@ class OrderController extends Controller
             }
 
             $formattedOrders = $orders->map(function ($order) {
+                $dealerName = null;
+    
+                if ($order->created_by_dealer) {
+                    $dealer = Dealer::find($order->created_by_dealer);
+                    $dealerName = $dealer ? $dealer->dealer_name : 'N/A';
+                } else {
+                    $dealerName = $order->dealer->dealer_name ?? 'N/A';
+                }
+    
                 return [
                     'id'            => $order->id,
                     'created_at'    => Carbon::parse($order->created_at)->format('d/m/Y'),
-                    'dealer_name'   => $order->dealer->dealer_name ?? 'N/A',
-                    'order_status'  => $order->status, 
+                    'dealer_name'   => $dealerName,
+                    'order_status'  => $order->status,
                     'total_amount'  => (int) $order->total_amount,
                 ];
             });
