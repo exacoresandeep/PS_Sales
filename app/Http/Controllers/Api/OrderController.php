@@ -552,6 +552,97 @@ class OrderController extends Controller
     }
     
 
+    // public function dealerOrderStatusUpdate(Request $request, $orderId)
+    // {
+    //     try {
+    //         // Validate request data
+    //         $validatedData = $request->validate([
+    //             'status' => 'required|in:Accepted,Rejected',
+    //             'reason_for_rejection' => 'required_if:status,Rejected|nullable|string|max:255',
+    //         ]);
+    
+    //         // Get the logged-in employee
+    //         $employee = Auth::user();
+    
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not Authenticated",
+    //             ], 401);
+    //         }
+    
+    //         // Get assigned routes for the logged-in employee
+    //         $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+    
+    //         if (empty($assignedRoutes)) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No assigned routes found for the employee.",
+    //             ], 404);
+    //         }
+    
+    //         // Get dealers linked to those routes
+    //         $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
+    
+    //         if (empty($dealers)) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No dealers found for the assigned routes.",
+    //             ], 404);
+    //         }
+    
+    //         // Find the order created by a dealer assigned to these routes
+    //         $order = Order::where('id', $orderId)
+    //             ->whereIn('created_by_dealer', $dealers)
+    //             ->first();
+    
+    //         if (!$order) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "Order with ID $orderId not found or not accessible.",
+    //             ], 404);
+    //         }
+    
+    //         // Prepare update data
+    //         $updateData = ['status' => $validatedData['status']];
+    //         if ($validatedData['status'] === 'Rejected') {
+    //             $updateData['reason_for_rejection'] = $validatedData['reason_for_rejection'];
+    //         } else {
+    //             $updateData['reason_for_rejection'] = null;
+    //         }
+    
+    //         // Update the order status
+    //         $order->update($updateData);
+    
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Order status updated successfully!',
+    //             'data' => [
+    //                 'id' => $order->id,
+    //                 'status' => $order->status,
+    //                 'reason_for_rejection' => $order->reason_for_rejection,
+    //             ],
+    //         ], 200);
+    
+    //     }catch (\Illuminate\Validation\ValidationException $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 400,
+    //             'message' => "Validation error",
+    //         ], 400);
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
     public function dealerOrderStatusUpdate(Request $request, $orderId)
     {
         try {
@@ -560,10 +651,10 @@ class OrderController extends Controller
                 'status' => 'required|in:Accepted,Rejected',
                 'reason_for_rejection' => 'required_if:status,Rejected|nullable|string|max:255',
             ]);
-    
+
             // Get the logged-in employee
             $employee = Auth::user();
-    
+
             if (!$employee) {
                 return response()->json([
                     'success' => false,
@@ -571,34 +662,45 @@ class OrderController extends Controller
                     'message' => "User not Authenticated",
                 ], 401);
             }
-    
-            // Get assigned routes for the logged-in employee
-            $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
-    
-            if (empty($assignedRoutes)) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "No assigned routes found for the employee.",
-                ], 404);
+
+            // Check if the user is an SM (Sales Manager)
+            if ($employee->employee_type_id == 5) {
+                // SM can access all orders created by ASOs, DSMs, RSMs, and Dealers
+                $order = Order::where('id', $orderId)
+                    ->where(function ($query) {
+                        $query->whereIn('created_by', Employee::whereIn('employee_type_id', [2, 3, 4])->pluck('id'))
+                            ->orWhereNotNull('created_by_dealer');
+                    })
+                    ->first();
+            } else {
+                // Get assigned routes for ASO
+                $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+
+                if (empty($assignedRoutes)) {
+                    return response()->json([
+                        'success' => false,
+                        'statusCode' => 404,
+                        'message' => "No assigned routes found for the employee.",
+                    ], 404);
+                }
+
+                // Get dealers linked to those routes
+                $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
+
+                if (empty($dealers)) {
+                    return response()->json([
+                        'success' => false,
+                        'statusCode' => 404,
+                        'message' => "No dealers found for the assigned routes.",
+                    ], 404);
+                }
+
+                // Fetch order created by dealers in assigned routes
+                $order = Order::where('id', $orderId)
+                    ->whereIn('created_by_dealer', $dealers)
+                    ->first();
             }
-    
-            // Get dealers linked to those routes
-            $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
-    
-            if (empty($dealers)) {
-                return response()->json([
-                    'success' => false,
-                    'statusCode' => 404,
-                    'message' => "No dealers found for the assigned routes.",
-                ], 404);
-            }
-    
-            // Find the order created by a dealer assigned to these routes
-            $order = Order::where('id', $orderId)
-                ->whereIn('created_by_dealer', $dealers)
-                ->first();
-    
+
             if (!$order) {
                 return response()->json([
                     'success' => false,
@@ -606,7 +708,7 @@ class OrderController extends Controller
                     'message' => "Order with ID $orderId not found or not accessible.",
                 ], 404);
             }
-    
+
             // Prepare update data
             $updateData = ['status' => $validatedData['status']];
             if ($validatedData['status'] === 'Rejected') {
@@ -614,10 +716,10 @@ class OrderController extends Controller
             } else {
                 $updateData['reason_for_rejection'] = null;
             }
-    
+
             // Update the order status
             $order->update($updateData);
-    
+
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
@@ -628,8 +730,8 @@ class OrderController extends Controller
                     'reason_for_rejection' => $order->reason_for_rejection,
                 ],
             ], 200);
-    
-        }catch (\Illuminate\Validation\ValidationException $e) {
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'statusCode' => 400,
@@ -643,6 +745,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
     public function dealerOrderFilter(Request $request)
     {
         try {
@@ -2546,7 +2649,122 @@ class OrderController extends Controller
         }
     }
 
+    public function sendForApproval($orderId)
+    {
+        try {
+            $order = Order::find($orderId);
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'Order not found'
+                ], 404);
+            }
+
+            if (Auth::user()->employee_type_id !== 2) { 
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'Unauthorized access'
+                ], 403);
+            }
+
+            $order->update([
+                'send_for_approval' => 1,
+                'send_for_approval_by' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Order sent for approval successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Error in sendForApproval: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => 'An error occurred while sending order for approval',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function orderApprovalList()
+    {
+       
+        try {
+            $user = Auth::user();
+           
+            if ($user->employee_type_id !== 5) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'Access denied. Only Sales Managers can view this list.'
+                ], 403);
+            }
 
 
+            $employeeIds = Employee::whereIn('employee_type_id', [2, 3, 4])->pluck('id');
+            if ($employeeIds->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'No employees found for ASO, DSM, or RSM'
+                ], 404);
+            }
+
+
+            $orders = Order::where(function ($query) use ($employeeIds) {
+                    $query->whereIn('created_by', $employeeIds)
+                        ->whereNull('send_for_approval')
+                        ->where('dealer_flag_order', '0');
+                })
+                ->orWhere(function ($query) {
+                    $query->whereNotNull('created_by_dealer')
+                        ->where('dealer_flag_order', '1')
+                        ->where('send_for_approval', '1');
+                })
+                ->with(['createdBy', 'dealer', 'orderType', 'paymentTerm']) 
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            if ($orders->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'No orders found for approval'
+                ], 404);
+            }
+
+            $formattedOrders = $orders->map(function ($order) {
+                return [
+                    'id'            => $order->id,
+                    'created_at'    => Carbon::parse($order->created_at)->format('d/m/Y'),
+                    'dealer_name'   => $order->dealer->dealer_name ?? 'N/A',
+                    'order_status'  => $order->status, 
+                    'total_amount'  => (int) $order->total_amount,
+                ];
+            });
     
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Order approval list retrieved successfully',
+                'orders' => $formattedOrders
+            ], 200);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => 'An error occurred while retrieving the order approval list.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+ 
 }

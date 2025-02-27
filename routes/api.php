@@ -31,6 +31,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/dealer/outstanding-payments', [OrderController::class, 'outstandingPaymentsList']); 
             Route::get('/dealer/view-outstanding-payment/{orderId}', [OrderController::class, 'viewOutstandingPaymentOrderDetails']); 
             Route::post('/dealer/outstanding-payment/{id}/add-commitment', [OrderController::class, 'addOutstandingPaymentCommitment']);
+
+            Route::post('/send-for-approval/{orderId}', [OrderController::class, 'sendForApproval']);
+            Route::post('/order-approval-list', [OrderController::class, 'orderApprovalList']);
          
         });
 
