@@ -715,18 +715,13 @@ class RouteController extends Controller
                 ], 401);
             }
 
-            // Base query for routes
             $query = AssignRoute::where('district_id', $district_id)
                 ->select('id as assign_route_id', 'route_name', 'locations');
 
-            // Apply filters based on employee type
             if (in_array($employee->employee_type_id, [1, 2])) {
-                // SE & ASO: Fetch only their assigned routes
                 $query->where('employee_id', $employee->id);
             }
-            // DSM, RSM, NSM (3, 4, 5) fetch all routes for the given district
 
-            // Execute the query
             $routes = $query->get();
 
             if ($routes->isEmpty()) {
