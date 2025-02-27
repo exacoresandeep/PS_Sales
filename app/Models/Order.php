@@ -17,6 +17,8 @@ class Order extends Model
         'lead_id',
         'dealer_id',
         'dealer_flag_order',
+        'send_for_approval',
+        'send_for_approval_by',
         'reason_for_rejection',
         'payment_terms_id',
         'advance_amount',
