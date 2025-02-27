@@ -101,11 +101,18 @@ class EmployeeController extends Controller
     {
         try {
             $request->validate([
-                'employee_type_id' => 'required|integer|in:1,2'
+                'employee_type_id' => 'required|integer|in:1,2',
+                'search_key' => 'nullable|string|max:255'
             ]);
 
             $employees = Employee::with('district:id,name')
                 ->where('employee_type_id', $request->employee_type_id)
+                ->when($request->search_key, function ($query) use ($request) {
+                    $query->where(function ($q) use ($request) {
+                        $q->where('name', 'LIKE', '%' . $request->search_key . '%')
+                        ->orWhere('employee_code', 'LIKE', '%' . $request->search_key . '%');
+                    });
+                })
                 ->select('id as employee_id', 'employee_code', 'name', 'email', 'phone', 'designation', 'employee_type_id', 'district_id')
                 ->get()
                 ->map(function ($employee) {
@@ -118,7 +125,7 @@ class EmployeeController extends Controller
                         'designation' => $employee->designation,
                         'employee_type_id' => $employee->employee_type_id,
                         'district_id' => $employee->district_id,
-                        'district_name' => $employee->district->name ?? null 
+                        'district_name' => $employee->district->name ?? null
                     ];
                 });
 
@@ -137,6 +144,7 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+
 
 }
 

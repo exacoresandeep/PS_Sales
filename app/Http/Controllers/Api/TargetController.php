@@ -6,13 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Target;
 use App\Models\Lead;
 use App\Models\Order;
+use App\Models\Employee;
+use App\Models\District;
+use App\Models\Regions;
 use App\Models\EmployeeType;
+use App\Models\RescheduledRoute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 class TargetController extends Controller
 {
@@ -50,56 +55,286 @@ class TargetController extends Controller
 
         return response()->json(['message' => 'Target created successfully!', 'target' => $target], 200);
     }
+    
+    // each employee target
+    // public function getTargets(Request $request)
+    // {
+
+    //     // $month = $request->month != "" ? $request->month : Carbon::now()->month;
+    //     $monthNumber = $request->month ?? Carbon::now()->month;
+    //     $month = $request->month ? Carbon::createFromDate(null, $request->month, 1)->format('F') : Carbon::now()->format('F');
+    //     $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
+    //     $employeeId = Auth::id();
+
+    //     $targetQuery = Target::where('employee_id', $employeeId)
+    //                         ->where('month', $month)
+    //                         ->where('year', $year);
+    //     $target = $targetQuery->first();
+    //     $target = $target ? $target->toArray() : null;
+    //     $uniqueLeadsQuery = Lead::where('created_by', $employeeId)
+    //                             ->whereYear('created_at', $year)
+    //                             ->whereMonth('created_at', $monthNumber);
+    //     $uniqueLeads = $uniqueLeadsQuery->count();
+
+    //     $customerVisitCount = RescheduledRoute::where('employee_id', $employeeId)
+    //         ->whereYear('assign_date', $year)
+    //         ->whereMonth('assign_date', $monthNumber)
+    //         ->get()
+    //         ->sum(function ($route) {
+    //             $customers = collect(json_decode($route->customers ?? '[]', true));
+    //             return $customers->where('scheduled', true)->where('status', 'Completed')->count();
+    //         });
+
+    //     $aashiyanaQuery = Order::where('created_by', $employeeId)
+    //                         ->whereYear('created_at', $year)
+    //                         ->whereMonth('created_at', $monthNumber)
+    //                         ->where('payment_terms_id', 3);
+    //     $aashiyanaCount = $aashiyanaQuery->count();
+
+    //     $ordersQuery = Order::where('created_by', $employeeId)
+    //                         ->whereYear('created_at', $year)
+    //                         ->whereMonth('created_at', $monthNumber)
+    //                         ->where('status', 'Delivered');
+    //     $orders = $ordersQuery->pluck('id');
+
+    //     $achievedOrderQuantityQuery = DB::table('order_items')
+    //                                     ->whereIn('order_id', $orders);
+    //     $achievedOrderQuantity = $achievedOrderQuantityQuery->sum('total_quantity');
+
+    //     $response = [
+    //         'target' => $target,
+    //         'achieved' => [
+    //             'unique_leads' => $uniqueLeads,
+    //             'customer_visit' => $customerVisitCount, 
+    //             'aashiyana' => $aashiyanaCount,
+    //             'order_quantity' => (int) $achievedOrderQuantity,
+    //         ],
+    //     ];
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'statusCode' => 200,
+    //         'message' => 'Target data retrieved successfully.',
+    //         'data' => $response,
+    //     ], 200);
+    // }
+
+    // new target function 
     public function getTargets(Request $request)
     {
-        $month = $request->month != "" ? $request->month : Carbon::now()->month;
-        $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
-        $employeeId = Auth::id();
-       
-        $targetQuery = Target::where('employee_id', $employeeId)
+        try {
+            $monthNumber = $request->month ?? Carbon::now()->month;
+            $month = $request->month ? Carbon::createFromDate(null, $request->month, 1)->format('F') : Carbon::now()->format('F');
+            $year = $request->year ?? Carbon::now()->year;
+            
+            $employeeId = $request->employee_id ?? Auth::id();
+    
+            $employee = Employee::find($employeeId);
+            if (!$employee) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Employee not found.",
+                ], 404);
+            }
+    
+            $target = Target::where('employee_id', $employeeId)
                             ->where('month', $month)
-                            ->where('year', $year);
-        $target = $targetQuery->first();
-        $target = $target ? $target->toArray() : null;
-
-        $uniqueLeadsQuery = Lead::where('created_by', $employeeId)
+                            ->where('year', $year)
+                            ->first();
+            $target = $target ? $target->toArray() : null;
+    
+            $uniqueLeads = Lead::where('created_by', $employeeId)
                                 ->whereYear('created_at', $year)
-                                ->whereMonth('created_at', $month);
-        $uniqueLeads = $uniqueLeadsQuery->count();
-        $aashiyanaQuery = Order::where('created_by', $employeeId)
+                                ->whereMonth('created_at', $monthNumber)
+                                ->count();
+    
+            $customerVisitCount = RescheduledRoute::where('employee_id', $employeeId)
+                ->whereYear('assign_date', $year)
+                ->whereMonth('assign_date', $monthNumber)
+                ->get()
+                ->sum(function ($route) {
+                    $customers = collect(json_decode($route->customers ?? '[]', true));
+                    return $customers->where('scheduled', true)->where('status', 'Completed')->count();
+                });
+    
+            $aashiyanaCount = Order::where('created_by', $employeeId)
+                                ->whereYear('created_at', $year)
+                                ->whereMonth('created_at', $monthNumber)
+                                ->where('payment_terms_id', 3)
+                                ->count();
+    
+            $orders = Order::where('created_by', $employeeId)
                             ->whereYear('created_at', $year)
-                            ->whereMonth('created_at', $month)
-                            ->where('payment_terms_id', 3);
-
-        $aashiyanaCount = $aashiyanaQuery->count();
-
-        $ordersQuery = Order::where('created_by', $employeeId)
-                            ->whereYear('created_at', $year)
-                            ->whereMonth('created_at', $month)
-                            ->where('status', 'Accepted');
-
-        $orders = $ordersQuery->pluck('id');
-
-        $achievedOrderQuantityQuery = DB::table('order_items')
-                                        ->whereIn('order_id', $orders);
-
-        $achievedOrderQuantity = $achievedOrderQuantityQuery->sum('total_quantity');
-        $response = [
-            'target' => $target,
-            'achieved' => [
-                'unique_leads' => $uniqueLeads,
-                'customer_visit' => $customer_visit ?? 0, 
-                'aashiyana' => $aashiyanaCount,
-                'order_quantity' => $achievedOrderQuantity,
-            ],
-        ];
-        return response()->json([
-            'success' => true,
-            'statusCode' => 200,
-            'message' => 'Target data retrieved successfully.',
-            'data' => $response,
-        ], 200);
+                            ->whereMonth('created_at', $monthNumber)
+                            ->where('status', 'Delivered')
+                            ->pluck('id');
+    
+            $achievedOrderQuantity = DB::table('order_items')
+                                        ->whereIn('order_id', $orders)
+                                        ->sum('total_quantity');
+    
+            $response = [
+                'employee' =>[
+                    'employee_id' => $employeeId,
+                    'employee_name' => $employee->name,
+                    'employee_type_id' => $employee->employee_type_id,
+                ],
+                'target' => $target,
+                'achieved' => [
+                    'unique_leads' => $uniqueLeads,
+                    'customer_visit' => $customerVisitCount, 
+                    'aashiyana' => $aashiyanaCount,
+                    'order_quantity' => (int) $achievedOrderQuantity,
+                ],
+            ];
+    
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Target data retrieved successfully.',
+                'data' => $response,
+            ], 200);
+        
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
+
+    
+    // common function 
+    // public function getTargets(Request $request)
+    // {
+    //     try {
+    //         $monthNumber = $request->month ?? Carbon::now()->month;
+    //         $month = $request->month ? Carbon::createFromDate(null, $request->month, 1)->format('F') : Carbon::now()->format('F');
+    //         $year = $request->year ?? Carbon::now()->year;
+
+    //         $employee = Auth::user();
+
+    //         if (!$employee) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 401,
+    //                 'message' => "User not authenticated",
+    //             ], 401);
+    //         }
+
+    //         // Initialize employee ID list
+    //         $employeeIds = [$employee->id]; // Start with own target
+
+    //         // Define access levels based on employee role
+    //         if ($employee->employee_type_id == 3) { // DSM
+    //             $employeeIds = Employee::where('district_id', $employee->district_id)
+    //                 ->where('employee_type_id', 1) // Get all SEs in the district
+    //                 ->pluck('id')->toArray();
+    //             array_unshift($employeeIds, $employee->id); // Add DSM's own ID
+
+    //         } elseif ($employee->employee_type_id == 4) { // RSM
+    //             $region = Regions::whereHas('districts', function ($query) use ($employee) {
+    //                 $query->where('id', $employee->district_id);
+    //             })->first();
+
+    //             if (!$region) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'statusCode' => 404,
+    //                     'message' => "Region not found for the employee's district.",
+    //                 ], 404);
+    //             }
+
+    //             $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
+    //             $employeeIds = Employee::whereIn('district_id', $districtsInRegion)
+    //                 ->whereIn('employee_type_id', [2, 3]) // Get all ASOs & DSMs in the region
+    //                 ->pluck('id')->toArray();
+    //             array_unshift($employeeIds, $employee->id); // Add RSM's own ID
+
+    //         } elseif ($employee->employee_type_id == 5) { // SM
+    //             $employeeIds = Employee::pluck('id')->toArray(); // Get all employees
+    //             array_unshift($employeeIds, $employee->id); // Add SM's own ID
+    //         }
+
+    //         // Fetch all targets based on employee(s)
+    //         $targets = Target::whereIn('employee_id', $employeeIds)
+    //             ->where('month', $month)
+    //             ->where('year', $year)
+    //             ->get();
+
+    //         if ($targets->isEmpty()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No targets found for the selected period.",
+    //             ], 404);
+    //         }
+
+    //         // Fetch achieved values for each target
+    //         $responseData = [];
+
+    //         foreach ($targets as $target) {
+    //             $employeeId = $target->employee_id;
+    //             $targetEmployee = Employee::find($employeeId);
+    //             $uniqueLeads = Lead::where('created_by', $employeeId)
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $monthNumber)
+    //                 ->count();
+
+    //             $customerVisitCount = RescheduledRoute::where('employee_id', $employeeId)
+    //                 ->whereYear('assign_date', $year)
+    //                 ->whereMonth('assign_date', $monthNumber)
+    //                 ->get()
+    //                 ->sum(function ($route) {
+    //                     $customers = collect(json_decode($route->customers ?? '[]', true));
+    //                     return $customers->where('scheduled', true)->where('status', 'Completed')->count();
+    //                 });
+
+    //             $aashiyanaCount = Order::where('created_by', $employeeId)
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $monthNumber)
+    //                 ->where('payment_terms_id', 3)
+    //                 ->count();
+
+    //             $orders = Order::where('created_by', $employeeId)
+    //                 ->whereYear('created_at', $year)
+    //                 ->whereMonth('created_at', $monthNumber)
+    //                 ->where('status', 'Delivered')
+    //                 ->pluck('id');
+
+    //             $achievedOrderQuantity = DB::table('order_items')
+    //                 ->whereIn('order_id', $orders)
+    //                 ->sum('total_quantity');
+
+    //             // Store data in response array
+    //             $responseData[] = [
+    //                 'employee_type_id' => $targetEmployee->employee_type_id ?? null,
+    //                 'target' => $target,
+    //                 'achieved' => [
+    //                     'unique_leads' => $uniqueLeads,
+    //                     'customer_visit' => $customerVisitCount,
+    //                     'aashiyana' => $aashiyanaCount,
+    //                     'order_quantity' => (int) $achievedOrderQuantity,
+    //                 ]
+    //             ];
+    //         }
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Target data retrieved successfully.',
+    //             'data' => $responseData,
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
 
     public function targetList(Request $request)

@@ -92,10 +92,10 @@ class OrderController extends Controller
             }
 
             $validatedData = $request->validate([
-                'order_type' => 'required|exists:order_types,id',
+                'order_type' => 'nullable|exists:order_types,id',
                 'customer_type_id' => 'nullable|exists:customer_types,id',
                 'order_category' => 'nullable|string',
-                'lead_id' => 'required|exists:leads,id',
+                'lead_id' => 'nullable|exists:leads,id',
                 'dealer_id' => 'nullable|exists:dealers,id',
                 'payment_terms_id' => 'required|exists:payment_terms,id',
                 'advance_amount' => 'nullable|numeric',
