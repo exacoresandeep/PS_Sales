@@ -2762,7 +2762,7 @@ class OrderController extends Controller
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Order approval list retrieved successfully',
-                'orders' => $formattedOrders
+                'data' => $formattedOrders
             ], 200);
 
         } catch (\Exception $e) {
