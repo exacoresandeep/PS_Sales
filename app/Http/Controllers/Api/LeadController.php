@@ -255,9 +255,28 @@ class LeadController extends Controller
                                 'balance_quantity' => $item->balance_quantity,
                                 'product_details' => $item->product_details,
                             ];
-                        }),
+                        })->values(),
                     ];
-                }),
+                })->values(),
+
+                // 'orders' => $leadWonOrders->map(function ($order) {
+                //     return [
+                //         'id' => $order->id,
+                //         'total_amount' => $order->total_amount,
+                //         'status' => $order->status,
+                //         'billing_date' => $order->billing_date,
+                //         'order_items' => $order->orderItems->map(function ($item) {
+                //             return [
+                //                 'id' => $item->id,
+                //                 'product_id' => $item->product_id,
+                //                 'product_name' => $item->product ? $item->product->product_name : null,
+                //                 'total_quantity' => $item->total_quantity,
+                //                 'balance_quantity' => $item->balance_quantity,
+                //                 'product_details' => $item->product_details,
+                //             ];
+                //         }),
+                //     ];
+                // }),
             ];
 
             return response()->json([
