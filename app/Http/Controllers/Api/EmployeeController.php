@@ -101,7 +101,7 @@ class EmployeeController extends Controller
     {
         try {
             $request->validate([
-                'employee_type_id' => 'required|integer|in:1,2',
+                'employee_type_id' => 'required|integer|in:1,2,3,4',
                 'search_key' => 'nullable|string|max:255'
             ]);
 
