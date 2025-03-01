@@ -37,6 +37,8 @@ Route::prefix('v1')->group(function () {
                 // Route::post('/filter', [DealerOrderController::class, 'orderFilter']);
                 Route::post('/track-order', [DealerOrderController::class, 'trackOrder']);
                 Route::post('/monthly-transaction', [DealerOrderController::class, 'monthlySalesTransaction']);
+                Route::post('/outstanding-payments', [DealerOrderController::class, 'outstandingPaymentsList']);
+                Route::get('/outstanding-payments/{orderId}', [DealerOrderController::class, 'opDetails']);
              
             });
 
