@@ -11,8 +11,53 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\TargetController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\StockController;
+use App\Http\Controllers\Dealer\DealerController;
+use App\Http\Controllers\Dealer\DealerOrderController;
 
 Route::prefix('v1')->group(function () {
+
+    Route::prefix('dealer')->group(function () {
+        Route::post('login', [DealerController::class, 'login']);
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('store', [DealerController::class, 'store']);
+            Route::get('profile', [DealerController::class, 'getDealerProfile']);
+
+            Route::get('order-types', [AuthController::class, 'getOrderTypes']);
+            Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
+            Route::get('products', [AuthController::class, 'getProducts']);
+            Route::post('product-types', [AuthController::class, 'getProductTypes']);
+            Route::get('getVehicleCategory', [AuthController::class, 'getVehicleCategory']);
+            Route::post('getVehicleTypeByCategory', [AuthController::class, 'getVehicleTypeByCategory']);
+
+            Route::prefix('orders')->group(function () {
+                Route::post('/', [DealerOrderController::class, 'store']); // Store new order
+                Route::get('/', [DealerOrderController::class, 'index']); // List orders by current user ID
+                Route::get('{orderId}', [DealerOrderController::class, 'show']); // order details
+                Route::post('/filter', [DealerOrderController::class, 'orderFilter']);
+             
+            });
+
+            Route::post('logout', [DealerController::class, 'logout']);
+
+            // Route::get('orders', [OrderController::class, 'dealerOrderList']);
+            // Route::get('order-details/{orderId}', [OrderController::class, 'dealerOrderDetails']); 
+            // Route::post('order-status-update/{orderId}', [OrderController::class, 'dealerOrderStatusUpdate']); 
+            // Route::get('order-filter', [OrderController::class, 'dealerOrderFilter']);
+
+            // Route::get('outstanding-payments', [OrderController::class, 'outstandingPaymentsList']); 
+            // Route::get('view-outstanding-payment/{orderId}', [OrderController::class, 'viewOutstandingPaymentOrderDetails']); 
+            // Route::post('outstanding-payment/{id}/add-commitment', [OrderController::class, 'addOutstandingPaymentCommitment']);
+
+            // Route::get('stock-insights', [StockController::class, 'stockList']);
+            // Route::get('product-stock/{product_details_id}', [StockController::class, 'getProductStockDetails']);
+            // Route::get('stock-filter', [StockController::class, 'stockFilter']);
+
+            // Route::get('track-order', [AuthController::class, 'trackOrder']);
+            // Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
+        });
+    });
+
     Route::post('login', [AuthController::class, 'login']);
     Route::middleware('auth:sanctum')->group(function () {
 
