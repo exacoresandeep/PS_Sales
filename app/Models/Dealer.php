@@ -1,28 +1,30 @@
 <?php
 
 namespace App\Models;
-
+use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Dealer extends Model
 {
-    use HasFactory;
+    use HasApiTokens, HasFactory;
 
     protected $fillable = [
         'dealer_code',
         'dealer_name',
-        'approver_id',
         'gst_no',
         'pan_no',
         'phone',
         'email',
         'address',
+        'password',
         'user_zone',
         'pincode',
         'state',
+        'district_id',
         'district',
         'taluk',
+        'location',
         'assigned_route_id',
     ];
 
