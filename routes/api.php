@@ -39,9 +39,11 @@ Route::prefix('v1')->group(function () {
                 Route::post('/monthly-transaction', [DealerOrderController::class, 'monthlySalesTransaction']);
                 Route::post('/outstanding-payments', [DealerOrderController::class, 'outstandingPaymentsList']);
                 Route::get('/outstanding-payments/{orderId}', [DealerOrderController::class, 'opDetails']);
-             
+                Route::post('/order-request-list', [DealerOrderController::class, 'orderRequestList']);
+                Route::post('/order-request/{orderId}', [DealerOrderController::class, 'orderRequestStatusUpdate']);
             });
 
+            Route::get('support', [DealerOrderController::class, 'getSupport']);
             Route::post('logout', [DealerController::class, 'logout']);
 
             // Route::get('orders', [OrderController::class, 'dealerOrderList']);
