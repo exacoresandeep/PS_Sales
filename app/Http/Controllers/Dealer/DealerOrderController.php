@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Dealer;
+use App\Models\Employee;
 use App\Models\OutstandingPaymentCommitment;
 use App\Models\OutstandingPayment;
 use App\Models\AssignRoute;
@@ -579,6 +580,203 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
+
+    public function orderRequestList(Request $request)
+    {
+        try {
+            $dealer = Auth::user();
+
+            if (!$dealer) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not Authenticated",
+                ], 401);
+            }
+
+            $assignedRouteIds = AssignRoute::whereIn('employee_id', function ($query) {
+                    $query->select('id')
+                        ->from('employees')
+                        ->where('employee_type_id', 1); 
+                })->pluck('id')->toArray();
+
+            if (empty($assignedRouteIds)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No assigned routes found for Sales Executives.",
+                    'data' => []
+                ], 404);
+            }
+
+            if (!in_array($dealer->assigned_route_id, $assignedRouteIds)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => "Dealer is not in an assigned route of an SE.",
+                    'data' => []
+                ], 403);
+            }
+
+            $salesExecutives = AssignRoute::where('id', $dealer->assigned_route_id)
+                ->pluck('employee_id');
+            if ($salesExecutives->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No Sales Executives found for this dealer's assigned route.",
+                    'data' => []
+                ], 404);
+            }
+
+            $orders = Order::whereIn('created_by', $salesExecutives)
+                ->select('id', 'total_amount', 'status', 'created_at')
+                ->orderBy('id', 'desc')
+                ->get();
+            $formattedOrders = $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'created_at' => $order->created_at->format('d/m/Y'),
+                    'total_amount' => round($order->total_amount, 2),
+                    'status' => $order->status === 'Pending' ? 'Order Received' :
+                                ($order->status === 'Accepted' ? 'Order Accepted' :
+                                ($order->status === 'Rejected' ? 'Order Rejected' : ucfirst($order->status))),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Order Request List fetched successfully',
+                'data' => $formattedOrders,
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function orderRequestStatusUpdate(Request $request, $orderId)
+    {
+        try {
+            $dealer = Auth::user();
+
+            if (!$dealer) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not Authenticated",
+                ], 401);
+            }
+
+            $validatedData = $request->validate([
+                'status' => 'required|in:Accepted,Rejected',
+                'reason_for_rejection' => 'required_if:status,Rejected|nullable|string|max:255',
+            ]);
+
+            $order = Order::find($orderId);
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Order not found",
+                ], 404);
+            }
+
+            $salesExecutives = AssignRoute::where('id', $dealer->assigned_route_id)->pluck('employee_id');
+
+            if (!$salesExecutives->contains($order->created_by)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => "You do not have permission to update this order's status.",
+                ], 403);
+            }
+
+            // Update order status
+            $order->status = $validatedData['status'];
+            if ($validatedData['status'] === 'Rejected') {
+                $order->reason_for_rejection = $validatedData['reason_for_rejection'];
+            } else {
+                $order->reason_for_rejection = null;
+            }
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Order status updated successfully",
+                'data' => [
+                    'id' => $order->id,
+                    'status' => $order->status,
+                    'reason_for_rejection' => $order->reason_for_rejection,
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function getSupport(Request $request)
+    {
+        try {
+            $dealer = Auth::user();
+
+            if (!$dealer) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not Authenticated",
+                ], 401);
+            }
+
+            $aso = Employee::whereIn('id', function ($query) use ($dealer) {
+                    $query->select('employee_id')
+                        ->from('assigned_routes')
+                        ->where('id', $dealer->assigned_route_id);
+                })
+                ->where('employee_type_id', 2) 
+                ->select('name', 'phone');
+                dd($aso->toSql(), $aso->getBindings());
+                // ->first();
+
+            if (!$aso) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No ASO found for this dealer's assigned route.",
+                    'data' => []
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => "Support ASO fetched successfully",
+                'data' => [
+                    'name' => $aso->name,
+                    'phone' => $aso->phone,
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
 
    
