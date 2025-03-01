@@ -5,28 +5,27 @@ namespace App\Http\Controllers\Dealer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\Dealer;
+use App\Models\AssignRoute;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class DealerOrderController extends Controller
 {
     public function index(Request $request)
     {
         try {
-            if ($request->has('search_key')) {
-                return $this->orderFilter($request); 
-            }
-
-
+           
             $dealer = Auth::user();
             if($dealer)
             {
-                $orders = Order::where('created_by', $dealer->id)
-                    ->where('dealer_flag_order',"0")
-                    ->with(['dealer:id,dealer_name,dealer_code'])
-                    ->select('id', 'total_amount', 'status', 'created_at', 'dealer_id')
+                $orders = Order::where('created_by_dealer', $dealer->id)
+                    ->where('dealer_flag_order',"1")
+                    ->with(['dealers:id,dealer_name,dealer_code'])
+                    ->select('id', 'total_amount', 'status', 'created_at', 'created_by_dealer')
                     ->orderBy('id','desc')
                     ->get()
                     ->map(function ($order) {
@@ -45,8 +44,8 @@ class DealerOrderController extends Controller
                             'status' => $order->status,
                             'created_at' => $order->created_at->format('d-m-Y'),
                             'dealer' => [
-                                'name' => $order->dealer->dealer_name,
-                                'dealer_code' => $order->dealer->dealer_code, 
+                                'name' => $order->dealers->dealer_name,
+                                'dealer_code' => $order->dealers->dealer_code, 
                             ],
                         ];
                     }),
@@ -182,26 +181,24 @@ class DealerOrderController extends Controller
     
             $order = Order::with([
                 'orderType:id,name',
-                'dealer:id,dealer_name,dealer_code',
+                'dealers:id,dealer_name,dealer_code',
                 'orderItems.product:id,product_name',
                 'orderItems',
                 'paymentTerm:id,name',
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($orderId);
     
-            // Format dates
             $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null;
             $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
             $order->updated_at = Carbon::parse($order->updated_at)->format('d-m-Y');
     
-            // Format response data
             $responseData = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
                 'dealer' => [
-                    'id' => $order->dealer->id ?? null,
-                    'name' => $order->dealer->dealer_name ?? null,
-                    'code' => $order->dealer->dealer_code ?? null,
+                    'id' => $order->dealers->id ?? null,
+                    'name' => $order->dealers->dealer_name ?? null,
+                    'code' => $order->dealers->dealer_code ?? null,
                 ],
                 'payment_terms' => [
                     'id' => $order->paymentTerm->id ?? null,
@@ -220,9 +217,8 @@ class DealerOrderController extends Controller
                     'driver_name' => $order->driver_name,
                     'driver_phone' => $order->driver_phone,
                 ],
-                'attachments' => $order->attachments ?? [],
+                'attachments' => $order->attachment ?? [],
     
-                // Order items with product details
                 'order_items' => $order->orderItems->map(function ($item) {
                     return [
                         'product_id' => $item->product_id,
@@ -251,101 +247,68 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
-    
-
-    public function orderFilter(Request $request)
+    public function trackOrder(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id', 
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors(),
+                'statusCode' => 422,
+                'data' => [],
+                'success' => false,
+            ], 422);
+        }
+
         try {
-            $dealerId = Auth::id();
-            if (!$dealerId) {
+            $user = Auth::user();
+
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 401,
-                    'message' => 'Unauthorized user.',
+                    'message' => 'User not authenticated',
                 ], 401);
             }
-            $searchKey = $request->input('search_key', '');
-            $isDate = false; 
-            $parsedDate = null;
 
-            if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $searchKey)) {
-                try {
-                    $parsedDate = Carbon::createFromFormat('d/m/Y', $searchKey);
-                    $isDate = true;
-                } catch (\Exception $e) {
-                    $isDate = false;
-                }
-            }
-            $ordersQuery = Order::with([
-                'dealer:id,dealer_name as name'  
-            ])
-            ->where('created_by', $dealerId)
-            ->select('id', 'created_at', 'status', 'total_amount', 'dealer_id');
-            
-            if ($isDate) {
-                $ordersQuery->whereDate('created_at', $parsedDate);
-            } else {
-           
-                $searchKey = strtolower($searchKey);
-                
-                if (in_array($searchKey, ['all', 'pending', 'accepted', 'rejected'])) {
-                    if ($searchKey !== 'all') {
-                        $ordersQuery->where('status', ucfirst($searchKey));
-                    }
-                }
-    
-                if (in_array($searchKey, ['today', 'weekly', 'monthly'])) {
-                    $startDate = null;
-                    $endDate = null;
-                    
-                    if ($searchKey == 'today') {
-                        $startDate = Carbon::today()->startOfDay();
-                        $endDate = Carbon::today()->endOfDay();
-                    } elseif ($searchKey == 'weekly') {
-                        $startDate = Carbon::now()->startOfWeek();
-                        $endDate = Carbon::now()->endOfWeek();
-                    } elseif ($searchKey == 'monthly') {
-                        $startDate = Carbon::now()->startOfMonth();
-                        $endDate = Carbon::now()->endOfMonth();
-                    }
-    
-                    if ($startDate && $endDate) {
-                        $ordersQuery->whereBetween('created_at', [$startDate, $endDate]);
-                    }
-                }
-    
-                $currentYear = Carbon::now()->year;
-                $financialStartDate = Carbon::create($currentYear - 1, 4, 1);
-                $financialEndDate = Carbon::create($currentYear, 3, 31); 
-    
-                $ordersQuery->whereBetween('created_at', [$financialStartDate, $financialEndDate]);
+            $order = Order::where('id', $request->order_id)
+                ->where('created_by_dealer', $user->id) 
+                ->select('id', 'status', 'created_at', 'accepted_time', 'rejected_time', 'dispatched_time', 'intransit_time', 'delivered_time')
+                ->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'Order not found',
+                    'data' => [],
+                ], 404);
             }
 
-            // $orders = $ordersQuery->get()->map(function ($order) {
-            //     if ($order->created_at) {
-            //         $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
-            //     }
-            //     return $order;
-            // });
-            $orders = $ordersQuery->get()->map(function ($order) {
-                return [
-                    'id' => $order->id,
-                    'created_at' => Carbon::parse($order->created_at)->format('d-m-Y'),
-                    'status' => $order->status,
-                    'total_amount' => $order->total_amount,
-                    'dealer' => $order->dealer,
-                ];
-            });
-            
-    
+            // Format timestamps
+            $formattedOrder = [
+                'id' => $order->id,
+                'status' => $order->status,
+                'timestamps' => [
+                    'pending_time' => $order->created_at ? Carbon::parse($order->created_at)->format('d-m-Y H:i:s') : null,
+                    'accepted_time' => $order->accepted_time ? Carbon::parse($order->accepted_time)->format('d-m-Y H:i:s') : null,
+                    'rejected_time' => $order->rejected_time ? Carbon::parse($order->rejected_time)->format('d-m-Y H:i:s') : null,
+                    'dispatched_time' => $order->dispatched_time ? Carbon::parse($order->dispatched_time)->format('d-m-Y H:i:s') : null,
+                    'intransit_time' => $order->intransit_time ? Carbon::parse($order->intransit_time)->format('d-m-Y H:i:s') : null,
+                    'delivered_time' => $order->delivered_time ? Carbon::parse($order->delivered_time)->format('d-m-Y H:i:s') : null,
+                ]
+            ];
+
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
-                'message' => 'Orders filtered successfully',
-                'data' => $orders,
+                'message' => 'Order tracking details fetched successfully',
+                'data' => $formattedOrder,
             ], 200);
-    
-        } catch (Exception $e) {
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'statusCode' => 500,
@@ -353,4 +316,76 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
+
+
+    public function monthlySalesTransaction(Request $request)
+    {
+        try {
+            $dealer = Auth::user();
+
+            if (!$dealer) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not Authenticated",
+                ], 401);
+            }
+
+            $month = $request->input('month', Carbon::now()->format('m'));
+            $year = $request->input('year', Carbon::now()->format('Y'));
+
+            $assignedRouteIds = AssignRoute::whereIn('employee_id', function ($query) {
+                    $query->select('id')
+                        ->from('employees')
+                        ->where('employee_type_id', 1); 
+                });
+                dd($assignedRouteIds->toSql(), $assignedRouteIds->getBindings());
+                // ->pluck('id')->toArray();
+dd($assignedRouteIds);
+            if (empty($assignedRouteIds)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No assigned routes found for Sales Executives.",
+                    'data' => []
+                ], 404);
+            }
+
+            $dealerIds = Dealer::whereIn('assigned_route_id', $assignedRouteIds)->pluck('id')->toArray();
+
+            if (empty($dealerIds)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No dealers found for the assigned routes.",
+                    'data' => []
+                ], 404);
+            }
+
+            $salesData = Order::whereIn('created_by_dealer', $dealerIds)
+                ->whereMonth('created_at', $month)
+                ->whereYear('created_at', $year)
+                ->selectRaw('SUM(invoice_quantity) as total_quantity, SUM(invoice_total) as total_transaction')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Monthly Sales Transaction Data',
+                'data' => [
+                    'month' => $month,
+                    'year' => $year,
+                    'total_quantity' => (float) ($salesData->total_quantity ?? 0),
+                    'total_transaction' => (float) ($salesData->total_transaction ?? 0),
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+   
 }

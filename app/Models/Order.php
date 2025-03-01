@@ -81,6 +81,15 @@ class Order extends Model
         return $this->belongsTo(Dealer::class, 'dealer_id');
     }
 
+// This is for dealer created orders
+
+    public function dealers()
+    {
+        return $this->belongsTo(Dealer::class, 'created_by_dealer');
+    }
+    
+// This is for dealer created orders
+
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);

@@ -33,8 +33,10 @@ Route::prefix('v1')->group(function () {
             Route::prefix('orders')->group(function () {
                 Route::post('/', [DealerOrderController::class, 'store']); // Store new order
                 Route::get('/', [DealerOrderController::class, 'index']); // List orders by current user ID
-                Route::get('{orderId}', [DealerOrderController::class, 'show']); // order details
-                Route::post('/filter', [DealerOrderController::class, 'orderFilter']);
+                Route::get('/{orderId}', [DealerOrderController::class, 'show']); // order details
+                // Route::post('/filter', [DealerOrderController::class, 'orderFilter']);
+                Route::post('/track-order', [DealerOrderController::class, 'trackOrder']);
+                Route::post('/monthly-transaction', [DealerOrderController::class, 'monthlySalesTransaction']);
              
             });
 
