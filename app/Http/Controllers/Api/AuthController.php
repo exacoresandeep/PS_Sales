@@ -139,7 +139,6 @@ class AuthController extends Controller
         }
     }
 
-
     public function getOrderTypes()
     {
         try {

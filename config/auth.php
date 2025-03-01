@@ -44,6 +44,7 @@ return [
             'driver' => 'sanctum',
             'provider' => 'users',
         ],
+       
         'employee' => [ 
             'driver' => 'session', 
             'provider' => 'employees',
@@ -83,6 +84,7 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Employee::class,
         ],
+       
     ],
 
     /*
