@@ -45,6 +45,8 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/payment-history', [DealerOrderController::class, 'paymentHistoryList']);
             Route::get('/payment-history/{orderId}', [DealerOrderController::class, 'paymentHistoryOrderDetails']);
+            Route::get('/credit-notes', [DealerOrderController::class, 'creditNoteList']);
+            Route::get('/credit-notes/{orderId}', [DealerOrderController::class, 'creditNoteDetails']);
             Route::get('support', [DealerOrderController::class, 'getSupport']);
             Route::post('logout', [DealerController::class, 'logout']);
 
