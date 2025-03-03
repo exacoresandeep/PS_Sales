@@ -8,6 +8,8 @@ use App\Models\Order;
 use App\Models\Dealer;
 use App\Models\Employee;
 use App\Models\Payment;
+use App\Models\ProductType;
+use App\Models\CreditNote;
 use App\Models\OutstandingPaymentCommitment;
 use App\Models\OutstandingPayment;
 use App\Models\AssignRoute;
@@ -841,7 +843,6 @@ class DealerOrderController extends Controller
                 ], 400);
             }
     
-            // Fetch order details
             $order = Order::with([
                 'orderType:id,name',
                 'dealers:id,dealer_name,dealer_code',
@@ -851,15 +852,12 @@ class DealerOrderController extends Controller
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($orderId);
     
-            // Fetch payments for this order
             $paidAmount = Payment::where('order_id', $orderId)->sum('payment_amount');
     
-            // Fetch outstanding payment for this order
             $outstandingPayment = OutstandingPayment::where('order_id', $orderId)
                 ->select('invoice_number', 'invoice_total', 'due_date', 'paid_amount', 'outstanding_amount')
                 ->first();
     
-            // Fetch tracking status
             $trackingStatus = [
                 'pending_time' => $order->created_at ? Carbon::parse($order->created_at)->format('d-m-Y H:i:s') : null,
                 'accepted_time' => $order->accepted_time ? Carbon::parse($order->accepted_time)->format('d-m-Y H:i:s') : null,
@@ -869,7 +867,6 @@ class DealerOrderController extends Controller
                 'delivered_time' => $order->delivered_time ? Carbon::parse($order->delivered_time)->format('d-m-Y H:i:s') : null,
             ];
     
-            // Format order response
             $responseData = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
@@ -928,8 +925,90 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
+    public function creditNoteList(Request $request)
+    {
+        $dealer = Auth::user();
     
+        if (!$dealer) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 400,
+                'message' => 'You must be logged in to view this order.'
+            ], 400);
+        }
+        $creditNotes = CreditNote::where('dealer_id', $dealer->id)
+        ->select('order_id', 'credit_note_number', 'invoice_number', 'date', 'total_row_amount')
+        ->orderBy('date', 'desc')
+        ->get()
+        ->map(function ($creditNote) {
+            return [
+                'order_id' => $creditNote->order_id,
+                'credit_note_number' => $creditNote->credit_note_number,
+                'invoice_number' => $creditNote->invoice_number,
+                'date' => $creditNote->date->format('d/m/Y'),
+                'total_row_amount' => $creditNote->total_row_amount,
+            ];
+        });
 
+        return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => 'Credit Notes retrieved successfully',
+            'data' => $creditNotes
+        ], 200);
+    }
+    public function creditNoteDetails($order_id)
+    {
+        $creditNote = CreditNote::where('order_id', $order_id)->first();
+    
+        if (!$creditNote) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 404,
+                'message' => 'Credit Note not found for this order.',
+                'data' =>null,
+            ], 404);
+        }
+    
+        $order = Order::where('id', $order_id)
+        ->select('order_type', 'payment_terms_id', 'billing_date', 'invoice_number')
+        ->with('orderType:id,name','paymentTerm:id,name') 
+        ->first();
+    
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 404,
+                'message' => 'Order details not found.',
+            ], 404);
+        }
+    
+        $response = [
+            'order_id' => $creditNote->order_id,
+            'order_type' => $order->orderType->name ?? 'N/A',
+            'payment_type' => $order->paymentTerm->name ?? 'N/A',
+            'billing_date' => $order->billing_date->format('d/m/Y'),
+            'invoice_number' => $order->invoice_number,
+            'return_products' => collect($creditNote->returned_items)->map(function ($item) {
+                return [
+                    'rate' => $item['rate'],
+                    'quantity' => $item['quantity'],
+                    'product_type_id' => $item['product_type_id'],
+                    'product_type' => ProductType::where('id', $item['product_type_id'])->value('type_name'),
+                ];
+            }),
+            'total_return_quantity' => $creditNote->total_return_quantity,
+            'total_amount' => $creditNote->total_row_amount,
+        ];
+    
+        return response()->json([
+            'success' => true,
+            'statusCode' => 200,
+            'message' => 'Credit Note details retrieved successfully',
+            'data' => $response,
+        ], 200);
+    }
+    
 
 
    
