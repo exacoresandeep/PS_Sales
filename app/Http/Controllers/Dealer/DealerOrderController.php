@@ -739,15 +739,30 @@ class DealerOrderController extends Controller
                 ], 401);
             }
 
-            $aso = Employee::whereIn('id', function ($query) use ($dealer) {
-                    $query->select('employee_id')
-                        ->from('assigned_routes')
-                        ->where('id', $dealer->assigned_route_id);
-                })
+            $seAssignedRoute = AssignRoute::where('id', $dealer->assigned_route_id)->first();
+
+            if (!$seAssignedRoute) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Assigned route not found for this dealer.",
+                    'data' => []
+                ], 404);
+            }
+
+            if (!$seAssignedRoute->parent_id) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No ASO assigned for this dealer's route.",
+                    'data' => []
+                ], 404);
+            }
+
+            $aso = Employee::where('id', $seAssignedRoute->parent_id)
                 ->where('employee_type_id', 2) 
-                ->select('name', 'phone');
-                dd($aso->toSql(), $aso->getBindings());
-                // ->first();
+                ->select('id', 'name', 'phone')
+                ->first();
 
             if (!$aso) {
                 return response()->json([
@@ -763,6 +778,7 @@ class DealerOrderController extends Controller
                 'statusCode' => 200,
                 'message' => "Support ASO fetched successfully",
                 'data' => [
+                    'aso_id' => $aso->id,
                     'name' => $aso->name,
                     'phone' => $aso->phone,
                 ],
@@ -776,6 +792,7 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
+
 
 
 
