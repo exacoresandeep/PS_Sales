@@ -43,6 +43,8 @@ Route::prefix('v1')->group(function () {
                 Route::post('/order-request/{orderId}', [DealerOrderController::class, 'orderRequestStatusUpdate']);
             });
 
+            Route::get('/payment-history', [DealerOrderController::class, 'paymentHistoryList']);
+            Route::get('/payment-history/{orderId}', [DealerOrderController::class, 'paymentHistoryOrderDetails']);
             Route::get('support', [DealerOrderController::class, 'getSupport']);
             Route::post('logout', [DealerController::class, 'logout']);
 

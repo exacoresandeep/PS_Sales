@@ -41,6 +41,10 @@ class Order extends Model
         'vehicle_number',
         'driver_name',
         'driver_phone',
+        'invoice_number',
+        'invoice_date',
+        'invoice_quantity',
+        'invoice_total',
         'created_by_dealer',
         'created_by',
     ];
@@ -57,6 +61,7 @@ class Order extends Model
         'intransit_time' => 'datetime',
         'delivered_time' => 'datetime',
         'attachment' => 'array',
+        'invoice_date' => 'date',
         
     ];
 
@@ -106,5 +111,9 @@ class Order extends Model
     public function vehicleCategory()
     {
         return $this->belongsTo(VehicleCategory::class, 'vehicle_category_id');
+    }
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'invoice_number', 'invoice_number');
     }
 }

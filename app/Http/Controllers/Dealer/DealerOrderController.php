@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Dealer;
 use App\Models\Employee;
+use App\Models\Payment;
 use App\Models\OutstandingPaymentCommitment;
 use App\Models\OutstandingPayment;
 use App\Models\AssignRoute;
@@ -739,15 +740,30 @@ class DealerOrderController extends Controller
                 ], 401);
             }
 
-            $aso = Employee::whereIn('id', function ($query) use ($dealer) {
-                    $query->select('employee_id')
-                        ->from('assigned_routes')
-                        ->where('id', $dealer->assigned_route_id);
-                })
+            $seAssignedRoute = AssignRoute::where('id', $dealer->assigned_route_id)->first();
+
+            if (!$seAssignedRoute) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "Assigned route not found for this dealer.",
+                    'data' => []
+                ], 404);
+            }
+
+            if (!$seAssignedRoute->parent_id) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => "No ASO assigned for this dealer's route.",
+                    'data' => []
+                ], 404);
+            }
+
+            $aso = Employee::where('id', $seAssignedRoute->parent_id)
                 ->where('employee_type_id', 2) 
-                ->select('name', 'phone');
-                dd($aso->toSql(), $aso->getBindings());
-                // ->first();
+                ->select('id', 'name', 'phone')
+                ->first();
 
             if (!$aso) {
                 return response()->json([
@@ -763,6 +779,7 @@ class DealerOrderController extends Controller
                 'statusCode' => 200,
                 'message' => "Support ASO fetched successfully",
                 'data' => [
+                    'aso_id' => $aso->id,
                     'name' => $aso->name,
                     'phone' => $aso->phone,
                 ],
@@ -776,6 +793,142 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
+
+    public function paymentHistoryList(Request $request)
+    {
+        $dealer = Auth::user();
+
+        if (!$dealer) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 401,
+                'message' => "User not Authenticated",
+            ], 401);
+        }
+        $dealerId = $dealer->id;
+
+        $payments = Payment::where('dealer_id', $dealerId)
+            ->with(['order.paymentTerm'])
+            ->orderBy('payment_date', 'desc')
+            ->get()
+            ->map(function ($payment) {
+                return [
+                    'order_id'       => $payment->order->id ?? null, 
+                    'payment_date'   => $payment->payment_date->format('d/m/y'),
+                    'payment_total'  => $payment->payment_amount,
+                    'payment_terms'  => $payment->order->paymentTerm->name ?? 'N/A',
+                ];
+            });
+
+        return response()->json([
+            'success'  => true,
+            'statusCode' => 200,
+            'message' => 'Payment history retrieved successfully',
+            'data'    => $payments,
+        ], 200);
+    }
+
+    public function paymentHistoryOrderDetails($orderId)
+    {
+        try {
+            $user = Auth::user();
+    
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 400,
+                    'message' => 'You must be logged in to view this order.'
+                ], 400);
+            }
+    
+            // Fetch order details
+            $order = Order::with([
+                'orderType:id,name',
+                'dealers:id,dealer_name,dealer_code',
+                'orderItems.product:id,product_name',
+                'orderItems',
+                'paymentTerm:id,name',
+                'vehicleCategory:id,vehicle_category_name'
+            ])->findOrFail($orderId);
+    
+            // Fetch payments for this order
+            $paidAmount = Payment::where('order_id', $orderId)->sum('payment_amount');
+    
+            // Fetch outstanding payment for this order
+            $outstandingPayment = OutstandingPayment::where('order_id', $orderId)
+                ->select('invoice_number', 'invoice_total', 'due_date', 'paid_amount', 'outstanding_amount')
+                ->first();
+    
+            // Fetch tracking status
+            $trackingStatus = [
+                'pending_time' => $order->created_at ? Carbon::parse($order->created_at)->format('d-m-Y H:i:s') : null,
+                'accepted_time' => $order->accepted_time ? Carbon::parse($order->accepted_time)->format('d-m-Y H:i:s') : null,
+                'rejected_time' => $order->rejected_time ? Carbon::parse($order->rejected_time)->format('d-m-Y H:i:s') : null,
+                'dispatched_time' => $order->dispatched_time ? Carbon::parse($order->dispatched_time)->format('d-m-Y H:i:s') : null,
+                'intransit_time' => $order->intransit_time ? Carbon::parse($order->intransit_time)->format('d-m-Y H:i:s') : null,
+                'delivered_time' => $order->delivered_time ? Carbon::parse($order->delivered_time)->format('d-m-Y H:i:s') : null,
+            ];
+    
+            // Format order response
+            $responseData = [
+                'id' => $order->id,
+                'order_type' => $order->orderType->name ?? null,
+                'dealer' => [
+                    'id' => $order->dealers->id ?? null,
+                    'name' => $order->dealers->dealer_name ?? null,
+                    'code' => $order->dealers->dealer_code ?? null,
+                ],
+                'payment_terms' => [
+                    'id' => $order->paymentTerm->id ?? null,
+                    'name' => $order->paymentTerm->name ?? null,
+                ],
+                'billing_date' => $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null,
+                'total_amount' => round($order->total_amount, 2),
+                'paid_amount' => round($paidAmount, 2),
+                'outstanding_payment' => $outstandingPayment ? [
+                    'invoice_number' => $outstandingPayment->invoice_number,
+                    'invoice_total' => round($outstandingPayment->invoice_total, 2),
+                    'due_date' => $outstandingPayment->due_date ? Carbon::parse($outstandingPayment->due_date)->format('d-m-Y') : null,
+                    'paid_amount' => round($outstandingPayment->paid_amount, 2),
+                    'outstanding_amount' => round($outstandingPayment->outstanding_amount, 2),
+                ] : null,
+                'vehicle' => [
+                    'category_id' => $order->vehicle_category_id,
+                    'category_name' => $order->vehicleCategory->vehicle_category_name ?? null,
+                    'vehicle_number' => $order->vehicle_number,
+                    'driver_name' => $order->driver_name,
+                    'driver_phone' => $order->driver_phone,
+                ],
+                'attachments' => $order->attachment ?? [],
+                'tracking_status' => $trackingStatus,
+                'order_items' => $order->orderItems->map(function ($item) {
+                    return [
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product->product_name ?? null,
+                        'total_quantity' => $item->total_quantity,
+                        'product_details' => $item->product_details ?? [],
+                    ];
+                }),
+                'created_at' => Carbon::parse($order->created_at)->format('d-m-Y'),
+                'updated_at' => Carbon::parse($order->updated_at)->format('d-m-Y'),
+            ];
+    
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Order details fetched successfully',
+                'data' => $responseData,
+            ], 200);
+    
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
 
 
 

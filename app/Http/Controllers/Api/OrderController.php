@@ -646,13 +646,11 @@ class OrderController extends Controller
     public function dealerOrderStatusUpdate(Request $request, $orderId)
     {
         try {
-            // Validate request data
             $validatedData = $request->validate([
                 'status' => 'required|in:Accepted,Rejected',
                 'reason_for_rejection' => 'required_if:status,Rejected|nullable|string|max:255',
             ]);
 
-            // Get the logged-in employee
             $employee = Auth::user();
 
             if (!$employee) {
@@ -663,9 +661,7 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            // Check if the user is an SM (Sales Manager)
             if ($employee->employee_type_id == 5) {
-                // SM can access all orders created by ASOs, DSMs, RSMs, and Dealers
                 $order = Order::where('id', $orderId)
                     ->where(function ($query) {
                         $query->whereIn('created_by', Employee::whereIn('employee_type_id', [2, 3, 4])->pluck('id'))
@@ -673,7 +669,6 @@ class OrderController extends Controller
                     })
                     ->first();
             } else {
-                // Get assigned routes for ASO
                 $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
 
                 if (empty($assignedRoutes)) {
