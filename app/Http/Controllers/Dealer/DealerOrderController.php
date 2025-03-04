@@ -98,14 +98,15 @@ class DealerOrderController extends Controller
                 'additional_information' => 'nullable|string',
                 'status' => 'nullable|in:Pending,Dispatched,Delivered',
                 'vehicle_category_id' => 'required|integer',
+             
                 'vehicle_number' => [
-                    Rule::requiredIf($request->vehicle_category_id == 1), 'string'
+                    Rule::requiredIf($request->vehicle_category_id == 1),'nullable', 'string'
                 ],
                 'driver_name' => [
-                    Rule::requiredIf($request->vehicle_category_id == 1), 'string'
+                    Rule::requiredIf($request->vehicle_category_id == 1),'nullable', 'string'
                 ],
                 'driver_phone' => [
-                    Rule::requiredIf($request->vehicle_category_id == 1), 'string'
+                    Rule::requiredIf($request->vehicle_category_id == 1),'nullable', 'string'
                 ],
                 // 'vehicle_type' => 'nullable|string',
                 'order_items' => 'required|array',
@@ -987,6 +988,8 @@ class DealerOrderController extends Controller
             'order_id' => $creditNote->order_id,
             'order_type' => $order->orderType->name ?? 'N/A',
             'payment_type' => $order->paymentTerm->name ?? 'N/A',
+            'credit_note_date' => $order->date->format('d/m/Y'),
+            'credit_note_number' => $order->credit_note_number ?? 'N/A',
             'billing_date' => $order->billing_date->format('d/m/Y'),
             'invoice_number' => $order->invoice_number,
             'return_products' => collect($creditNote->returned_items)->map(function ($item) {
