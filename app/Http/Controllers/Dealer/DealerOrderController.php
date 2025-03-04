@@ -811,6 +811,9 @@ class DealerOrderController extends Controller
         $dealerId = $dealer->id;
 
         $payments = Payment::where('dealer_id', $dealerId)
+            ->whereHas('order.paymentTerm', function ($query) {
+                $query->whereIn('payment_terms_id', [1, 2]); 
+            })
             ->with(['order.paymentTerm'])
             ->orderBy('payment_date', 'desc')
             ->get()
