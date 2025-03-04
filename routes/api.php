@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function () {
                 Route::post('/outstanding-payments', [DealerOrderController::class, 'outstandingPaymentsList']);
                 Route::get('/outstanding-payments/{orderId}', [DealerOrderController::class, 'opDetails']);
                 Route::post('/order-request-list', [DealerOrderController::class, 'orderRequestList']);
+                Route::get('/order-request/{orderId}', [DealerOrderController::class, 'orderRequestDetails']);
                 Route::post('/order-request/{orderId}', [DealerOrderController::class, 'orderRequestStatusUpdate']);
             });
 

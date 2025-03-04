@@ -634,6 +634,7 @@ class DealerOrderController extends Controller
             }
 
             $orders = Order::whereIn('created_by', $salesExecutives)
+                ->where('dealer_id',$dealer->id)
                 ->select('id', 'total_amount', 'status', 'created_at')
                 ->orderBy('id', 'desc')
                 ->get();
@@ -663,6 +664,112 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
+    public function orderRequestDetails($orderId)
+    {
+        try {
+            $dealer = Auth::user();
+
+            if (!$dealer) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 401,
+                    'message' => "User not authenticated",
+                ], 401);
+            }
+
+            // Fetch the order with required relationships
+            $order = Order::with([
+                'createdBy:id,name,employee_code',
+                'orderType:id,name',
+                'customerType:id,name',
+                'lead.customerType:id,name',
+                'lead:id,customer_name,phone,address,construction_type,stage_of_construction',
+                'paymentTerm:id,name',
+                'orderItems.product.productTypes:id,product_id,type_name',
+                'orderItems.product:id,product_name',
+                'dealers:id,dealer_name,dealer_code',
+                'vehicleCategory:id,vehicle_category_name',
+            ])
+            ->where('dealer_id', $dealer->id) // Ensure order belongs to the logged-in dealer
+            ->find($orderId);
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'Order not found or unauthorized access',
+                ], 404);
+            }
+
+            // Format response data
+            $orderDetails = [
+                'id' => $order->id,
+                'order_placed_by' => [
+                    'name' => $order->createdBy->name ?? ' ',
+                    'employee_code' => $order->createdBy->employee_code ?? ' ',
+                    'designation' => 'Sales Executive', // Fixed designation
+                ],
+                'order_date' => $order->created_at->format('d/m/Y'),
+                'order_type' => $order->orderType->name ?? ' ',
+
+
+                'customer_details' => [
+                    'customer_type' => $order->customerType->name ?? ($order->lead->customerType->name ?? ' '),
+                    'customer_name' => $order->lead->customer_name ?? ' ',
+                    'phone' => $order->lead->phone ?? ' ',
+                    'address' => $order->lead->address ?? ' ',
+                    'construction_type' => $order->lead->construction_type ?? ' ',
+                    'stage_of_construction' => $order->lead->stage_of_construction ?? ' ',
+                ],
+
+                'billing_date' => $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : ' ',
+                'payment_terms' => $order->paymentTerm->name ?? ' ',
+                'additional_information' => $order->additional_information ?? ' ',
+                'status' => $order->status,
+
+                
+
+                'attachments' => $order->attachment ?? [],
+
+                // Order Items
+                'order_items' => $order->orderItems->map(function ($item) {
+
+                    return [
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product->product_name ?? 'N/A',
+                        'total_quantity' => $item->total_quantity,
+                        'balance_quantity' => $item->balance_quantity,
+                        'product_details' => collect($item->product_details)->map(function ($detail) {
+                            return [
+                                'product_type_id' => $detail['product_type_id'],
+                                'quantity' => $detail['quantity'],
+                                'rate' => $detail['rate'],
+                                'product_type' => ProductType::where('id', $detail['product_type_id'])->value('type_name') ?? 'N/A',
+                            ];
+                        }),
+                    ];
+                }),
+
+                'created_at' => $order->created_at->format('d/m/Y'),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'statusCode' => 200,
+                'message' => 'Order details retrieved successfully',
+                'data' => $orderDetails,
+            ], 200);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 
     public function orderRequestStatusUpdate(Request $request, $orderId)
     {
@@ -963,50 +1070,65 @@ class DealerOrderController extends Controller
     }
     public function creditNoteDetails($order_id)
     {
-        $creditNote = CreditNote::where('order_id', $order_id)->first();
-    
+        $dealer = Auth::user();
+
+        if (!$dealer) {
+            return response()->json([
+                'success' => false,
+                'statusCode' => 401,
+                'message' => 'You must be logged in to view this credit note.',
+            ], 401);
+        }
+
+        // Fetch credit note ensuring it belongs to the logged-in dealer
+        $creditNote = CreditNote::where('order_id', $order_id)
+            ->where('dealer_id', $dealer->id) // Ensuring the credit note belongs to the dealer
+            ->first();
+
         if (!$creditNote) {
             return response()->json([
                 'success' => false,
                 'statusCode' => 404,
-                'message' => 'Credit Note not found for this order.',
-                'data' =>null,
+                'message' => 'Credit Note not found for this order or unauthorized access.',
+                'data' => null,
             ], 404);
         }
-    
+
+        // Fetch order details ensuring it belongs to the dealer
         $order = Order::where('id', $order_id)
-        ->select('order_type', 'payment_terms_id', 'billing_date', 'invoice_number')
-        ->with('orderType:id,name','paymentTerm:id,name') 
-        ->first();
-    
+            ->where('dealer_id', $dealer->id) // Ensuring the order belongs to the dealer
+            ->select('order_type', 'payment_terms_id', 'billing_date', 'invoice_number')
+            ->with('orderType:id,name', 'paymentTerm:id,name')
+            ->first();
+
         if (!$order) {
             return response()->json([
                 'success' => false,
                 'statusCode' => 404,
-                'message' => 'Order details not found.',
+                'message' => 'Order details not found or unauthorized access.',
             ], 404);
         }
-    
+
         $response = [
             'order_id' => $creditNote->order_id,
             'order_type' => $order->orderType->name ?? 'N/A',
             'payment_type' => $order->paymentTerm->name ?? 'N/A',
-            'credit_note_date' => $order->date->format('d/m/Y'),
-            'credit_note_number' => $order->credit_note_number ?? 'N/A',
-            'billing_date' => $order->billing_date->format('d/m/Y'),
+            'credit_note_date' => $creditNote->date->format('d/m/Y'), // Fixed incorrect date reference
+            'credit_note_number' => $creditNote->credit_note_number ?? 'N/A',
+            'billing_date' => $order->billing_date ? $order->billing_date->format('d/m/Y') : 'N/A',
             'invoice_number' => $order->invoice_number,
             'return_products' => collect($creditNote->returned_items)->map(function ($item) {
                 return [
                     'rate' => $item['rate'],
                     'quantity' => $item['quantity'],
                     'product_type_id' => $item['product_type_id'],
-                    'product_type' => ProductType::where('id', $item['product_type_id'])->value('type_name'),
+                    'product_type' => ProductType::where('id', $item['product_type_id'])->value('type_name') ?? 'N/A',
                 ];
             }),
             'total_return_quantity' => $creditNote->total_return_quantity,
             'total_amount' => $creditNote->total_row_amount,
         ];
-    
+
         return response()->json([
             'success' => true,
             'statusCode' => 200,
@@ -1014,6 +1136,7 @@ class DealerOrderController extends Controller
             'data' => $response,
         ], 200);
     }
+
     
 
 

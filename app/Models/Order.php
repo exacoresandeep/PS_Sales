@@ -116,4 +116,5 @@ class Order extends Model
     {
         return $this->hasMany(Payment::class, 'invoice_number', 'invoice_number');
     }
+    
 }
