@@ -590,7 +590,6 @@ class DealerOrderController extends Controller
     {
         try {
             $user = Auth::user();
-dd($user->dealer_id);
             if (!$user) {
                 return response()->json([
                     'success' => false,
@@ -608,7 +607,7 @@ dd($user->dealer_id);
                     'message' => 'Order not found for the given Outstanding Payment ID.'
                 ], 404);
             }
-            if ($outstandingPayment->dealer_id !== $user->dealer_id) {
+            if ($outstandingPayment->dealer_id !== $user->id) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 403,
