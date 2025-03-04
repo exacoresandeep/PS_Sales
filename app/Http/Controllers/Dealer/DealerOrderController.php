@@ -419,22 +419,17 @@ class DealerOrderController extends Controller
 
             $outstandingPayments = OutstandingPayment::where('dealer_id', $dealer->id)
                 ->where('status', 'open')
-                ->select(
-                    'id',
-                    'order_id',
-                    'invoice_number',
-                    'invoice_date',
-                    'invoice_total',
-                    'due_date',
-                    'paid_amount',
-                    'outstanding_amount',
-                    'payment_doc_number',
-                    'payment_date',
-                    'payment_amount_applied',
-                    'status'
-                )
+                ->select('id','order_id', 'due_date', 'outstanding_amount')
                 ->orderBy('due_date', 'asc')
-                ->get();
+                ->get()
+                ->map(function ($payment) {
+                    return [
+                        'id' => $payment->id,
+                        'order_id' => $payment->order_id,
+                        'due_date' => $payment->due_date ? \Carbon\Carbon::parse($payment->due_date)->format('d/m/Y') : null,
+                        'outstanding_amount' => $payment->outstanding_amount,
+                    ];
+                });
              
 
             return response()->json([
@@ -451,17 +446,158 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
-    public function opDetails($orderId)
+    // public function opDetails($orderId)
+    // {
+    //     try {
+    //         $user = Auth::user();
+
+    //         if ($user === null) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 400,
+    //                 'message' => 'You must be logged in to view this order.'
+    //             ], 400);
+    //         }
+
+    //         $order = Order::with([
+    //             'orderType:id,name',
+    //             'dealers:id,dealer_name,dealer_code',
+    //             'orderItems.product:id,product_name',
+    //             'orderItems',
+    //             'paymentTerm:id,name',
+    //             'vehicleCategory:id,vehicle_category_name'
+    //         ])->findOrFail($orderId);
+
+    //         $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null;
+    //         $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
+    //         $order->updated_at = Carbon::parse($order->updated_at)->format('d-m-Y');
+
+    //         $outstandingPayments = OutstandingPayment::where('order_id', $orderId)
+    //             ->where('status', 'open')
+    //             ->select(
+    //                 'id',
+    //                 'order_id',
+    //                 'invoice_number',
+    //                 'invoice_date',
+    //                 'invoice_total',
+    //                 'due_date',
+    //                 'paid_amount',
+    //                 'outstanding_amount',
+    //                 'payment_doc_number',
+    //                 'payment_date',
+    //                 'payment_amount_applied',
+    //                 'status'
+    //             )
+    //             ->orderBy('due_date', 'asc')
+    //             ->get();
+
+    //         $outstandingPayments->each(function ($payment) {
+    //             $payment->commitments = OutstandingPaymentCommitment::where('outstanding_payment_id', $payment->id)
+    //                 ->select('id', 'committed_date', 'committed_amount')
+    //                 ->orderBy('committed_date', 'asc')
+    //                 ->get();
+    //         });
+
+    //         // Response data
+    //         $responseData = [
+    //             'id' => $order->id,
+    //             'order_type' => $order->orderType->name ?? null,
+    //             'dealer' => [
+    //                 'id' => $order->dealers->id ?? null,
+    //                 'name' => $order->dealers->dealer_name ?? null,
+    //                 'code' => $order->dealers->dealer_code ?? null,
+    //             ],
+    //             'payment_terms' => [
+    //                 'id' => $order->paymentTerm->id ?? null,
+    //                 'name' => $order->paymentTerm->name ?? null,
+    //             ],
+    //             'billing_date' => $order->billing_date,
+    //             'total_amount' => round($order->total_amount, 2),
+    //             'additional_information' => $order->additional_information,
+    //             'status' => $order->status,
+    //             'created_by_dealer' => $order->created_by_dealer,
+    //             'dealer_flag_order' => $order->dealer_flag_order,
+    //             'vehicle' => [
+    //                 'category_id' => $order->vehicle_category_id,
+    //                 'category_name' => $order->vehicleCategory->vehicle_category_name ?? null,
+    //                 'vehicle_number' => $order->vehicle_number,
+    //                 'driver_name' => $order->driver_name,
+    //                 'driver_phone' => $order->driver_phone,
+    //             ],
+    //             'attachments' => $order->attachment ?? [],
+
+    //             'order_items' => $order->orderItems->map(function ($item) {
+    //                 return [
+    //                     'product_id' => $item->product_id,
+    //                     'product_name' => $item->product->product_name ?? null,
+    //                     'total_quantity' => $item->total_quantity,
+    //                     'product_details' => $item->product_details ?? [],
+    //                 ];
+    //             }),
+
+    //             'outstanding_payments' => $outstandingPayments->map(function ($payment) {
+    //                 return [
+    //                     'id' => $payment->id,
+    //                     'invoice_number' => $payment->invoice_number,
+    //                     'invoice_date' => $payment->invoice_date ? Carbon::parse($payment->invoice_date)->format('d-m-Y') : null,
+    //                     'invoice_total' => $payment->invoice_total,
+    //                     'due_date' => $payment->due_date ? Carbon::parse($payment->due_date)->format('d-m-Y') : null,
+    //                     'paid_amount' => $payment->paid_amount,
+    //                     'outstanding_amount' => $payment->outstanding_amount,
+    //                     'payment_doc_number' => $payment->payment_doc_number,
+    //                     'payment_date' => $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d-m-Y') : null,
+    //                     'payment_amount_applied' => $payment->payment_amount_applied,
+    //                     'status' => $payment->status,
+    //                     'commitments' => $payment->commitments->map(function ($commitment) {
+    //                         return [
+    //                             'id' => $commitment->id,
+    //                             'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d-m-Y') : null,
+    //                             'committed_amount' => $commitment->committed_amount,
+    //                         ];
+    //                     }),
+    //                 ];
+    //             }),
+
+    //             'created_at' => $order->created_at,
+    //             'updated_at' => $order->updated_at,
+    //         ];
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Order details fetched successfully',
+    //             'data' => $responseData,
+    //         ], 200);
+
+    //     } catch (Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'statusCode' => 500,
+    //             'message' => $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+    public function opDetails($outstandingPaymentId)
     {
         try {
             $user = Auth::user();
 
-            if ($user === null) {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 400,
                     'message' => 'You must be logged in to view this order.'
                 ], 400);
+            }
+
+            $outstandingPayment = OutstandingPayment::with('order')->findOrFail($outstandingPaymentId);
+
+            if (!$outstandingPayment->order) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'Order not found for the given Outstanding Payment ID.'
+                ], 404);
             }
 
             $order = Order::with([
@@ -471,14 +607,13 @@ class DealerOrderController extends Controller
                 'orderItems',
                 'paymentTerm:id,name',
                 'vehicleCategory:id,vehicle_category_name'
-            ])->findOrFail($orderId);
+            ])->findOrFail($outstandingPayment->order_id);
 
             $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null;
             $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
             $order->updated_at = Carbon::parse($order->updated_at)->format('d-m-Y');
 
-            // Fetch outstanding payments for this order (only open status)
-            $outstandingPayments = OutstandingPayment::where('order_id', $orderId)
+            $outstandingPayments = OutstandingPayment::where('order_id', $order->id)
                 ->where('status', 'open')
                 ->select(
                     'id',
@@ -497,48 +632,49 @@ class DealerOrderController extends Controller
                 ->orderBy('due_date', 'asc')
                 ->get();
 
-            // Fetch outstanding payment commitments for each outstanding payment
             $outstandingPayments->each(function ($payment) {
                 $payment->commitments = OutstandingPaymentCommitment::where('outstanding_payment_id', $payment->id)
                     ->select('id', 'committed_date', 'committed_amount')
                     ->orderBy('committed_date', 'asc')
                     ->get();
             });
+            $payments = Payment::where('order_id', $order->id)
+                ->select('payment_date', 'payment_amount', 'payment_document_no')
+                ->orderBy('payment_date', 'asc')
+                ->get();
 
-            // Response data
+            $totalPaidAmount = $payments->sum('payment_amount');
+
+            $totalOutstandingAmount = $order->invoice_total - $totalPaidAmount;
+
             $responseData = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
-                'dealer' => [
-                    'id' => $order->dealers->id ?? null,
-                    'name' => $order->dealers->dealer_name ?? null,
-                    'code' => $order->dealers->dealer_code ?? null,
-                ],
+                
                 'payment_terms' => [
                     'id' => $order->paymentTerm->id ?? null,
                     'name' => $order->paymentTerm->name ?? null,
                 ],
-                'billing_date' => $order->billing_date,
+                'billing_date' => $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null,
                 'total_amount' => round($order->total_amount, 2),
-                'additional_information' => $order->additional_information,
-                'status' => $order->status,
-                'created_by_dealer' => $order->created_by_dealer,
-                'dealer_flag_order' => $order->dealer_flag_order,
-                'vehicle' => [
-                    'category_id' => $order->vehicle_category_id,
-                    'category_name' => $order->vehicleCategory->vehicle_category_name ?? null,
-                    'vehicle_number' => $order->vehicle_number,
-                    'driver_name' => $order->driver_name,
-                    'driver_phone' => $order->driver_phone,
-                ],
+              
                 'attachments' => $order->attachment ?? [],
 
                 'order_items' => $order->orderItems->map(function ($item) {
+
                     return [
                         'product_id' => $item->product_id,
-                        'product_name' => $item->product->product_name ?? null,
+                        'product_name' => $item->product->product_name ?? 'N/A',
                         'total_quantity' => $item->total_quantity,
-                        'product_details' => $item->product_details ?? [],
+                        'balance_quantity' => $item->balance_quantity,
+                        'product_details' => collect($item->product_details)->map(function ($detail) {
+                            return [
+                                'product_type_id' => $detail['product_type_id'],
+                                'quantity' => $detail['quantity'],
+                                'rate' => $detail['rate'],
+                                'product_type' => ProductType::where('id', $detail['product_type_id'])->value('type_name') ?? 'N/A',
+                            ];
+                        }),
                     ];
                 }),
 
@@ -546,27 +682,37 @@ class DealerOrderController extends Controller
                     return [
                         'id' => $payment->id,
                         'invoice_number' => $payment->invoice_number,
-                        'invoice_date' => $payment->invoice_date ? Carbon::parse($payment->invoice_date)->format('d-m-Y') : null,
-                        'invoice_total' => $payment->invoice_total,
-                        'due_date' => $payment->due_date ? Carbon::parse($payment->due_date)->format('d-m-Y') : null,
-                        'paid_amount' => $payment->paid_amount,
-                        'outstanding_amount' => $payment->outstanding_amount,
-                        'payment_doc_number' => $payment->payment_doc_number,
-                        'payment_date' => $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d-m-Y') : null,
-                        'payment_amount_applied' => $payment->payment_amount_applied,
-                        'status' => $payment->status,
+                        // 'invoice_date' => $payment->invoice_date ? Carbon::parse($payment->invoice_date)->format('d/m/Y') : null,
+                        'invoice_amount' => $payment->invoice_total,
+                        'due_date' => $payment->due_date ? Carbon::parse($payment->due_date)->format('d/m/Y') : null,
+                        // 'paid_amount' => $payment->paid_amount,
+                        // 'outstanding_amount' => $payment->outstanding_amount,
+                        // 'payment_doc_number' => $payment->payment_doc_number,
+                        // 'payment_date' => $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d-m-Y') : null,
+                        // 'payment_amount_applied' => $payment->payment_amount_applied,
+                        // 'status' => $payment->status,
                         'commitments' => $payment->commitments->map(function ($commitment) {
                             return [
                                 'id' => $commitment->id,
-                                'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d-m-Y') : null,
+                                'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d/m/Y') : null,
                                 'committed_amount' => $commitment->committed_amount,
                             ];
                         }),
                     ];
                 }),
+                'payment_summary' => [
+                    // 'total_paid_amount' => round($totalPaidAmount, 2),
+                    'total_outstanding_amount' => round($totalOutstandingAmount, 2),
+                    'payments' => $payments->map(function ($payment) {
+                        return [
+                            'payment_date' => $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d/m/Y') : null,
+                            'payment_amount' => round($payment->payment_amount, 2),
+                            'payment_document_no' => $payment->payment_document_no,
+                        ];
+                    }),
+                ],
 
-                'created_at' => $order->created_at,
-                'updated_at' => $order->updated_at,
+                'created_at' => $order->created_at? Carbon::parse($order->created_at)->format('d/m/Y') : null,
             ];
 
             return response()->json([
@@ -584,6 +730,7 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
+
 
     public function orderRequestList(Request $request)
     {
@@ -1080,9 +1227,8 @@ class DealerOrderController extends Controller
             ], 401);
         }
 
-        // Fetch credit note ensuring it belongs to the logged-in dealer
         $creditNote = CreditNote::where('order_id', $order_id)
-            ->where('dealer_id', $dealer->id) // Ensuring the credit note belongs to the dealer
+            ->where('dealer_id', $dealer->id)
             ->first();
 
         if (!$creditNote) {
@@ -1094,9 +1240,8 @@ class DealerOrderController extends Controller
             ], 404);
         }
 
-        // Fetch order details ensuring it belongs to the dealer
         $order = Order::where('id', $order_id)
-            ->where('dealer_id', $dealer->id) // Ensuring the order belongs to the dealer
+            ->where('dealer_id', $dealer->id) 
             ->select('order_type', 'payment_terms_id', 'billing_date', 'invoice_number')
             ->with('orderType:id,name', 'paymentTerm:id,name')
             ->first();
@@ -1113,7 +1258,7 @@ class DealerOrderController extends Controller
             'order_id' => $creditNote->order_id,
             'order_type' => $order->orderType->name ?? 'N/A',
             'payment_type' => $order->paymentTerm->name ?? 'N/A',
-            'credit_note_date' => $creditNote->date->format('d/m/Y'), // Fixed incorrect date reference
+            'credit_note_date' => $creditNote->date->format('d/m/Y'), 
             'credit_note_number' => $creditNote->credit_note_number ?? 'N/A',
             'billing_date' => $order->billing_date ? $order->billing_date->format('d/m/Y') : 'N/A',
             'invoice_number' => $order->invoice_number,
