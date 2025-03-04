@@ -624,9 +624,9 @@ class DealerOrderController extends Controller
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($outstandingPayment->order_id);
 
-            $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null;
-            $order->created_at = Carbon::parse($order->created_at)->format('d/m/Y');
-            $order->updated_at = Carbon::parse($order->updated_at)->format('d/m/Y');
+            $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null;
+            $order->created_at = Carbon::parse($order->created_at)->format('d-m-Y');
+            $order->updated_at = Carbon::parse($order->updated_at)->format('d-m-Y');
 
             $outstandingPayments = OutstandingPayment::where('order_id', $order->id)
                 ->where('status', 'open')
