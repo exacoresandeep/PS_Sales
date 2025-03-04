@@ -590,7 +590,7 @@ class DealerOrderController extends Controller
     {
         try {
             $user = Auth::user();
-
+dd($user->dealer_id);
             if (!$user) {
                 return response()->json([
                     'success' => false,
