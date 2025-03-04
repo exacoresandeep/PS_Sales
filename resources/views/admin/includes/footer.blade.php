@@ -327,7 +327,117 @@ $(document).ready(function () {
             $('#filter_route').html('<option value="">-Select Route-</option>');
         }
     });
+
+
+    //Activity Type
+    var table = $('#activityTypeTable').DataTable({
+        processing: true,
+        serverSide: true,  // ✅ Set to true for optimized performance
+        ajax: "{{ route('admin.activity.activity-type-list') }}",
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'name', name: 'name' },
+            {
+                data: 'status',
+                name: 'status',
+                render: function (data) {
+                    return data == 1 
+                        ? '<span class="badge bg-success">Active</span>' 
+                        : '<span class="badge bg-danger">Inactive</span>';
+                }
+            },
+            {
+                data: 'id',
+                name: 'action',
+                orderable: false,
+                searchable: false,
+                render: function (data, type, row) {
+                    return `
+                        <button class="btn btn-warning btn-sm editActivityType" data-id="${data}">Edit</button>
+                        <button class="btn btn-danger btn-sm deleteActivityType" data-id="${data}">Delete</button>
+                    `;
+                }
+            }
+        ]
+    });
+
+    // Open Create Modal
+    $('#openCreateActivityTypeModal').click(function () {
+        $('#activityTypeForm')[0].reset(); 
+        $('#activity_type_id').val('');
+        $('#createEditActivityTypeModalLabel').text('Create Activity Type');
+        $('#createEditActivityTypeModal').modal('show');
+    });
+
+    // Handle Create / Update
+    $('#activityTypeForm').submit(function (e) {
+        e.preventDefault();
+        
+        let id = $('#activity_type_id').val();
+        let url = id ? `/admin/activity/activity-type-update/${id}` : "/admin/activity/activity-type-store";
+        let method = id ? 'PUT' : 'POST';
+        
+        let formData = $(this).serialize(); // Get form data
+        if (id) {
+            formData += '&_method=PUT'; // ✅ Add `_method` for PUT request
+        }
+
+        $.ajax({
+            url: url,
+            type: 'POST',  // ✅ Always use POST and add `_method` for PUT
+            data: formData,
+            success: function (response) {
+                $('#createEditActivityTypeModal').modal('hide');
+                $('#activityTypeForm')[0].reset();
+                table.ajax.reload();
+            },
+            error: function (xhr) {
+                alert('Error: ' + xhr.responseJSON.message);
+            }
+        });
+    });
+
+    // Edit Activity Type
+    $(document).on('click', '.editActivityType', function () {
+        let id = $(this).data('id');
+
+        $.ajax({
+            url: `/admin/activity/activity-type-edit/${id}`,
+            type: 'GET',
+            success: function (response) {
+                $('#activity_type_id').val(response.activity_type.id);
+                $('#activity_name').val(response.activity_type.name);
+                $('#status').val(response.activity_type.status);
+                $('#createEditActivityTypeModal').modal('show');
+            },
+            error: function () {
+                alert('Error fetching activity type details.');
+            }
+        });
+    });
+
+    // Delete Activity Type
+    $(document).on('click', '.deleteActivityType', function () {
+        let id = $(this).data('id');
+
+        if (confirm('Are you sure you want to delete this Activity Type?')) {
+            $.ajax({
+                url: `/admin/activity/activity-type-delete/${id}`,
+                type: 'POST',  // ✅ Use POST instead of DELETE
+                data: { _method: 'DELETE' },  // ✅ Add `_method` for DELETE
+                success: function (response) {
+                    alert(response.message);
+                    table.ajax.reload();
+                },
+                error: function () {
+                    alert('Error deleting activity type.');
+                }
+            });
+        }
+    });
 });
+
+
 
 
 </script>

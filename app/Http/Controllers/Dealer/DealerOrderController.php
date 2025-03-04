@@ -698,15 +698,8 @@ class DealerOrderController extends Controller
                     return [
                         'id' => $payment->id,
                         'invoice_number' => $payment->invoice_number,
-                        // 'invoice_date' => $payment->invoice_date ? Carbon::parse($payment->invoice_date)->format('d/m/Y') : null,
                         'invoice_amount' => $payment->invoice_total,
                         'due_date' => $payment->due_date ? Carbon::parse($payment->due_date)->format('d/m/Y') : null,
-                        // 'paid_amount' => $payment->paid_amount,
-                        // 'outstanding_amount' => $payment->outstanding_amount,
-                        // 'payment_doc_number' => $payment->payment_doc_number,
-                        // 'payment_date' => $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d-m-Y') : null,
-                        // 'payment_amount_applied' => $payment->payment_amount_applied,
-                        // 'status' => $payment->status,
                         'commitments' => $payment->commitments->map(function ($commitment) {
                             return [
                                 'id' => $commitment->id,
@@ -715,7 +708,7 @@ class DealerOrderController extends Controller
                             ];
                         }),
                     ];
-                }),
+                })->toArray(),
                 'payment_summary' => [
                     // 'total_paid_amount' => round($totalPaidAmount, 2),
                     'total_outstanding_amount' => round($totalOutstandingAmount, 2),
@@ -746,7 +739,6 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
-
 
     public function orderRequestList(Request $request)
     {

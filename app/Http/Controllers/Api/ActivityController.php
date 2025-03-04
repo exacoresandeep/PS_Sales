@@ -6,6 +6,7 @@ use App\Models\Activity;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\ActivityType;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 
@@ -372,5 +373,70 @@ class ActivityController extends Controller
         }
     }
 
+
+    public function activityTypeIndex()
+    {
+        return view('admin.activity.activity-type-index'); 
+    }
+
+    public function activityTypeStore(Request $request)
+    {
+        $request->validate([
+            'activity_name' => 'required|string|max:255',
+            'status' => 'required|in:1,2',
+        ]);
+
+        $activity_type = ActivityType::create([
+            'name' => $request->activity_name,
+            'status' => $request->status,
+        ]);
+
+        return response()->json([
+            'message' => 'Activity Type created successfully!',
+            'activity_type' => $activity_type
+        ], 201);
+    }
+
+    public function getActivityTypes(Request $request)
+    {
+        // Server-side processing for large datasets
+        if ($request->ajax()) {
+            $activity_types = ActivityType::whereIn('status', [1,2])
+                                          ->orderBy('id', 'desc')
+                                          ->get();
+            return response()->json(['data' => $activity_types]);
+        }
+        return abort(403, 'Unauthorized access');
+    }
+
+    public function editActivityType(ActivityType $activity_type)
+    {
+        return response()->json(['activity_type' => $activity_type]);
+    }
+
+    public function updateActivityType(Request $request, ActivityType $activity_type)
+    {
+        $request->validate([
+            'activity_name' => 'required|string|max:255',
+            'status' => 'required|in:1,2',
+        ]);
+
+        $activity_type->update([
+            'name' => $request->activity_name,
+            'status' => $request->status,
+        ]);
+
+        return response()->json([
+            'message' => 'Activity Type updated successfully!',
+            'activity_type' => $activity_type
+        ]);
+    }
+
+    public function deleteActivityType(ActivityType $activity_type)
+    {
+        $activity_type->delete();
+
+        return response()->json(['message' => 'Activity Type deleted successfully!']);
+    }
 
 }
