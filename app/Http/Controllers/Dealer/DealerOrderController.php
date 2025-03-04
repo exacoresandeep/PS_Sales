@@ -52,7 +52,7 @@ class DealerOrderController extends Controller
                             'total_amount' => $order->total_amount,
                             'total_quantity' => $order->total_quantity,
                             'status' => $order->status,
-                            'created_at' => $order->created_at->format('d/mY'),
+                            'created_at' => $order->created_at->format('d/m/Y'),
                             'dealer' => [
                                 'name' => $order->dealers->dealer_name,
                                 'dealer_code' => $order->dealers->dealer_code, 
@@ -231,11 +231,20 @@ class DealerOrderController extends Controller
                 'attachments' => $order->attachment ?? [],
     
                 'order_items' => $order->orderItems->map(function ($item) {
+
                     return [
                         'product_id' => $item->product_id,
-                        'product_name' => $item->product->product_name ?? null,
+                        'product_name' => $item->product->product_name ?? 'N/A',
                         'total_quantity' => $item->total_quantity,
-                        'product_details' => $item->product_details ?? [],
+                        'balance_quantity' => $item->balance_quantity,
+                        'product_details' => collect($item->product_details)->map(function ($detail) {
+                            return [
+                                'product_type_id' => $detail['product_type_id'],
+                                'quantity' => $detail['quantity'],
+                                'rate' => $detail['rate'],
+                                'product_type' => ProductType::where('id', $detail['product_type_id'])->value('type_name') ?? 'N/A',
+                            ];
+                        }),
                     ];
                 }),
     
