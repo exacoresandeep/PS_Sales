@@ -649,8 +649,7 @@ class DealerOrderController extends Controller
 
             $responseData = [
                 'id' => $order->id,
-                'order_type' => $order->orderType->name ?? null,
-                
+                'order_type' => $order->order_type ?? null,
                 'payment_terms' => [
                     'id' => $order->paymentTerm->id ?? null,
                     'name' => $order->paymentTerm->name ?? null,
