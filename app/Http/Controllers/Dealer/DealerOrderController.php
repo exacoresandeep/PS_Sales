@@ -599,6 +599,13 @@ class DealerOrderController extends Controller
                     'message' => 'Order not found for the given Outstanding Payment ID.'
                 ], 404);
             }
+            if ($outstandingPayment->dealer_id !== $user->dealer_id) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'Unauthorized: You do not have permission to view this order.'
+                ], 403);
+            }
 
             $order = Order::with([
                 'orderType:id,name',
@@ -615,6 +622,7 @@ class DealerOrderController extends Controller
 
             $outstandingPayments = OutstandingPayment::where('order_id', $order->id)
                 ->where('status', 'open')
+                ->where('dealer_id', $user->dealer_id)
                 ->select(
                     'id',
                     'order_id',
@@ -639,6 +647,7 @@ class DealerOrderController extends Controller
                     ->get();
             });
             $payments = Payment::where('order_id', $order->id)
+                ->where('dealer_id', $user->dealer_id) 
                 ->select('payment_date', 'payment_amount', 'payment_document_no')
                 ->orderBy('payment_date', 'asc')
                 ->get();
@@ -649,7 +658,7 @@ class DealerOrderController extends Controller
 
             $responseData = [
                 'id' => $order->id,
-                'order_type' => $order->order_type ?? null,
+                'order_type' => $order->orderType->name ?? null,
                 'payment_terms' => [
                     'id' => $order->paymentTerm->id ?? null,
                     'name' => $order->paymentTerm->name ?? null,
