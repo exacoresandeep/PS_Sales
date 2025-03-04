@@ -15,7 +15,22 @@ Route::prefix('admin')->group(function () {
     Route::post('/doLogin', [AdminController::class, 'doLogin'])->name('admin.doLogin');
 
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/activity-management', [AdminController::class, 'activity_management'])->name('admin.activity-management');
+    // Route::get('/activity-management', [AdminController::class, 'activity_management'])->name('admin.activity-management');
+    // Route::get('/activity/activity-type-index', [ActivityController::class, 'activityTypeIndex'])->name('admin.activity.activity-type-index');
+    // Route::post('/activity/activity-type-store', [ActivityController::class, 'activityTypeStore'])->name('admin.activity.activity-type-store');
+    // Route::get('/admin/activity/activity-type-list', [ActivityController::class, 'getActivityTypes'])->name('admin.activity.activity-type-list');
+    // Route::get('/admin/activity/activity-type-edit/{id}', [ActivityController::class, 'editActivityType'])->name('admin.activity.activity-type-edit');
+    // Route::put('/admin/activity/activity-type-update/{id}', [ActivityController::class, 'updateActivityType'])->name('admin.activity.activity-type-update');
+    // Route::delete('/admin/activity/activity-type-delete/{id}', [ActivityController::class, 'deleteActivityType'])->name('admin.activity.activity-type-delete');
+    
+    Route::prefix('activity')->group(function () {
+        Route::get('/activity-type-index', [ActivityController::class, 'activityTypeIndex'])->name('admin.activity.activity-type-index');
+        Route::get('/activity-type-list', [ActivityController::class, 'getActivityTypes'])->name('admin.activity.activity-type-list');
+        Route::post('/activity-type-store', [ActivityController::class, 'activityTypeStore'])->name('admin.activity.activity-type-store');
+        Route::get('/activity-type-edit/{activity_type}', [ActivityController::class, 'editActivityType'])->name('admin.activity.activity-type-edit');
+        Route::put('/activity-type-update/{activity_type}', [ActivityController::class, 'updateActivityType'])->name('admin.activity.activity-type-update');
+        Route::delete('/activity-type-delete/{activity_type}', [ActivityController::class, 'deleteActivityType'])->name('admin.activity.activity-type-delete');
+    });
     // Route::get('/route-management', [AdminController::class, 'route_management'])->name('admin.route-management');
     
     Route::get('/routes', [RouteController::class, 'index'])->name('admin.route.index');

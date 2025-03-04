@@ -13,15 +13,15 @@
                 </a>
                 <ul class="submenu">
                     <li>
-                        <a href="activity-management">
+                        <a href="{{ route('admin.activity.activity-type-index') }}">
                             <i class="fa fa-list" aria-hidden="true"></i>
-                            All Activities <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
+                            Activity Type <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
                     </li>
                     <li>
                         <a href="create-activity">
                             <i class="fa fa-plus-square" aria-hidden="true"></i>
-                            Create Activities <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
+                            Activities <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
                     </li>
                 </ul>
