@@ -706,7 +706,7 @@ class DealerOrderController extends Controller
                                 'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d/m/Y') : null,
                                 'committed_amount' => $commitment->committed_amount,
                             ];
-                        }),
+                        })->toArray(),
                     ];
                 })->toArray(),
                 'payment_summary' => [
