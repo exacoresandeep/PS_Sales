@@ -599,6 +599,13 @@ class DealerOrderController extends Controller
                     'message' => 'Order not found for the given Outstanding Payment ID.'
                 ], 404);
             }
+            if ($outstandingPayment->dealer_id !== $user->dealer_id) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'Unauthorized: You do not have permission to view this order.'
+                ], 403);
+            }
 
             $order = Order::with([
                 'orderType:id,name',
@@ -615,6 +622,7 @@ class DealerOrderController extends Controller
 
             $outstandingPayments = OutstandingPayment::where('order_id', $order->id)
                 ->where('status', 'open')
+                ->where('dealer_id', $user->dealer_id)
                 ->select(
                     'id',
                     'order_id',
@@ -639,6 +647,7 @@ class DealerOrderController extends Controller
                     ->get();
             });
             $payments = Payment::where('order_id', $order->id)
+                ->where('dealer_id', $user->dealer_id) 
                 ->select('payment_date', 'payment_amount', 'payment_document_no')
                 ->orderBy('payment_date', 'asc')
                 ->get();
@@ -649,7 +658,7 @@ class DealerOrderController extends Controller
 
             $responseData = [
                 'id' => $order->id,
-                'order_type' => $order->order_type ?? null,
+                'order_type' => $order->orderType->name ?? null,
                 'payment_terms' => [
                     'id' => $order->paymentTerm->id ?? null,
                     'name' => $order->paymentTerm->name ?? null,
@@ -1116,33 +1125,29 @@ class DealerOrderController extends Controller
                 ->first();
     
             $trackingStatus = [
-                'pending_time' => $order->created_at ? Carbon::parse($order->created_at)->format('d-m-Y H:i:s') : null,
-                'accepted_time' => $order->accepted_time ? Carbon::parse($order->accepted_time)->format('d-m-Y H:i:s') : null,
-                'rejected_time' => $order->rejected_time ? Carbon::parse($order->rejected_time)->format('d-m-Y H:i:s') : null,
-                'dispatched_time' => $order->dispatched_time ? Carbon::parse($order->dispatched_time)->format('d-m-Y H:i:s') : null,
-                'intransit_time' => $order->intransit_time ? Carbon::parse($order->intransit_time)->format('d-m-Y H:i:s') : null,
-                'delivered_time' => $order->delivered_time ? Carbon::parse($order->delivered_time)->format('d-m-Y H:i:s') : null,
+                'pending_time' => $order->created_at ? Carbon::parse($order->created_at)->format('d/m/Y H:i:s') : null,
+                'accepted_time' => $order->accepted_time ? Carbon::parse($order->accepted_time)->format('d/m/Y H:i:s') : null,
+                'rejected_time' => $order->rejected_time ? Carbon::parse($order->rejected_time)->format('d/m/Y H:i:s') : null,
+                'dispatched_time' => $order->dispatched_time ? Carbon::parse($order->dispatched_time)->format('d/m/Y H:i:s') : null,
+                'intransit_time' => $order->intransit_time ? Carbon::parse($order->intransit_time)->format('d/m/Y H:i:s') : null,
+                'delivered_time' => $order->delivered_time ? Carbon::parse($order->delivered_time)->format('d/m/Y H:i:s') : null,
             ];
     
             $responseData = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
-                'dealer' => [
-                    'id' => $order->dealers->id ?? null,
-                    'name' => $order->dealers->dealer_name ?? null,
-                    'code' => $order->dealers->dealer_code ?? null,
-                ],
+               
                 'payment_terms' => [
                     'id' => $order->paymentTerm->id ?? null,
                     'name' => $order->paymentTerm->name ?? null,
                 ],
-                'billing_date' => $order->billing_date ? Carbon::parse($order->billing_date)->format('d-m-Y') : null,
+                'billing_date' => $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null,
                 'total_amount' => round($order->total_amount, 2),
                 'paid_amount' => round($paidAmount, 2),
                 'outstanding_payment' => $outstandingPayment ? [
                     'invoice_number' => $outstandingPayment->invoice_number,
                     'invoice_total' => round($outstandingPayment->invoice_total, 2),
-                    'due_date' => $outstandingPayment->due_date ? Carbon::parse($outstandingPayment->due_date)->format('d-m-Y') : null,
+                    'due_date' => $outstandingPayment->due_date ? Carbon::parse($outstandingPayment->due_date)->format('d/m/Y') : null,
                     'paid_amount' => round($outstandingPayment->paid_amount, 2),
                     'outstanding_amount' => round($outstandingPayment->outstanding_amount, 2),
                 ] : null,
@@ -1163,8 +1168,7 @@ class DealerOrderController extends Controller
                         'product_details' => $item->product_details ?? [],
                     ];
                 }),
-                'created_at' => Carbon::parse($order->created_at)->format('d-m-Y'),
-                'updated_at' => Carbon::parse($order->updated_at)->format('d-m-Y'),
+                'created_at' => Carbon::parse($order->created_at)->format('d/m/Y'),
             ];
     
             return response()->json([
