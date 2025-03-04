@@ -708,7 +708,7 @@ class DealerOrderController extends Controller
                             ];
                         })->toArray(),
                     ];
-                })->toArray(),
+                })->values()->toArray(),
                 'payment_summary' => [
                     // 'total_paid_amount' => round($totalPaidAmount, 2),
                     'total_outstanding_amount' => round($totalOutstandingAmount, 2),
