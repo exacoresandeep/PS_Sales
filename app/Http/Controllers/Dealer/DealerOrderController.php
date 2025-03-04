@@ -1117,12 +1117,20 @@ class DealerOrderController extends Controller
                 'paymentTerm:id,name',
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($orderId);
+
+            $invoiceNumber = $order->invoice_number;
+            $invoiceTotal = round($order->invoice_total, 2);
+    
+            $totalQuantity = $order->orderItems->sum('total_quantity');
     
             $paidAmount = Payment::where('order_id', $orderId)->sum('payment_amount');
     
-            $outstandingPayment = OutstandingPayment::where('order_id', $orderId)
-                ->select('invoice_number', 'invoice_total', 'due_date', 'paid_amount', 'outstanding_amount')
-                ->first();
+            $outstandingPayment = $invoiceTotal - $paidAmount;
+            // $paidAmount = Payment::where('order_id', $orderId)->sum('payment_amount');
+    
+            // $outstandingPayment = OutstandingPayment::where('order_id', $orderId)
+            //     ->select('invoice_number', 'invoice_total', 'due_date', 'paid_amount', 'outstanding_amount')
+            //     ->first();
     
             $trackingStatus = [
                 'pending_time' => $order->created_at ? Carbon::parse($order->created_at)->format('d/m/Y H:i:s') : null,
@@ -1136,21 +1144,17 @@ class DealerOrderController extends Controller
             $responseData = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
-               
+               'invoice_number' => $invoiceNumber,
+                'invoice_total' => $invoiceTotal,
+                'total_quantity' => $totalQuantity,
+                'paid_amount' => round($paidAmount, 2),
+                'outstanding_payment' => round($outstandingPayment, 2),
                 'payment_terms' => [
                     'id' => $order->paymentTerm->id ?? null,
                     'name' => $order->paymentTerm->name ?? null,
                 ],
                 'billing_date' => $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null,
-                'total_amount' => round($order->total_amount, 2),
-                'paid_amount' => round($paidAmount, 2),
-                'outstanding_payment' => $outstandingPayment ? [
-                    'invoice_number' => $outstandingPayment->invoice_number,
-                    'invoice_total' => round($outstandingPayment->invoice_total, 2),
-                    'due_date' => $outstandingPayment->due_date ? Carbon::parse($outstandingPayment->due_date)->format('d/m/Y') : null,
-                    'paid_amount' => round($outstandingPayment->paid_amount, 2),
-                    'outstanding_amount' => round($outstandingPayment->outstanding_amount, 2),
-                ] : null,
+                
                 'vehicle' => [
                     'category_id' => $order->vehicle_category_id,
                     'category_name' => $order->vehicleCategory->vehicle_category_name ?? null,
@@ -1161,11 +1165,20 @@ class DealerOrderController extends Controller
                 'attachments' => $order->attachment ?? [],
                 'tracking_status' => $trackingStatus,
                 'order_items' => $order->orderItems->map(function ($item) {
+
                     return [
                         'product_id' => $item->product_id,
-                        'product_name' => $item->product->product_name ?? null,
+                        'product_name' => $item->product->product_name ?? 'N/A',
                         'total_quantity' => $item->total_quantity,
-                        'product_details' => $item->product_details ?? [],
+                        'balance_quantity' => $item->balance_quantity,
+                        'product_details' => collect($item->product_details)->map(function ($detail) {
+                            return [
+                                'product_type_id' => $detail['product_type_id'],
+                                'quantity' => $detail['quantity'],
+                                'rate' => $detail['rate'],
+                                'product_type' => ProductType::where('id', $detail['product_type_id'])->value('type_name') ?? 'N/A',
+                            ];
+                        }),
                     ];
                 }),
                 'created_at' => Carbon::parse($order->created_at)->format('d/m/Y'),
