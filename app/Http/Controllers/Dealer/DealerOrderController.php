@@ -630,7 +630,7 @@ class DealerOrderController extends Controller
 
             $outstandingPayments = OutstandingPayment::where('order_id', $order->id)
                 ->where('status', 'open')
-                ->where('dealer_id', $user->dealer_id)
+                ->where('dealer_id', $user->id)
                 ->select(
                     'id',
                     'order_id',
@@ -655,7 +655,7 @@ class DealerOrderController extends Controller
                     ->get();
             });
             $payments = Payment::where('order_id', $order->id)
-                ->where('dealer_id', $user->dealer_id) 
+                ->where('dealer_id', $user->id) 
                 ->select('payment_date', 'payment_amount', 'payment_document_no')
                 ->orderBy('payment_date', 'asc')
                 ->get();
