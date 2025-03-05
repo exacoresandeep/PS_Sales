@@ -7,8 +7,10 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityType;
+use App\Models\Dealer;
 use Illuminate\Support\Facades\Auth;
 use Exception;
+use Yajra\DataTables\Facades\DataTables;
 
 class ActivityController extends Controller
 {
@@ -399,12 +401,15 @@ class ActivityController extends Controller
 
     public function getActivityTypes(Request $request)
     {
-        // Server-side processing for large datasets
         if ($request->ajax()) {
-            $activity_types = ActivityType::whereIn('status', [1,2])
-                                          ->orderBy('id', 'desc')
-                                          ->get();
-            return response()->json(['data' => $activity_types]);
+            $query = ActivityType::whereIn('status', ['1', '2'])
+                    ->whereNull('deleted_at') 
+                    ->orderBy('id', 'desc');
+                    // dd($query->toSql(), $query->getBindings());
+    
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->make(true);
         }
         return abort(403, 'Unauthorized access');
     }
@@ -434,9 +439,125 @@ class ActivityController extends Controller
 
     public function deleteActivityType(ActivityType $activity_type)
     {
-        $activity_type->delete();
+        $activity_type->delete(); 
 
         return response()->json(['message' => 'Activity Type deleted successfully!']);
+    }
+
+    public function getEmployeesByDistrict($district_id)
+    {
+        $employees = Employee::where('district_id', $district_id)
+            ->where('employee_type_id', 1) 
+            ->select('id', 'name') 
+            ->get();
+
+        return response()->json($employees);
+    }
+
+    public function getDealersByDistrict($district_id)
+    {
+        $dealers = Dealer::where('district_id', $district_id)
+            ->select('id', 'dealer_name', 'dealer_code')
+            ->get();
+
+        return response()->json($dealers);
+    }
+
+    public function activityIndex()
+    {
+        $activityTypes = ActivityType::all();
+        $districts = Employee::select('district')->distinct()->get();
+        return view('admin.activity.index', compact('activityTypes', 'districts'));
+    }
+    public function list(Request $request)
+    {
+        $query = Activity::with(['activityType', 'dealer', 'employee']);
+
+        // Filters
+        if ($request->activity_type) {
+            $query->where('activity_type_id', $request->activity_type);
+        }
+        if ($request->dealer) {
+            $query->whereHas('dealer', function ($q) use ($request) {
+                $q->where('dealer_name', 'LIKE', "%{$request->dealer}%")
+                  ->orWhere('dealer_code', 'LIKE', "%{$request->dealer}%");
+            });
+        }
+        if ($request->district) {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('district', $request->district);
+            });
+        }
+        if ($request->employee) {
+            $query->where('assigned_to', $request->employee);
+        }
+        if ($request->assigned_date) {
+            $query->whereDate('assigned_date', $request->assigned_date);
+        }
+        if ($request->due_date) {
+            $query->whereDate('due_date', $request->due_date);
+        }
+
+        $activities = $query->orderBy('id', 'desc')->get();
+
+        return response()->json(['data' => $activities]);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'activity_type' => 'required|exists:activity_types,id',
+            'dealer_id' => 'required|exists:dealers,id',
+            'assigned_to' => 'required|exists:employees,id',
+            'assigned_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:assigned_date',
+            'status' => 'required|in:Pending,Completed',
+        ]);
+
+        $activity = Activity::create([
+            'activity_type_id' => $request->activity_type,
+            'dealer_id' => $request->dealer_id,
+            'assigned_to' => $request->assigned_to,
+            'assigned_date' => $request->assigned_date,
+            'due_date' => $request->due_date,
+            'status' => $request->status,
+        ]);
+
+        return response()->json(['message' => 'Activity created successfully!', 'activity' => $activity]);
+    }
+
+    public function edit(Activity $activity)
+    {
+        return response()->json(['activity' => $activity]);
+    }
+
+    public function update(Request $request, Activity $activity)
+    {
+        $request->validate([
+            'activity_type' => 'required|exists:activity_types,id',
+            'dealer_id' => 'required|exists:dealers,id',
+            'assigned_to' => 'required|exists:employees,id',
+            'assigned_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:assigned_date',
+            'status' => 'required|in:Pending,Completed',
+        ]);
+
+        $activity->update([
+            'activity_type_id' => $request->activity_type,
+            'dealer_id' => $request->dealer_id,
+            'assigned_to' => $request->assigned_to,
+            'assigned_date' => $request->assigned_date,
+            'due_date' => $request->due_date,
+            'status' => $request->status,
+        ]);
+
+        return response()->json(['message' => 'Activity updated successfully!', 'activity' => $activity]);
+    }
+
+    public function delete(Activity $activity)
+    {
+        $activity->delete();
+        return response()->json(['message' => 'Activity deleted successfully!']);
     }
 
 }

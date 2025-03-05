@@ -378,7 +378,16 @@ class DealerOrderController extends Controller
                 ], 403);
             }
 
-            $salesData = Order::where('created_by_dealer', $dealer->id)
+            // $salesData = Order::where('created_by_dealer', $dealer->id)
+            //     ->where('status', 'Delivered')
+            //     ->whereMonth('created_at', $month)
+            //     ->whereYear('created_at', $year)
+            //     ->selectRaw('SUM(invoice_quantity) as total_quantity, SUM(invoice_total) as total_transaction')
+            //     ->first();
+            $salesData = Order::where(function ($query) use ($dealer) {
+                $query->where('created_by_dealer', $dealer->id)
+                    ->orWhere('dealer_id', $dealer->id);
+            })
                 ->where('status', 'Delivered')
                 ->whereMonth('created_at', $month)
                 ->whereYear('created_at', $year)

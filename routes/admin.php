@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\TargetController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\DealerController;
 
 // Admin Authentication Routes
 Route::get('/load-content/{page}', [AdminController::class, 'loadContent'])->name('load.content');
@@ -13,7 +14,9 @@ Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'login'])->name('admin.login'); 
     Route::post('/doLogin', [AdminController::class, 'doLogin'])->name('admin.doLogin');
-
+    Route::get('/employees-by-district/{district_id}', [ActivityController::class, 'getEmployeesByDistrict']);
+    Route::get('/dealers-by-district/{district_id}', [ActivityController::class, 'getDealersByDistrict']);
+    
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     // Route::get('/activity-management', [AdminController::class, 'activity_management'])->name('admin.activity-management');
     // Route::get('/activity/activity-type-index', [ActivityController::class, 'activityTypeIndex'])->name('admin.activity.activity-type-index');
@@ -30,6 +33,14 @@ Route::prefix('admin')->group(function () {
         Route::get('/activity-type-edit/{activity_type}', [ActivityController::class, 'editActivityType'])->name('admin.activity.activity-type-edit');
         Route::put('/activity-type-update/{activity_type}', [ActivityController::class, 'updateActivityType'])->name('admin.activity.activity-type-update');
         Route::delete('/activity-type-delete/{activity_type}', [ActivityController::class, 'deleteActivityType'])->name('admin.activity.activity-type-delete');
+    
+        Route::get('/', [ActivityController::class, 'activityIndex'])->name('admin.activity.index');
+        Route::get('/list', [ActivityController::class, 'list'])->name('admin.activity.list');
+        Route::post('/store', [ActivityController::class, 'store'])->name('admin.activity.store');
+        Route::get('/edit/{activity}', [ActivityController::class, 'edit'])->name('admin.activity.edit');
+        Route::put('/update/{activity}', [ActivityController::class, 'update'])->name('admin.activity.update');
+        Route::delete('/delete/{activity}', [ActivityController::class, 'delete'])->name('admin.activity.delete');
+    
     });
     // Route::get('/route-management', [AdminController::class, 'route_management'])->name('admin.route-management');
     

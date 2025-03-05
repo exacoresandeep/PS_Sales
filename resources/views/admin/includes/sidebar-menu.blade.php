@@ -19,9 +19,9 @@
                         </a>
                     </li>
                     <li>
-                        <a href="create-activity">
+                        <a href="{{ route('admin.activity.index') }}">
                             <i class="fa fa-plus-square" aria-hidden="true"></i>
-                            Activities <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
+                            Assign Activities <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
                     </li>
                 </ul>
