@@ -446,10 +446,7 @@ $(document).ready(function () {
     });
 
 });
-
-
-
-
+@yield('scripts')
 </script>
 </body>
 </html>
