@@ -1153,7 +1153,8 @@ class DealerOrderController extends Controller
             $responseData = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
-               'invoice_number' => $invoiceNumber,
+                'additional_information' => $order->additional_information,
+                'invoice_number' => $invoiceNumber,
                 'invoice_total' => $invoiceTotal,
                 'total_quantity' => $totalQuantity,
                 'paid_amount' => round($paidAmount, 2),
