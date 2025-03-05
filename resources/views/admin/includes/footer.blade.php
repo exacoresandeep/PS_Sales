@@ -27,6 +27,7 @@
 <script>
 
 $(document).ready(function () {
+
     $(".menu-title").click(function () {
         var $submenu = $(this).next(".submenu"); // Target the next UL (submenu)
         

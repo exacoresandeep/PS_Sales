@@ -32,4 +32,8 @@ class Dealer extends Model
     {
         return $this->hasMany(Order::class);
     }
+    public function district()
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
 }

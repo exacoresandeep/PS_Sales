@@ -15,7 +15,7 @@
                             <select class="form-control" id="district" name="district" required>
                                 <option value="">-Select District-</option>
                                 @foreach($districts as $district)
-                                    <option value="{{ $district->id }}">{{ $district->district }}</option>
+                                    <option value="{{ $district->id }}">{{ $district->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -59,7 +59,7 @@
         </div>
     </div>
 </div>
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 @section('scripts')
 <script>
     $(document).ready(function () {
@@ -67,7 +67,6 @@
         // When district is changed, load dealers & employees (only SEs) for that district
         $('#district').change(function () {
             let district_id = $(this).val();
-            
             if (district_id) {
                 // Fetch dealers in the selected district
                 $.ajax({
@@ -81,9 +80,18 @@
                     }
                 });
 
-                // Fetch Sales Executives (employee_type_id = 1) in the selected district
+                // Clear the employee dropdown
+                $('#employee_id').html('<option value="">-Select Employee-</option>');
+            }
+        });
+
+        // When dealer is changed, load employees assigned to the same route
+        $('#dealer_id').change(function () {
+            let dealer_id = $(this).val();
+
+            if (dealer_id) {
                 $.ajax({
-                    url: `/admin/employees-by-district/${district_id}`,
+                    url: `/admin/employees-by-dealer/${dealer_id}`,
                     type: 'GET',
                     success: function (response) {
                         $('#employee_id').html('<option value="">-Select Employee-</option>');
@@ -95,9 +103,9 @@
             }
         });
 
+
         // Open create modal
         $('#openCreateActivityModal').click(function () {
-            alert('dsf00');
             $('#activityForm')[0].reset();
             $('#activity_id').val('');
             $('#createEditActivityModalLabel').text('Create Activity');
