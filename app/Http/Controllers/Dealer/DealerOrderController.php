@@ -875,8 +875,7 @@ class DealerOrderController extends Controller
                 ],
                 'order_date' => $order->created_at->format('d/m/Y'),
                 'order_type' => $order->orderType->name ?? ' ',
-
-
+                'order_type' => $order->total_amount,
                 'customer_details' => [
                     'customer_type' => $order->customerType->name ?? ($order->lead->customerType->name ?? ' '),
                     'customer_name' => $order->lead->customer_name ?? ' ',
