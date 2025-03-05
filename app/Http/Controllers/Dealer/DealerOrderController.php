@@ -401,8 +401,8 @@ class DealerOrderController extends Controller
                 'data' => [
                     'month' => $month,
                     'year' => $year,
-                    'total_quantity' => number_format((float) ($salesData->total_quantity ?? 0), 2, '.', ''),
-                    'total_transaction' => number_format((float) ($salesData->total_transaction ?? 0), 2, '.', ''),
+                    'total_quantity' => round((float) ($salesData->total_quantity ?? 0), 2),
+                    'total_transaction' => round((float) ($salesData->total_transaction ?? 0), 2),
                 ],
             ], 200);
         } catch (\Exception $e) {
