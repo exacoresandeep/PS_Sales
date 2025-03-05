@@ -4,7 +4,7 @@
 <div class="activity-sec">
     <div class="inner-header button-align">
         <h3>Activity Management</h3>
-        <button type="button" class="btn btn-primary" id="openCreateActivityModal" data-bs-toggle="modal" data-bs-target="#createEditActivityModal">
+        <button type="button" class="btn btn-primary" id="openCreateActivityModal">
             Create Activity
         </button>
     </div>

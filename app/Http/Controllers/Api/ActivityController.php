@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityType;
 use App\Models\Dealer;
+use App\Models\District;
+use App\Models\AssignRoute;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Yajra\DataTables\Facades\DataTables;
@@ -444,12 +446,19 @@ class ActivityController extends Controller
         return response()->json(['message' => 'Activity Type deleted successfully!']);
     }
 
-    public function getEmployeesByDistrict($district_id)
+    public function getEmployeesByDealer($dealer_id)
     {
-        $employees = Employee::where('district_id', $district_id)
+        $dealer = Dealer::find($dealer_id);
+
+        if (!$dealer) {
+            return response()->json([], 404);
+        }
+
+        $employees = AssignRoute::where('id', $dealer->assigned_route_id)
             ->where('employee_type_id', 1) 
-            ->select('id', 'name') 
-            ->get();
+            ->with('employee:id,name')
+            ->get()
+            ->pluck('employee'); 
 
         return response()->json($employees);
     }
@@ -457,7 +466,7 @@ class ActivityController extends Controller
     public function getDealersByDistrict($district_id)
     {
         $dealers = Dealer::where('district_id', $district_id)
-            ->select('id', 'dealer_name', 'dealer_code')
+            ->select('id', 'dealer_name', 'dealer_code', 'assigned_route_id')
             ->get();
 
         return response()->json($dealers);
@@ -466,7 +475,7 @@ class ActivityController extends Controller
     public function activityIndex()
     {
         $activityTypes = ActivityType::all();
-        $districts = Employee::select('district')->distinct()->get();
+        $districts = District::select('id', 'name')->get();
         return view('admin.activity.index', compact('activityTypes', 'districts'));
     }
     public function list(Request $request)

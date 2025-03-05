@@ -14,7 +14,7 @@ Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'login'])->name('admin.login'); 
     Route::post('/doLogin', [AdminController::class, 'doLogin'])->name('admin.doLogin');
-    Route::get('/employees-by-district/{district_id}', [ActivityController::class, 'getEmployeesByDistrict']);
+    Route::get('/employees-by-dealer/{dealer_id}', [ActivityController::class, 'getEmployeesByDealer']);
     Route::get('/dealers-by-district/{district_id}', [ActivityController::class, 'getDealersByDistrict']);
     
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
