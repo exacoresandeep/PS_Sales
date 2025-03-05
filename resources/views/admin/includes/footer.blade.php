@@ -332,10 +332,15 @@ $(document).ready(function () {
     //Activity Type
     var table = $('#activityTypeTable').DataTable({
         processing: true,
-        serverSide: true,  // ✅ Set to true for optimized performance
-        ajax: "{{ route('admin.activity.activity-type-list') }}",
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.activity.activity-type-list') }}",
+            data: function (d) {
+                d.status = $('#statusFilter').val(); 
+            }
+        },
         columns: [
-            { data: 'id', name: 'id' },
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, 
             { data: 'name', name: 'name' },
             {
                 data: 'status',
@@ -360,6 +365,7 @@ $(document).ready(function () {
             }
         ]
     });
+
 
     // Open Create Modal
     $('#openCreateActivityTypeModal').click(function () {
@@ -423,18 +429,21 @@ $(document).ready(function () {
         if (confirm('Are you sure you want to delete this Activity Type?')) {
             $.ajax({
                 url: `/admin/activity/activity-type-delete/${id}`,
-                type: 'POST',  // ✅ Use POST instead of DELETE
-                data: { _method: 'DELETE' },  // ✅ Add `_method` for DELETE
+                type: 'DELETE',  // ✅ Use DELETE method directly
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // ✅ Include CSRF Token
+                },
                 success: function (response) {
                     alert(response.message);
                     table.ajax.reload();
                 },
-                error: function () {
-                    alert('Error deleting activity type.');
+                error: function (xhr) {
+                    alert('Error deleting activity type: ' + xhr.responseText);
                 }
             });
         }
     });
+
 });
 
 
