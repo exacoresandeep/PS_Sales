@@ -9,7 +9,7 @@
                 @csrf
                 <input type="hidden" id="activity_id">
                 <div class="modal-body">
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="district">District</label>
                             <select class="form-control" id="district" name="district" required>
@@ -25,6 +25,9 @@
                                 <option value="">-Select Dealer-</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="employee_id">Assigned Employee</label>
                             <select class="form-control" id="employee_id" name="employee_id" required>
@@ -40,6 +43,9 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
+
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="assigned_date">Assigned Date</label>
                             <input type="date" class="form-control" id="assigned_date" name="assigned_date" required>
@@ -48,125 +54,23 @@
                             <label for="due_date">Due Date</label>
                             <input type="date" class="form-control" id="due_date" name="due_date" required>
                         </div>
-                        
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="instruction">Instruction</label>
+                            <textarea class="form-control" id="instruction" name="instruction" rows="3" required></textarea>
+                        </div>
                     </div>
                 </div>
+
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Activity</button>
+                    {{-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> --}}
+                    <button type="submit" class="btn btn-primary submit-btn">Create</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-@section('scripts')
-<script>
-    $(document).ready(function () {
-
-        // When district is changed, load dealers & employees (only SEs) for that district
-        $('#district').change(function () {
-            let district_id = $(this).val();
-            if (district_id) {
-                // Fetch dealers in the selected district
-                $.ajax({
-                    url: `/admin/dealers-by-district/${district_id}`,
-                    type: 'GET',
-                    success: function (response) {
-                        $('#dealer_id').html('<option value="">-Select Dealer-</option>');
-                        $.each(response, function (key, dealer) {
-                            $('#dealer_id').append(`<option value="${dealer.id}">${dealer.dealer_name} (${dealer.dealer_code})</option>`);
-                        });
-                    }
-                });
-
-                // Clear the employee dropdown
-                $('#employee_id').html('<option value="">-Select Employee-</option>');
-            }
-        });
-
-        // When dealer is changed, load employees assigned to the same route
-        $('#dealer_id').change(function () {
-            let dealer_id = $(this).val();
-
-            if (dealer_id) {
-                $.ajax({
-                    url: `/admin/employees-by-dealer/${dealer_id}`,
-                    type: 'GET',
-                    success: function (response) {
-                        $('#employee_id').html('<option value="">-Select Employee-</option>');
-                        $.each(response, function (key, employee) {
-                            $('#employee_id').append(`<option value="${employee.id}">${employee.name}</option>`);
-                        });
-                    }
-                });
-            }
-        });
 
 
-        // Open create modal
-        $('#openCreateActivityModal').click(function () {
-            $('#activityForm')[0].reset();
-            $('#activity_id').val('');
-            $('#createEditActivityModalLabel').text('Create Activity');
-            $('#createEditActivityModal').modal('show');
-        });
-
-        // Handle form submission (Create & Update)
-        $('#activityForm').submit(function (e) {
-            e.preventDefault();
-            let id = $('#activity_id').val();
-            let url = id ? `/admin/activity/update/${id}` : "/admin/activity/store";
-            let method = id ? 'PUT' : 'POST';
-            
-            let formData = $(this).serialize();
-            if (id) {
-                formData += '&_method=PUT';
-            }
-
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: formData,
-                success: function (response) {
-                    $('#createEditActivityModal').modal('hide');
-                    $('#activityForm')[0].reset();
-                    $('#activityTable').DataTable().ajax.reload();
-                },
-                error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.message);
-                }
-            });
-        });
-
-        // Open edit modal and populate data
-        $(document).on('click', '.editActivity', function () {
-            let id = $(this).data('id');
-            $.ajax({
-                url: `/admin/activity/edit/${id}`,
-                type: 'GET',
-                success: function (response) {
-                    $('#activity_id').val(response.activity.id);
-                    $('#activity_type_id').val(response.activity.activity_type_id);
-                    $('#district').val(response.activity.district_id).change();
-
-                    setTimeout(() => {
-                        $('#dealer_id').val(response.activity.dealer_id);
-                        $('#employee_id').val(response.activity.employee_id);
-                    }, 1000);
-
-                    $('#assigned_date').val(response.activity.assigned_date);
-                    $('#due_date').val(response.activity.due_date);
-                    $('#status').val(response.activity.status);
-                    $('#createEditActivityModalLabel').text('Edit Activity');
-                    $('#createEditActivityModal').modal('show');
-                },
-                error: function () {
-                    alert('Error fetching activity details.');
-                }
-            });
-        });
-
-    });
-</script>
-@endsection
