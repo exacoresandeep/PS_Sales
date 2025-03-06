@@ -421,14 +421,14 @@ class OrderController extends Controller
             // Get the order with dealer details
             $order = Order::with([
                 'orderType:id,name',
-                'dealer:id,dealer_name,dealer_code,assigned_route_id', 
+                'dealers:id,dealer_name,dealer_code,assigned_route_id', 
                 'orderItems.product:id,product_name',
                 'paymentTerm:id,name',
                 'vehicleCategory:id,vehicle_category_name' 
             ])->findOrFail($orderId);
 
             // Fetch dealer ID and assigned route
-            $dealer = $order->dealer;
+            $dealer = $order->dealers;
             if (!$dealer) {
                 return response()->json([
                     'success' => false,
