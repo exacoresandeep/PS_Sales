@@ -40,7 +40,7 @@ Route::prefix('admin')->group(function () {
     Route::prefix('routes')->group(function () {
         Route::get('/route-index', [RouteController::class, 'routeIndex'])->name('admin.route.route-index');
         Route::get('/route-list', [RouteController::class, 'routeList'])->name('admin.route.route-list');
-        Route::get('/route-store', [RouteController::class, 'routeStore'])->name('admin.route.route-store');
+        Route::post('/route-store', [RouteController::class, 'routeStore'])->name('admin.route.route-store');
         Route::get('/route-edit/{route_id}', [RouteController::class, 'editRoute'])->name('admin.route.route-edit');
         Route::put('/route-update/{route_id}', [RouteController::class, 'updateRoute'])->name('admin.route.route-update');
         Route::delete('/route-delete/{route_id}', [RouteController::class, 'deleteRoute'])->name('admin.route.route-delete');

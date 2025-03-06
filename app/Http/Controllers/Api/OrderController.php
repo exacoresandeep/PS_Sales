@@ -328,59 +328,75 @@ class OrderController extends Controller
         }
     }
 
-   
-    // public function dealerOrderList(Request $request)
+    // public function dealerOrderDetails($orderId)
     // {
     //     try {
-    //         if ($request->has('search_key')) {
-    //             return $this->orderFilter($request);
-    //         }
+    //         $user = Auth::user();
 
-    //         $employee = Auth::user();
-
-    //         if ($employee) {
-    //             $orders = Order::join('dealers', 'orders.created_by_dealer', '=', 'dealers.id') 
-    //                     ->where('orders.dealer_flag_order', '1') 
-    //                     ->select([
-    //                         'orders.id',
-    //                         'orders.total_amount',
-    //                         'orders.status',
-    //                         'orders.created_at',
-    //                         'dealers.id as dealer_id',
-    //                         'dealers.dealer_name',
-    //                         'dealers.dealer_code'
-    //                     ])
-    //                     ->get()
-    //                     ->map(function ($order) {
-    //                         $order->total_amount = (float) sprintf("%.2f", $order->total_amount);
-    //                         return $order;
-    //                     });
-             
-    //             return response()->json([
-    //                 'success' => true,
-    //                 'statusCode' => 200,
-    //                 'message' => 'Dealer-created orders fetched successfully',
-    //                 'data' => $orders->map(function ($order) {
-    //                     return [
-    //                         'id' => $order->id,
-    //                         'total_amount' => $order->total_amount,
-    //                         'status' => $order->status,
-    //                         'created_at' => $order->created_at->format('d/m/Y'),
-    //                         'dealer' => [
-    //                             'id' => $order->dealer_id,
-    //                             'name' => $order->dealer_name,
-    //                             'code' => $order->dealer_code,
-    //                         ],
-    //                     ];
-    //                 }),
-    //             ], 200);
-    //         } else {
+    //         if ($user === null) {
     //             return response()->json([
     //                 'success' => false,
-    //                 'statusCode' => 401,
-    //                 'message' => "User not Authenticated",
-    //             ], 401);
+    //                 'statusCode' => 400,
+    //                 'message' => 'You must be logged in to view this order.'
+    //             ], 400);
     //         }
+
+    //         $order = Order::with([
+    //             'orderType:id,name',
+    //             'dealer:id,dealer_name,dealer_code,assigned_route_id', 
+    //             'orderItems.product:id,product_name',
+    //             'paymentTerm:id,name',
+    //             'vehicleCategory:id,vehicle_category_name' 
+    //         ])->findOrFail($orderId);
+            
+    //         $dealerId = $order->created_by_dealer;
+    //         $totalOutstandingPayments = OutstandingPayment::where('dealer_id', $dealerId)->sum('outstanding_amount');
+    //         $billingDate = $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null;
+    //         $createdAt = Carbon::parse($order->created_at)->format('d/m/Y');
+
+    //         $orderItems = $order->orderItems->map(function ($item) {
+    //             $productDetails = collect($item->product_details)->map(function ($detail) {
+    //                 $productType = ProductType::find($detail['product_type_id']);
+    //                 return [
+    //                     'product_type_id' => $detail['product_type_id'],
+    //                     'type_name' => $productType->type_name ?? null, 
+    //                     'quantity' => (int) $detail['quantity'],
+    //                     'rate' => $detail['rate']
+    //                 ];
+    //             });
+    
+    //             return [
+    //                 'product_id' => $item->product_id,
+    //                 'product_name' => $item->product->product_name ?? null,
+    //                 'total_quantity' => (int) $item->total_quantity,
+    //                 'product_details' => $productDetails,
+    //             ];
+    //         });
+
+    //         $response = [
+    //             'id' => $order->id,
+    //             'order_type' => $order->orderType->name ?? null,
+    //             'payment_term' => $order->paymentTerm->name ?? null,
+    //             'billing_date' => $billingDate,
+    //             'attachment' => $order->attachment,
+    //             'total_amount' => $order->total_amount,
+    //             'additional_information' => $order->additional_information,
+    //             'created_at' => $createdAt,
+    //             'order_items' => $orderItems,
+    //             'vehicle_category' => $order->vehicleCategory->vehicle_category_name ?? null,
+    //             'vehicle_number' => $order->vehicle_number,
+    //             'driver_name' => $order->driver_name,
+    //             'driver_phone' => $order->driver_phone,
+    //             'total_outstanding_payments' => $totalOutstandingPayments
+    //         ];
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'statusCode' => 200,
+    //             'message' => 'Order details fetched successfully',
+    //             'data' => $response,
+    //         ], 200);
+
     //     } catch (Exception $e) {
     //         return response()->json([
     //             'success' => false,
@@ -389,13 +405,12 @@ class OrderController extends Controller
     //         ], 500);
     //     }
     // }
-   
     public function dealerOrderDetails($orderId)
     {
         try {
             $user = Auth::user();
 
-            if ($user === null) {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 400,
@@ -403,18 +418,43 @@ class OrderController extends Controller
                 ], 400);
             }
 
+            // Get the order with dealer details
             $order = Order::with([
                 'orderType:id,name',
-                'dealer:id,dealer_name,dealer_code', 
+                'dealer:id,dealer_name,dealer_code,assigned_route_id', 
                 'orderItems.product:id,product_name',
                 'paymentTerm:id,name',
                 'vehicleCategory:id,vehicle_category_name' 
             ])->findOrFail($orderId);
-            $dealerId = $order->created_by_dealer;
-            $totalOutstandingPayments = OutstandingPayment::where('dealer_id', $dealerId)->sum('outstanding_amount');
+
+            // Fetch dealer ID and assigned route
+            $dealer = $order->dealer;
+            if (!$dealer) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 404,
+                    'message' => 'Dealer not found for this order.'
+                ], 404);
+            }
+
+            // Get the ASO's assigned routes (parent_id = ASO ID)
+            $allowedRoutes = AssignRoute::where('parent_id', $user->id)->pluck('id')->toArray();
+
+            // Ensure the dealer belongs to a route assigned to this ASO
+            if (!in_array($dealer->assigned_route_id, $allowedRoutes)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'You are not authorized to view this order.'
+                ], 403);
+            }
+
+            // Fetch total outstanding payments for this dealer
+            $totalOutstandingPayments = OutstandingPayment::where('dealer_id', $dealer->id)->sum('outstanding_amount');
             $billingDate = $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null;
             $createdAt = Carbon::parse($order->created_at)->format('d/m/Y');
 
+            // Process order items
             $orderItems = $order->orderItems->map(function ($item) {
                 $productDetails = collect($item->product_details)->map(function ($detail) {
                     $productType = ProductType::find($detail['product_type_id']);
@@ -425,7 +465,7 @@ class OrderController extends Controller
                         'rate' => $detail['rate']
                     ];
                 });
-    
+
                 return [
                     'product_id' => $item->product_id,
                     'product_name' => $item->product->product_name ?? null,
@@ -434,6 +474,7 @@ class OrderController extends Controller
                 ];
             });
 
+            // Build the response
             $response = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
@@ -466,6 +507,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
     public function dealerOrderList(Request $request)
     {
         try {
@@ -483,8 +525,8 @@ class OrderController extends Controller
                 ], 401);
             }
     
-            $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
-    
+            $assignedRoutes = AssignRoute::where('parent_id', $employee->id)->pluck('id')->toArray();
+
             if (empty($assignedRoutes)) {
                 return response()->json([
                     'success' => false,
@@ -493,7 +535,8 @@ class OrderController extends Controller
                     'data' => []
                 ], 404);
             }
-    
+
+            // Get dealers linked to these routes
             $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
     
             if (empty($dealers)) {
