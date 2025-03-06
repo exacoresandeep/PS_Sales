@@ -848,7 +848,7 @@ class RouteController extends Controller
                 return $route->district ? $route->district->name : 'N/A'; // Ensure district exists
             })
             ->editColumn('locations', function ($route) {
-                return is_array($route->locations) ? implode(', ', $route->locations) : ''; // Convert array to string
+                return is_array($route->locations) ? implode(', ', $route->locations) : '';
             })
             ->addColumn('action', function ($route) {
                 return '
@@ -886,7 +886,7 @@ class RouteController extends Controller
             'route' => [
                 'id' => $route->id,
                 'district_id' => $route->district_id,
-                'locations' => $route->locations ? json_decode($route->locations, true) : [],
+                'locations' => $route->locations ?? [],
             ],
             'districts' => $districts
         ]);
@@ -898,7 +898,7 @@ class RouteController extends Controller
             'district' => 'required|exists:districts,id',
             'locations' => 'required|array',
         ]);
-
+        // dd($validatedData); 
         $route = TripRoute::findOrFail($route_id);
         $route->update([
             'district_id' => $validatedData['district'],
