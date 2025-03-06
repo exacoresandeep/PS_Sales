@@ -8,9 +8,10 @@
             <form id="routeForm">
                 @csrf
                 <div class="modal-body">
-                    <input type="hidden" name="id" id="route_id">
-                    
+                   
                     <div class="row">
+                        <input type="text" name="id" id="route_id">
+                    
                         <!-- District Selection -->
                         <div class="col-md-6">
                             <label>District</label>

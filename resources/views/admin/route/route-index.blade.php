@@ -31,7 +31,6 @@
 @section('scripts')
 <script>
     $(document).ready(function () {
-
         let locationInput;
 
         $('#createEditRouteModal').on('shown.bs.modal', function () {
@@ -49,29 +48,24 @@
         });
 
         $('#createEditRouteModal').on('hidden.bs.modal', function () {
-            $('#routeForm')[0].reset(); 
-            $('#route_id').val(''); 
+            $('#routeForm')[0].reset();
+            $('#route_id').val('');
             $('.submit-btn').text('Create');
             $('#createEditRouteModalLabel').text('Create Route');
 
             if (locationInput) {
-                locationInput.clearStore();  
-                locationInput.clearInput();  
+                locationInput.clearStore();
+                locationInput.clearInput();
             }
         });
 
         let routeTable = $('#routeTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('admin.route.route-list') }}',
+            ajax: '{{ route("admin.route.route-list") }}',
             columns: [
-                { 
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex', 
-                    orderable: false, 
-                    searchable: false 
-                },
-                { data: 'district_name', name: 'district.name' },  
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'district_name', name: 'district.name' },
                 { data: 'locations', name: 'locations' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
@@ -81,103 +75,133 @@
             $('#createEditRouteModal').modal('show');
         });
 
-        // Create / Update Route Form Submission
         $('#routeForm').on('submit', function (e) {
             e.preventDefault();
 
-            const route_id = $('#route_id').val();
-            const district = $('#district').val();
-            const locations = locationInput.getValue().map(loc => loc.value); // Get array of locations
+            let route_id = $('#route_id').val();
+            let url = route_id
+                ? `{{ route('admin.route.route-update', ':id') }}`.replace(':id', route_id)
+                : "{{ route('admin.route.route-store') }}";
 
-            const url = route_id 
-                ? `{{ url('routes/route-update') }}/${route_id}`
-                : `{{ route('admin.route.route-store') }}`;
-            const method = route_id ? 'PUT' : 'POST';
+            let formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            if (route_id) formData.append('_method', 'PUT');
+            formData.append('district', $('#district').val());
+
+            let locations = locationInput.getValue().map(loc => loc.value);
+            locations.forEach(location => formData.append('locations[]', location));
 
             $.ajax({
                 url: url,
-                method: method,
-                data: {
-                    district: district,
-                    locations: locations, 
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
                     alert(response.message);
                     routeTable.ajax.reload();
                     $('#createEditRouteModal').modal('hide');
+                    $('#routeForm')[0].reset();
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     alert('Error: ' + xhr.responseJSON.message);
                 }
             });
         });
 
-        // window.editRoute = function(route_id) {
-        //     $.get(`{{ url('routes/route-edit') }}/${route_id}`, function(response) {
-        //         const route = response.route;
-
-        //         $('#route_id').val(route.id);
-        //         $('#district').val(route.district_id);
-
-        //         if (locationInput) {
-        //             locationInput.clearStore(); // Clear previous values
-        //             route.locations.forEach(loc => locationInput.setValue([loc])); // Add new values
-        //         }
-
-        //         $('#createEditRouteModalLabel').text('Edit Route');
-        //         $('.submit-btn').text('Update');
-        //         $('#createEditRouteModal').modal('show');
-        //     });
-        // };
         $(document).on('click', '.editRoute', function () {
-            let route_id = $(this).data('id'); // Get the route ID
+            let route_id = $(this).data('id');
 
             $.ajax({
-                url: `{{ url('routes/route-edit') }}/${route_id}`,
+                url: `{{ route('admin.route.route-edit', ':id') }}`.replace(':id', route_id),
                 type: 'GET',
-                success: function(response) {
+                success: function (response) {
                     const route = response.route;
 
                     $('#route_id').val(route.id);
                     $('#district').val(route.district_id);
 
-                    if (locationInput) {
-                        locationInput.clearStore();
-                        route.locations.forEach(loc => locationInput.setValue([loc]));
+                    if (!locationInput) {
+                        locationInput = new Choices('#locations', {
+                            delimiter: ',',
+                            editItems: true,
+                            removeItemButton: true,
+                            paste: false,
+                            duplicateItemsAllowed: false,
+                            placeholderValue: 'Enter locations',
+                            searchPlaceholderValue: 'Search location'
+                        });
                     }
+
+                    // Clear & Set Locations
+                    locationInput.clearStore();
+                    locationInput.clearInput();
+                    setTimeout(() => {
+                        route.locations.forEach(loc => locationInput.setValue([loc]));
+                    }, 100);
 
                     $('#createEditRouteModalLabel').text('Edit Route');
                     $('.submit-btn').text('Update');
                     $('#createEditRouteModal').modal('show');
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     alert('Error: ' + xhr.responseJSON.message);
                 }
             });
         });
 
+        // $(document).on('click', '.editRoute', function () {
+        //     let route_id = $(this).data('id');
 
-     
-        $(document).on('click', '.deleteRoute', function() {
+        //     $.ajax({
+        //         url: `{{ route('admin.route.route-edit', ':id') }}`.replace(':id', route_id),
+        //         type: 'GET',
+        //         success: function (response) {
+        //             console.log(response); // Debugging: Check if route data is received
+
+        //             const route = response.route;
+
+        //             if (route) {
+        //                 $('#route_id').val(route.id); // Ensure the ID is set correctly
+        //                 $('#district_id').val(route.district_id);
+        //                 $('#route_name').val(route.route_name);
+        //                 $('#location_name').val(route.location_name);
+        //                 $('#sub-locations').val(route.sub_locations.join(', ')); // Assuming it's an array
+
+        //                 $('#createEditRouteModalLabel').text('Edit Route');
+        //                 $('.submit-btn').text('Update');
+        //                 $('#createEditRouteModal').modal('show');
+        //             } else {
+        //                 alert('Error: Route data not found.');
+        //             }
+        //         },
+        //         error: function (xhr) {
+        //             console.error('Error:', xhr.responseJSON.message);
+        //             alert('Error fetching route details.');
+        //         }
+        //     });
+        // });
+
+
+        // Delete Route
+        $(document).on('click', '.deleteRoute', function () {
             const route_id = $(this).data('id');
             if (confirm('Are you sure you want to delete this route?')) {
                 $.ajax({
-                    url: `{{ url('routes/route-delete') }}/${route_id}`,
+                    url: `{{ route('admin.route.route-delete', ':id') }}`.replace(':id', route_id),
                     method: 'DELETE',
-                    data: {_token: '{{ csrf_token() }}'},
-                    success: function(response) {
+                    data: { _token: '{{ csrf_token() }}' },
+                    success: function (response) {
                         alert(response.message);
                         routeTable.ajax.reload();
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         alert('Error: ' + xhr.responseJSON.message);
                     }
                 });
             }
         });
-
-
     });
+
 </script>
 @endsection
