@@ -418,7 +418,6 @@ class OrderController extends Controller
                 ], 400);
             }
 
-            // Get the order with dealer details
             $order = Order::with([
                 'orderType:id,name',
                 'dealers:id,dealer_name,dealer_code,assigned_route_id', 
@@ -427,7 +426,6 @@ class OrderController extends Controller
                 'vehicleCategory:id,vehicle_category_name' 
             ])->findOrFail($orderId);
 
-            // Fetch dealer ID and assigned route
             $dealer = $order->dealers;
             if (!$dealer) {
                 return response()->json([
@@ -437,10 +435,8 @@ class OrderController extends Controller
                 ], 404);
             }
 
-            // Get the ASO's assigned routes (parent_id = ASO ID)
             $allowedRoutes = AssignRoute::where('parent_id', $user->id)->pluck('id')->toArray();
 
-            // Ensure the dealer belongs to a route assigned to this ASO
             if (!in_array($dealer->assigned_route_id, $allowedRoutes)) {
                 return response()->json([
                     'success' => false,
@@ -449,12 +445,10 @@ class OrderController extends Controller
                 ], 403);
             }
 
-            // Fetch total outstanding payments for this dealer
             $totalOutstandingPayments = OutstandingPayment::where('dealer_id', $dealer->id)->sum('outstanding_amount');
             $billingDate = $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null;
             $createdAt = Carbon::parse($order->created_at)->format('d/m/Y');
 
-            // Process order items
             $orderItems = $order->orderItems->map(function ($item) {
                 $productDetails = collect($item->product_details)->map(function ($detail) {
                     $productType = ProductType::find($detail['product_type_id']);
@@ -489,7 +483,9 @@ class OrderController extends Controller
                 'vehicle_number' => $order->vehicle_number,
                 'driver_name' => $order->driver_name,
                 'driver_phone' => $order->driver_phone,
-                'total_outstanding_payments' => $totalOutstandingPayments
+                'total_outstanding_payments' => $totalOutstandingPayments,
+                'dealer_code' => $dealer->dealer_code,
+                'dealer_name' => $dealer->dealer_name
             ];
 
             return response()->json([

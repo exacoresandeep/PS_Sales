@@ -7,6 +7,8 @@
             </div>
             <form id="routeForm">
                 <div class="modal-body">
+                    <input type="hidden" name="id" id="route_id">
+
                     <div class="mb-3">
                         <label for="district" class="form-label">District</label>
                         <select class="form-control" id="district" name="district" required>
