@@ -13,6 +13,7 @@ use App\Models\AssignRoute;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Log;
 
 class ActivityController extends Controller
 {
@@ -407,7 +408,6 @@ class ActivityController extends Controller
             $query = ActivityType::whereIn('status', ['1', '2'])
                     ->whereNull('deleted_at') 
                     ->orderBy('id', 'desc');
-                    // dd($query->toSql(), $query->getBindings());
     
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -480,25 +480,24 @@ class ActivityController extends Controller
     }
     public function list(Request $request)
     {
-        $query = Activity::with(['activityType', 'dealer', 'employee']);
+        $query = Activity::with(['activityType', 'dealer', 'employee'])->whereNull('deleted_at');
 
-        // Filters
         if ($request->activity_type) {
             $query->where('activity_type_id', $request->activity_type);
         }
         if ($request->dealer) {
             $query->whereHas('dealer', function ($q) use ($request) {
                 $q->where('dealer_name', 'LIKE', "%{$request->dealer}%")
-                  ->orWhere('dealer_code', 'LIKE', "%{$request->dealer}%");
+                ->orWhere('dealer_code', 'LIKE', "%{$request->dealer}%");
             });
         }
         if ($request->district) {
             $query->whereHas('employee', function ($q) use ($request) {
-                $q->where('district', $request->district);
+                $q->where('district_id', $request->district);
             });
         }
         if ($request->employee) {
-            $query->where('assigned_to', $request->employee);
+            $query->where('employee_id', $request->employee);
         }
         if ($request->assigned_date) {
             $query->whereDate('assigned_date', $request->assigned_date);
@@ -507,57 +506,120 @@ class ActivityController extends Controller
             $query->whereDate('due_date', $request->due_date);
         }
 
-        $activities = $query->orderBy('id', 'desc')->get();
+        $activities = $query->get(); 
 
-        return response()->json(['data' => $activities]);
+        return DataTables::of($activities)
+            ->addIndexColumn()
+            ->addColumn('activity_type_name', function ($activity) {
+                return optional($activity->activityType)->name ?? '-';
+            })
+            ->addColumn('dealer_name', function ($activity) {
+                return optional($activity->dealer)->dealer_name 
+                    ? optional($activity->dealer)->dealer_name . ' (' . optional($activity->dealer)->dealer_code . ')' 
+                    : '-';
+            })
+            ->addColumn('employee_name', function ($activity) {
+                return optional($activity->employee)->name ?? '-';
+            })
+            ->addColumn('status', function ($activity) {
+                $status = $activity->status ?? 'Pending';
+                $dueDate = $activity->due_date;
+                $today = now()->toDateString();
+            
+                $statusBadge = match ($status) {
+                    'Completed' => '<span class="badge bg-success text-white">Completed</span>',
+                    'Pending' => '<span class="badge bg-warning text-dark">Pending</span>',
+                    default => '<span class="badge bg-secondary text-white">' . $status . '</span>',
+                };
+            
+                $overdueButton = '';
+                if ($status == 'Pending' && $dueDate < $today) {
+                    $overdueButton = '<span class="badge bg-danger text-white">Overdue</span>';
+                }
+            
+                return $statusBadge . $overdueButton;
+            })
+            ->addColumn('action', function ($activity) {
+                return '
+                    <button class="btn btn-sm btn-info" onclick="handleAction(' . $activity->id . ', \'view\')" title="View">
+                        <i class="fa fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="handleAction(' . $activity->id . ', \'edit\')" title="Edit">
+                        <i class="fa fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger deleteActivity" data-id="' . $activity->id . '" title="Delete">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                ';
+            })
+            ->rawColumns(['action','status'])
+            ->make(true);
+
+
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'activity_type' => 'required|exists:activity_types,id',
+            'activity_type_id' => 'required|exists:activity_types,id',
             'dealer_id' => 'required|exists:dealers,id',
-            'assigned_to' => 'required|exists:employees,id',
+            'employee_id' => 'required|exists:employees,id',
             'assigned_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:assigned_date',
-            'status' => 'required|in:Pending,Completed',
+            'instruction' => 'required|string',
         ]);
 
         $activity = Activity::create([
-            'activity_type_id' => $request->activity_type,
+            'activity_type_id' => $request->activity_type_id,
             'dealer_id' => $request->dealer_id,
-            'assigned_to' => $request->assigned_to,
+            'employee_id' => $request->employee_id,
             'assigned_date' => $request->assigned_date,
             'due_date' => $request->due_date,
-            'status' => $request->status,
+            'instructions' => $request->instruction,
+            'status' => 'Pending',
         ]);
 
         return response()->json(['message' => 'Activity created successfully!', 'activity' => $activity]);
     }
-
-    public function edit(Activity $activity)
+    public function view($id)
     {
+        $activity = Activity::with(['activityType', 'dealer', 'employee'])->find($id);
+        if (!$activity) {
+            return response()->json(['error' => 'Activity not found'], 404);
+        }
+    
+        return response()->json(['activity' => $activity]);
+    }
+    public function edit($id)
+    {
+        $activity = Activity::with(['activityType', 'employee', 'dealer'])->find($id);
+
+        if (!$activity) {
+            return response()->json(['error' => 'Activity not found'], 404);
+        }
+    
         return response()->json(['activity' => $activity]);
     }
 
     public function update(Request $request, Activity $activity)
     {
         $request->validate([
-            'activity_type' => 'required|exists:activity_types,id',
+            'activity_type_id' => 'required|exists:activity_types,id',
             'dealer_id' => 'required|exists:dealers,id',
-            'assigned_to' => 'required|exists:employees,id',
+            'employee_id' => 'required|exists:employees,id',
             'assigned_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:assigned_date',
-            'status' => 'required|in:Pending,Completed',
+            'instruction' => 'required|string',
         ]);
 
         $activity->update([
-            'activity_type_id' => $request->activity_type,
+            'activity_type_id' => $request->activity_type_id,
             'dealer_id' => $request->dealer_id,
-            'assigned_to' => $request->assigned_to,
+            'employee_id' => $request->employee_id,
             'assigned_date' => $request->assigned_date,
             'due_date' => $request->due_date,
-            'status' => $request->status,
+            'instructions' => $request->instruction,
+            'status' => 'Pending',
         ]);
 
         return response()->json(['message' => 'Activity updated successfully!', 'activity' => $activity]);
@@ -565,7 +627,7 @@ class ActivityController extends Controller
 
     public function delete(Activity $activity)
     {
-        $activity->delete();
+        $activity->delete(); 
         return response()->json(['message' => 'Activity deleted successfully!']);
     }
 

@@ -27,24 +27,24 @@
                 </ul>
             </li>
             <li>
-                <a class="menu-title"  href="{{ route('admin.route.index') }}">
+                <a class="menu-title">
                     <i class="fa fa-road" aria-hidden="true"></i>
-                    Route Management <span class="icon-right"></span>
+                    Route Management <span class="icon-right"><i class="fa fa-solid fa-chevron-down"></i></span>
                 </a>
-                {{-- <ul class="submenu">
+                <ul class="submenu">
                     <li>
-                        <a href="route-management">
+                        <a href="{{ route('admin.route.route-index') }}">
                             <i class="fa fa-road" aria-hidden="true"></i>
-                            All Routes <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
+                             Routes <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
                     </li>
                     <li>
-                        <a href="create-route">
+                        <a href="{{ route('admin.route.index') }}">
                             <i class="fa fa-plus-square" aria-hidden="true"></i>
-                            Create Route <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
+                            Assigned Routes <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
                         </a>
                     </li>
-                </ul> --}}
+                </ul>
             </li>
             <li>
                 <a class="menu-title"  href="{{ route('admin.target.index') }}">
