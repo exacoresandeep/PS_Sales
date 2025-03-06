@@ -703,21 +703,34 @@ class DealerOrderController extends Controller
                     ];
                 }),
 
-                'outstanding_payments' => $outstandingPayments->map(function ($payment) {
-                    return [
-                        'id' => $payment->id,
-                        'invoice_number' => $payment->invoice_number,
-                        'invoice_amount' => $payment->invoice_total,
-                        'due_date' => $payment->due_date ? Carbon::parse($payment->due_date)->format('d/m/Y') : null,
-                        'commitments' => $payment->commitments->map(function ($commitment) {
-                            return [
-                                'id' => $commitment->id,
-                                'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d/m/Y') : null,
-                                'committed_amount' => $commitment->committed_amount,
-                            ];
-                        })->toArray(),
-                    ];
-                })->values()->toArray(),
+                // 'outstanding_payments' => $outstandingPayments->map(function ($payment) {
+                //     return [
+                //         'id' => $payment->id,
+                //         'invoice_number' => $payment->invoice_number,
+                //         'invoice_amount' => $payment->invoice_total,
+                //         'due_date' => $payment->due_date ? Carbon::parse($payment->due_date)->format('d/m/Y') : null,
+                //         'commitments' => $payment->commitments->map(function ($commitment) {
+                //             return [
+                //                 'id' => $commitment->id,
+                //                 'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d/m/Y') : null,
+                //                 'committed_amount' => $commitment->committed_amount,
+                //             ];
+                //         })->toArray(),
+                //     ];
+                // })->values()->toArray(),
+                'outstanding_payments' => $outstandingPayments->isNotEmpty() ? [
+                    'id' => $outstandingPayments->first()->id,
+                    'invoice_number' => $outstandingPayments->first()->invoice_number,
+                    'invoice_amount' => $outstandingPayments->first()->invoice_total,
+                    'due_date' => $outstandingPayments->first()->due_date ? Carbon::parse($outstandingPayments->first()->due_date)->format('d/m/Y') : null,
+                    'commitments' => $outstandingPayments->first()->commitments->map(function ($commitment) {
+                        return [
+                            'id' => $commitment->id,
+                            'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d/m/Y') : null,
+                            'committed_amount' => $commitment->committed_amount,
+                        ];
+                    })->toArray(),
+                ] : null,
                 'payment_summary' => [
                     // 'total_paid_amount' => round($totalPaidAmount, 2),
                     'total_outstanding_amount' => round($totalOutstandingAmount, 2),
@@ -841,7 +854,6 @@ class DealerOrderController extends Controller
                 ], 401);
             }
 
-            // Fetch the order with required relationships
             $order = Order::with([
                 'createdBy:id,name,employee_code',
                 'orderType:id,name',
@@ -854,7 +866,7 @@ class DealerOrderController extends Controller
                 'dealers:id,dealer_name,dealer_code',
                 'vehicleCategory:id,vehicle_category_name',
             ])
-            ->where('dealer_id', $dealer->id) // Ensure order belongs to the logged-in dealer
+            ->where('dealer_id', $dealer->id) 
             ->find($orderId);
 
             if (!$order) {
