@@ -10,6 +10,7 @@
                     <div class="mb-3">
                         <label for="district" class="form-label">District</label>
                         <select class="form-control" id="district" name="district" required>
+                            <option value="" selected disabled>-- Select District --</option>
                             @foreach($districts as $district)
                                 <option value="{{ $district->id }}">{{ $district->name }}</option>
                             @endforeach
@@ -17,8 +18,8 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="sub-locations" class="form-label">Locations</label>
-                        <textarea class="form-control" id="locations" name="locations" placeholder="Enter locations separated by commas" required></textarea>
+                        <label for="locations" class="form-label">Locations</label>
+                        <input type="text" class="form-control" id="locations" name="locations" placeholder="Enter locations separated by commas" required>
                     </div>
                 </div>
                 <div class="modal-footer">

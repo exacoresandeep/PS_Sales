@@ -835,68 +835,89 @@ class RouteController extends Controller
     {
         $districts = District::all(); 
 
-        // Pass the districts to the view
         return view('admin.route.route-index', compact('districts'));
     }
 
-    // Fetch routes list to populate DataTable
     public function routeList(Request $request)
     {
-        $routes = TripRoute::with('district')
-            ->orderBy('id', 'desc')
-            ->get();
+        $routes = TripRoute::with('district')->orderBy('id', 'desc');
 
-        return response()->json($routes);
+        return DataTables::of($routes)
+            ->addIndexColumn()
+            ->addColumn('district_name', function ($route) {
+                return $route->district ? $route->district->name : 'N/A'; // Ensure district exists
+            })
+            ->editColumn('locations', function ($route) {
+                return is_array($route->locations) ? implode(', ', $route->locations) : ''; // Convert array to string
+            })
+            ->addColumn('action', function ($route) {
+                return '
+                    <button class="btn btn-sm btn-warning editRoute" data-id="'.$route->id.'" title="Edit">
+                    <i class="fa fa-edit"></i>
+                </button>
+                    <button class="btn btn-sm btn-danger deleteRoute" data-id="'.$route->id.'" title="Delete">
+                        <i class="fa fa-trash"></i>
+                    </button>';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
 
-    // Store a new route
     public function routeStore(Request $request)
     {
         $validatedData = $request->validate([
             'district' => 'required|exists:districts,id',
-            'sub_locations' => 'required|array',
+            'locations' => 'required|array',
         ]);
 
-        $route = new TripRoute();
-        $route->district_id = $validatedData['district'];
-        $route->locations = $validatedData['sub_locations'];
-        $route->save();
+        $route = TripRoute::create([
+            'district_id' => $validatedData['district'],
+            'locations' => array_values($validatedData['locations']), // Store as JSON
+        ]);
 
         return response()->json(['message' => 'Route created successfully!', 'route' => $route]);
     }
 
-    // Edit route
     public function editRoute($route_id)
     {
         $route = TripRoute::findOrFail($route_id);
-        $districts = District::all(); // Fetch all districts for the dropdown
-
-        return response()->json(['route' => $route, 'districts' => $districts]);
+        $districts = District::all();
+        return response()->json([
+            'route' => [
+                'id' => $route->id,
+                'district_id' => $route->district_id,
+                'locations' => $route->locations ? json_decode($route->locations, true) : [],
+            ],
+            'districts' => $districts
+        ]);
     }
 
-    // Update the route
     public function updateRoute(Request $request, $route_id)
     {
         $validatedData = $request->validate([
             'district' => 'required|exists:districts,id',
-            'sub_locations' => 'required|array',
+            'locations' => 'required|array',
         ]);
 
         $route = TripRoute::findOrFail($route_id);
-        $route->district_id = $validatedData['district'];
-        $route->locations = $validatedData['sub_locations'];
-        $route->save();
+        $route->update([
+            'district_id' => $validatedData['district'],
+            'locations' => array_values($validatedData['locations']), // Store as JSON
+        ]);
 
         return response()->json(['message' => 'Route updated successfully!', 'route' => $route]);
     }
 
-    // Delete a route
     public function deleteRoute($route_id)
     {
-        $route = TripRoute::findOrFail($route_id);
-        $route->delete();
-
-        return response()->json(['message' => 'Route deleted successfully!']);
+        try {
+            $route = TripRoute::findOrFail($route_id);
+            $route->delete();
+    
+            return response()->json(['message' => 'Route deleted successfully!']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to delete route!'], 500);
+        }
     }
 
 

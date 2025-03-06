@@ -703,21 +703,6 @@ class DealerOrderController extends Controller
                     ];
                 }),
 
-                // 'outstanding_payments' => $outstandingPayments->map(function ($payment) {
-                //     return [
-                //         'id' => $payment->id,
-                //         'invoice_number' => $payment->invoice_number,
-                //         'invoice_amount' => $payment->invoice_total,
-                //         'due_date' => $payment->due_date ? Carbon::parse($payment->due_date)->format('d/m/Y') : null,
-                //         'commitments' => $payment->commitments->map(function ($commitment) {
-                //             return [
-                //                 'id' => $commitment->id,
-                //                 'committed_date' => $commitment->committed_date ? Carbon::parse($commitment->committed_date)->format('d/m/Y') : null,
-                //                 'committed_amount' => $commitment->committed_amount,
-                //             ];
-                //         })->toArray(),
-                //     ];
-                // })->values()->toArray(),
                 'outstanding_payments' => $outstandingPayments->isNotEmpty() ? [
                     'id' => $outstandingPayments->first()->id,
                     'invoice_number' => $outstandingPayments->first()->invoice_number,
@@ -943,8 +928,6 @@ class DealerOrderController extends Controller
             ], 500);
         }
     }
-
-
 
     public function orderRequestStatusUpdate(Request $request, $orderId)
     {
