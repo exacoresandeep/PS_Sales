@@ -16,6 +16,10 @@ Route::prefix('admin')->group(function () {
     Route::post('/doLogin', [AdminController::class, 'doLogin'])->name('admin.doLogin');
     Route::get('/employees-by-dealer/{dealer_id}', [ActivityController::class, 'getEmployeesByDealer']);
     Route::get('/dealers-by-district/{district_id}', [ActivityController::class, 'getDealersByDistrict']);
+    Route::get('/get-districts', [RouteController::class, 'getDistricts'])->name('admin.get-districts');
+    Route::get('/get-employees', [RouteController::class, 'getEmployees'])->name('admin.get-employees');
+    Route::get('/get-locations', [RouteController::class, 'getLocations'])->name('admin.get-locations');
+
     
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
    
@@ -46,11 +50,13 @@ Route::prefix('admin')->group(function () {
         Route::delete('/route-delete/{route_id}', [RouteController::class, 'deleteRoute'])->name('admin.route.route-delete');
 
 
-        Route::get('/', [RouteController::class, 'index'])->name('admin.route.index');
-        Route::post('/store', [RouteController::class, 'store'])->name('admin.route.store');
-        Route::post('/list', [RouteController::class, 'routesListing'])->name('admin.route.list');
-        Route::post('/update', [RouteController::class, 'update'])->name('admin.route.update');
-        Route::get('/getAllRoutesByDistrict/{district}', [RouteController::class, 'getAllRoutesByDistrict'])->name('admin.route.getAllRoutesByDistrict');    
+        Route::get('/', [RouteController::class, 'assignedIndex'])->name('admin.route.index');
+        Route::get('/assigned-list', [RouteController::class, 'assignedList'])->name('admin.route.assigned-list');
+        Route::post('/store', [RouteController::class, 'storeAssignedRoute'])->name('admin.route.assigned-store');
+        Route::get('/edit/{id}', [RouteController::class, 'editAssignedRoute'])->name('admin.route.assigned-edit');
+        Route::put('/update/{id}', [RouteController::class, 'updateAssignedRoute'])->name('admin.route.assigned-update');
+        Route::delete('/delete/{id}', [RouteController::class, 'deleteAssignedRoute'])->name('admin.route.assigned-delete');
+
     });
 
 

@@ -8,6 +8,7 @@ use App\Models\Dealer;
 use App\Models\TripRoute;
 use App\Models\District;
 use App\Models\EmployeeType;
+use App\Models\Employee;
 use App\Models\DealerTripActivity;
 use App\Models\RescheduledRoute;
 use App\Models\Lead;
@@ -20,93 +21,93 @@ use Exception;
 
 class RouteController extends Controller
 {
-    public function index()
-    {
-        $routes = TripRoute::all(); 
-        $districts = District::all();
-        $employeeTypes = EmployeeType::all();
+    // public function index()
+    // {
+    //     $routes = TripRoute::all(); 
+    //     $districts = District::all();
+    //     $employeeTypes = EmployeeType::all();
     
-        return view('admin.route.index', compact('routes', 'districts', 'employeeTypes'));
-    }
-    public function store(Request $request)
-    {
-        $request->validate([
-            'district_id' => 'required|exists:districts,id',
-            'route_name' => 'required|string|max:255',
-            'location_name' => 'required|string|max:255',
-            'sub_locations' => 'required|string', 
-        ]);
-        $subLocations = json_decode($request->sub_locations, true);
+    //     return view('admin.route.index', compact('routes', 'districts', 'employeeTypes'));
+    // }
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'district_id' => 'required|exists:districts,id',
+    //         'route_name' => 'required|string|max:255',
+    //         'location_name' => 'required|string|max:255',
+    //         'sub_locations' => 'required|string', 
+    //     ]);
+    //     $subLocations = json_decode($request->sub_locations, true);
 
-        if (!is_array($subLocations)) {
-            return response()->json(['message' => 'Invalid sub locations format'], 422);
-        }
+    //     if (!is_array($subLocations)) {
+    //         return response()->json(['message' => 'Invalid sub locations format'], 422);
+    //     }
 
     
-        $route = new TripRoute();
-        $route->district_id = $request->district_id;
-        $route->route_name = $request->route_name;
-        $route->location_name = $request->location_name;
-        $route->sub_locations = json_encode($subLocations);
-        $route->status = "1";
-        $route->save();
+    //     $route = new TripRoute();
+    //     $route->district_id = $request->district_id;
+    //     $route->route_name = $request->route_name;
+    //     $route->location_name = $request->location_name;
+    //     $route->sub_locations = json_encode($subLocations);
+    //     $route->status = "1";
+    //     $route->save();
 
-        return response()->json(['message' => 'Route created successfully']);
-    }
+    //     return response()->json(['message' => 'Route created successfully']);
+    // }
 
-    public function update(Request $request)
-    {
-        $request->validate([
-            'district_id' => 'required|exists:districts,id',
-            'route_name' => 'required|string|max:255',
-            'location_name' => 'required|string|max:255',
-            'sub_locations' => 'required|string',
-        ]);
-        $subLocations = json_decode($request->sub_locations, true);
+    // public function update(Request $request)
+    // {
+    //     $request->validate([
+    //         'district_id' => 'required|exists:districts,id',
+    //         'route_name' => 'required|string|max:255',
+    //         'location_name' => 'required|string|max:255',
+    //         'sub_locations' => 'required|string',
+    //     ]);
+    //     $subLocations = json_decode($request->sub_locations, true);
 
-        if (!is_array($subLocations)) {
-            return response()->json(['message' => 'Invalid sub locations format'], 422);
-        }
+    //     if (!is_array($subLocations)) {
+    //         return response()->json(['message' => 'Invalid sub locations format'], 422);
+    //     }
 
-        $route = TripRoute::findOrFail($request->id);
+    //     $route = TripRoute::findOrFail($request->id);
         
-        $route->district_id = $request->district_id;
-        $route->route_name = $request->route_name;
-        $route->location_name = $request->location_name;
-        $route->sub_locations = json_encode($subLocations);
-        $route->save();
+    //     $route->district_id = $request->district_id;
+    //     $route->route_name = $request->route_name;
+    //     $route->location_name = $request->location_name;
+    //     $route->sub_locations = json_encode($subLocations);
+    //     $route->save();
 
-        return response()->json(['message' => 'Route updated successfully']);
-    }
-    public function routesListing(Request $request)
-    {
-        $query = TripRoute::with('district'); 
+    //     return response()->json(['message' => 'Route updated successfully']);
+    // }
+    // public function routesListing(Request $request)
+    // {
+    //     $query = TripRoute::with('district'); 
     
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('district_name', function ($route) {
-                return optional($route->district)->name ?? '-'; 
-            })
-            ->addColumn('sub_locations', function ($route) {
-                $subLocations = json_decode($route->sub_locations, true);
-                return is_array($subLocations) ? implode(', ', $subLocations) : '-';
-            })
-            ->addColumn('action', function ($route) {
-                return '
-                    <button class="btn btn-sm btn-info" onclick="handleAction(' . $route->id . ', \'view\')" title="View">
-                        <i class="fa fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-warning" onclick="handleAction(' . $route->id . ', \'edit\')" title="Edit">
-                        <i class="fa fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteRoute(' . $route->id . ')" title="Delete">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                ';
-            })
-            ->rawColumns(['action'])
-            ->make(true);
-    }
+    //     return DataTables::of($query)
+    //         ->addIndexColumn()
+    //         ->addColumn('district_name', function ($route) {
+    //             return optional($route->district)->name ?? '-'; 
+    //         })
+    //         ->addColumn('sub_locations', function ($route) {
+    //             $subLocations = json_decode($route->sub_locations, true);
+    //             return is_array($subLocations) ? implode(', ', $subLocations) : '-';
+    //         })
+    //         ->addColumn('action', function ($route) {
+    //             return '
+    //                 <button class="btn btn-sm btn-info" onclick="handleAction(' . $route->id . ', \'view\')" title="View">
+    //                     <i class="fa fa-eye"></i>
+    //                 </button>
+    //                 <button class="btn btn-sm btn-warning" onclick="handleAction(' . $route->id . ', \'edit\')" title="Edit">
+    //                     <i class="fa fa-edit"></i>
+    //                 </button>
+    //                 <button class="btn btn-sm btn-danger" onclick="deleteRoute(' . $route->id . ')" title="Delete">
+    //                     <i class="fa fa-trash"></i>
+    //                 </button>
+    //             ';
+    //         })
+    //         ->rawColumns(['action'])
+    //         ->make(true);
+    // }
     public function getTodaysTrip(Request $request)
     {
         try {
@@ -898,7 +899,6 @@ class RouteController extends Controller
             'district' => 'required|exists:districts,id',
             'locations' => 'required|array',
         ]);
-        // dd($validatedData); 
         $route = TripRoute::findOrFail($route_id);
         $route->update([
             'district_id' => $validatedData['district'],
@@ -919,6 +919,82 @@ class RouteController extends Controller
             return response()->json(['message' => 'Failed to delete route!'], 500);
         }
     }
+    public function assignedIndex()
+    {
+        return view('admin.route.index');
+    }
+
+    public function assignedList()
+    {
+        $routes = AssignRoute::with(['district', 'employee', 'route'])->get();
+        return DataTables::of($routes)
+            ->addColumn('action', function ($route) {
+                return '<button class="btn btn-sm btn-warning editRoute" data-id="'.$route->id.'">Edit</button>
+                        <button class="btn btn-sm btn-danger deleteRoute" data-id="'.$route->id.'">Delete</button>';
+            })
+            ->make(true);
+    }
+
+    public function editAssignedRoute($id)
+    {
+        $route = AssignRoute::findOrFail($id);
+        return response()->json($route);
+    }
+    public function updateAssignedRoute(Request $request, $id)
+    {
+        // Validate the request
+        $request->validate([
+            'district_id' => 'required|exists:districts,id',
+            'employee_type_id' => 'required|integer',
+            'employee_id' => 'required|exists:employees,id',
+            'route_name' => 'required|string|max:255',
+            'locations' => 'required|array', // Ensure locations are provided as an array
+        ]);
+
+        // Find assigned route
+        $route = AssignRoute::findOrFail($id);
+
+        // Update the assigned route
+        $route->update([
+            'district_id' => $request->district_id,
+            'employee_type_id' => $request->employee_type_id,
+            'employee_id' => $request->employee_id,
+            'route_name' => $request->route_name,
+            'locations' => json_encode($request->locations), // Storing as JSON
+        ]);
+
+        return response()->json(['message' => 'Assigned Route updated successfully!']);
+    }
+
+    public function deleteAssignedRoute($id)
+    {
+        AssignRoute::findOrFail($id)->delete();
+        return response()->json(['message' => 'Route deleted successfully!']);
+    }
+
+    public function getDistricts()
+    {
+        return response()->json(District::select('id', 'name')->get());
+    }
+
+    public function getEmployees(Request $request)
+    {
+        $employees = Employee::where('district_id', $request->district_id)
+            ->where('employee_type_id', $request->employee_type_id)
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json($employees);
+    }
+    public function getLocations(Request $request)
+    {
+        $routes = TripRoute::where('district_id', $request->district_id)->get();
+
+        $locations = $routes->pluck('locations')->flatten()->unique()->values();
+
+        return response()->json($locations);
+    }
+
 
 
 

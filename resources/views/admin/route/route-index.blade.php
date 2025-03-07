@@ -150,39 +150,6 @@
             });
         });
 
-        // $(document).on('click', '.editRoute', function () {
-        //     let route_id = $(this).data('id');
-
-        //     $.ajax({
-        //         url: `{{ route('admin.route.route-edit', ':id') }}`.replace(':id', route_id),
-        //         type: 'GET',
-        //         success: function (response) {
-        //             console.log(response); // Debugging: Check if route data is received
-
-        //             const route = response.route;
-
-        //             if (route) {
-        //                 $('#route_id').val(route.id); // Ensure the ID is set correctly
-        //                 $('#district_id').val(route.district_id);
-        //                 $('#route_name').val(route.route_name);
-        //                 $('#location_name').val(route.location_name);
-        //                 $('#sub-locations').val(route.sub_locations.join(', ')); // Assuming it's an array
-
-        //                 $('#createEditRouteModalLabel').text('Edit Route');
-        //                 $('.submit-btn').text('Update');
-        //                 $('#createEditRouteModal').modal('show');
-        //             } else {
-        //                 alert('Error: Route data not found.');
-        //             }
-        //         },
-        //         error: function (xhr) {
-        //             console.error('Error:', xhr.responseJSON.message);
-        //             alert('Error fetching route details.');
-        //         }
-        //     });
-        // });
-
-
         // Delete Route
         $(document).on('click', '.deleteRoute', function () {
             const route_id = $(this).data('id');
