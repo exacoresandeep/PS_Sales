@@ -15,7 +15,7 @@
                     <th>District</th>
                     <th>Employee Type</th>
                     <th>Employee</th>
-                    <th>Route Names</th>
+                    <th>Route Name</th>
                     <th>Locations</th>
                     <th>Action</th>
                 </tr>
@@ -188,10 +188,10 @@
             ajax: "{{ route('admin.route.assigned-list') }}",
             columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false, orderable: false },
-                { data: 'district.name', name: 'district.name' },
+                { data: 'district', name: 'district' },
                 { data: 'employee_type', name: 'employee_type' },
-                { data: 'employee.name', name: 'employee.name' },
-                { data: 'route_names', name: 'route_names' },
+                { data: 'employee', name: 'employee' },
+                { data: 'route_name', name: 'route_name' },
                 { data: 'locations', name: 'locations' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]

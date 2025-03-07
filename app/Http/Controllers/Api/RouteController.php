@@ -926,14 +926,40 @@ class RouteController extends Controller
 
     public function assignedList()
     {
-        $routes = AssignRoute::with(['district', 'employee', 'route'])->get();
+        $routes = AssignRoute::with(['district', 'employee'])->get();
+
         return DataTables::of($routes)
+            ->addIndexColumn() 
+            ->addColumn('district', function ($route) {
+                return $route->district->name ?? 'N/A';
+            })
+            ->addColumn('employee_type', function ($route) {
+                if ($route->employee) {
+                    $employeeTypes = [
+                        1 => 'Sales Executive',
+                        2 => 'Area Sales Officer'
+                    ];
+                    return $employeeTypes[$route->employee->employee_type_id] ?? 'Unknown';
+                }
+                return 'N/A';
+            })
+            ->addColumn('employee', function ($route) {
+                return $route->employee->name ?? 'N/A';
+            })
+            ->addColumn('route_name', function ($route) {
+                return $route->route_name  ?? 'N/A';
+            })
+            ->addColumn('locations', function ($route) {
+                return  $route->locations ?? 'N/A';
+            })
             ->addColumn('action', function ($route) {
                 return '<button class="btn btn-sm btn-warning editRoute" data-id="'.$route->id.'">Edit</button>
                         <button class="btn btn-sm btn-danger deleteRoute" data-id="'.$route->id.'">Delete</button>';
             })
+            ->rawColumns(['action'])
             ->make(true);
     }
+    
     public function storeAssignedRoute(Request $request)
     {
         $request->validate([
