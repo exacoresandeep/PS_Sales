@@ -48,7 +48,7 @@ class LeadController extends Controller
                             'name' => $lead->district->name,
                         ] : null,  
                         'route_name' => $lead->tripRoute ? $lead->tripRoute->route_name : null, 
-                        'location_name' => $lead->tripRoute ? $lead->tripRoute->location_name : null,
+                        'location_name' => $lead->location ? $lead->location : null,
                         'created_at' => $lead->created_at,
                         ];
                 });

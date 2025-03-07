@@ -934,7 +934,56 @@ class RouteController extends Controller
             })
             ->make(true);
     }
-
+    public function storeAssignedRoute(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'district_id' => 'required|exists:districts,id',
+            'employee_type_id' => 'required|integer',
+            'employee_id' => 'required|exists:employees,id',
+            'aso_id' => 'nullable|exists:employees,id',
+            'routes' => 'required|array|max:6', // Ensure we receive up to 6 routes
+            'routes.*.route_name' => 'required|string|max:255', // Each route must have a name
+            'routes.*.locations' => 'nullable|array', // Locations must be an array
+            'routes.*.locations.*' => 'nullable|string', // Each location must be a string
+        ]);
+    
+        $districtId = $request->district_id;
+        $employeeTypeId = $request->employee_type_id;
+        $employeeId = $request->employee_id;
+        $parentId = ($employeeTypeId == 1) ? $request->aso_id : null;
+    
+        // Check if the employee already has assigned routes
+        $existingRoutes = AssignRoute::where('district_id', $districtId)
+            ->where('employee_type_id', $employeeTypeId)
+            ->where('employee_id', $employeeId)
+            ->exists();
+    
+        if ($existingRoutes) {
+            return response()->json(['message' => 'This employee already has assigned routes!'], 422);
+        }
+    
+        // Loop through routes and store them as separate entries
+        foreach ($request->routes as $route) {
+            $routeName = $route['route_name'];
+            $locations = isset($route['locations']) && is_array($route['locations'])
+                ? implode(', ', $route['locations']) // Convert array to comma-separated string
+                : '';
+    
+            AssignRoute::create([
+                'district_id' => $districtId,
+                'employee_type_id' => $employeeTypeId,
+                'parent_id' => $parentId,
+                'employee_id' => $employeeId,
+                'route_name' => $routeName,
+                'locations' => $locations,
+            ]);
+        }
+    
+        return response()->json(['message' => 'Assigned Routes stored successfully!']);
+    }
+    
+    
     public function editAssignedRoute($id)
     {
         $route = AssignRoute::findOrFail($id);
