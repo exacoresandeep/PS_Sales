@@ -590,19 +590,16 @@ class OrderController extends Controller
         }
     }
     
-
     // public function dealerOrderStatusUpdate(Request $request, $orderId)
     // {
     //     try {
-    //         // Validate request data
     //         $validatedData = $request->validate([
     //             'status' => 'required|in:Accepted,Rejected',
     //             'reason_for_rejection' => 'required_if:status,Rejected|nullable|string|max:255',
     //         ]);
-    
-    //         // Get the logged-in employee
+
     //         $employee = Auth::user();
-    
+
     //         if (!$employee) {
     //             return response()->json([
     //                 'success' => false,
@@ -610,34 +607,42 @@ class OrderController extends Controller
     //                 'message' => "User not Authenticated",
     //             ], 401);
     //         }
-    
-    //         // Get assigned routes for the logged-in employee
-    //         $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
-    
-    //         if (empty($assignedRoutes)) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 404,
-    //                 'message' => "No assigned routes found for the employee.",
-    //             ], 404);
+
+    //         if ($employee->employee_type_id == 5) {
+    //             $order = Order::where('id', $orderId)
+    //                 ->where(function ($query) {
+    //                     $query->whereIn('created_by', Employee::whereIn('employee_type_id', [2, 3, 4])->pluck('id'))
+    //                         ->orWhereNotNull('created_by_dealer');
+    //                 })
+    //                 ->first();
+    //         } else {
+    //             $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+
+    //             if (empty($assignedRoutes)) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'statusCode' => 404,
+    //                     'message' => "No assigned routes found for the employee.",
+    //                 ], 404);
+    //             }
+
+    //             // Get dealers linked to those routes
+    //             $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
+
+    //             if (empty($dealers)) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'statusCode' => 404,
+    //                     'message' => "No dealers found for the assigned routes.",
+    //                 ], 404);
+    //             }
+
+    //             // Fetch order created by dealers in assigned routes
+    //             $order = Order::where('id', $orderId)
+    //                 ->whereIn('created_by_dealer', $dealers)
+    //                 ->first();
     //         }
-    
-    //         // Get dealers linked to those routes
-    //         $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
-    
-    //         if (empty($dealers)) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 404,
-    //                 'message' => "No dealers found for the assigned routes.",
-    //             ], 404);
-    //         }
-    
-    //         // Find the order created by a dealer assigned to these routes
-    //         $order = Order::where('id', $orderId)
-    //             ->whereIn('created_by_dealer', $dealers)
-    //             ->first();
-    
+
     //         if (!$order) {
     //             return response()->json([
     //                 'success' => false,
@@ -645,7 +650,7 @@ class OrderController extends Controller
     //                 'message' => "Order with ID $orderId not found or not accessible.",
     //             ], 404);
     //         }
-    
+
     //         // Prepare update data
     //         $updateData = ['status' => $validatedData['status']];
     //         if ($validatedData['status'] === 'Rejected') {
@@ -653,10 +658,10 @@ class OrderController extends Controller
     //         } else {
     //             $updateData['reason_for_rejection'] = null;
     //         }
-    
+
     //         // Update the order status
     //         $order->update($updateData);
-    
+
     //         return response()->json([
     //             'success' => true,
     //             'statusCode' => 200,
@@ -667,8 +672,8 @@ class OrderController extends Controller
     //                 'reason_for_rejection' => $order->reason_for_rejection,
     //             ],
     //         ], 200);
-    
-    //     }catch (\Illuminate\Validation\ValidationException $e) {
+
+    //     } catch (\Illuminate\Validation\ValidationException $e) {
     //         return response()->json([
     //             'success' => false,
     //             'statusCode' => 400,
@@ -690,9 +695,9 @@ class OrderController extends Controller
                 'reason_for_rejection' => 'required_if:status,Rejected|nullable|string|max:255',
             ]);
 
-            $employee = Auth::user();
+            $user = Auth::user();
 
-            if (!$employee) {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 401,
@@ -700,59 +705,34 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            if ($employee->employee_type_id == 5) {
-                $order = Order::where('id', $orderId)
-                    ->where(function ($query) {
-                        $query->whereIn('created_by', Employee::whereIn('employee_type_id', [2, 3, 4])->pluck('id'))
-                            ->orWhereNotNull('created_by_dealer');
-                    })
-                    ->first();
-            } else {
-                $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+            // Fetch order with necessary relationships
+            $order = Order::with('dealers:id,dealer_name,dealer_code,assigned_route_id')->findOrFail($orderId);
+            $dealer = $order->dealers;
 
-                if (empty($assignedRoutes)) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 404,
-                        'message' => "No assigned routes found for the employee.",
-                    ], 404);
-                }
-
-                // Get dealers linked to those routes
-                $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
-
-                if (empty($dealers)) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 404,
-                        'message' => "No dealers found for the assigned routes.",
-                    ], 404);
-                }
-
-                // Fetch order created by dealers in assigned routes
-                $order = Order::where('id', $orderId)
-                    ->whereIn('created_by_dealer', $dealers)
-                    ->first();
-            }
-
-            if (!$order) {
+            if (!$dealer) {
                 return response()->json([
                     'success' => false,
                     'statusCode' => 404,
-                    'message' => "Order with ID $orderId not found or not accessible.",
+                    'message' => 'Dealer not found for this order.',
                 ], 404);
             }
 
-            // Prepare update data
-            $updateData = ['status' => $validatedData['status']];
-            if ($validatedData['status'] === 'Rejected') {
-                $updateData['reason_for_rejection'] = $validatedData['reason_for_rejection'];
-            } else {
-                $updateData['reason_for_rejection'] = null;
+            // Check if the user has access to this dealer's order
+            $allowedRoutes = AssignRoute::where('parent_id', $user->id)->pluck('id')->toArray();
+
+            if (!in_array($dealer->assigned_route_id, $allowedRoutes)) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => 'You are not authorized to update this order status.',
+                ], 403);
             }
 
-            // Update the order status
-            $order->update($updateData);
+            // Update order status and reason for rejection
+            $order->update([
+                'status' => $validatedData['status'],
+                'reason_for_rejection' => $validatedData['status'] === 'Rejected' ? $validatedData['reason_for_rejection'] : null,
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -770,6 +750,7 @@ class OrderController extends Controller
                 'success' => false,
                 'statusCode' => 400,
                 'message' => "Validation error",
+                'errors' => $e->errors(),
             ], 400);
         } catch (Exception $e) {
             return response()->json([
@@ -779,6 +760,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
 
     public function dealerOrderFilter(Request $request)
     {
@@ -867,12 +849,12 @@ class OrderController extends Controller
         }
     }
 
+   
     // public function outstandingPaymentsList()
     // {
     //     try {
-    //         // Get logged-in employee
     //         $employee = Auth::user();
-    
+
     //         if (!$employee) {
     //             return response()->json([
     //                 'success' => false,
@@ -880,12 +862,12 @@ class OrderController extends Controller
     //                 'message' => "User not Authenticated",
     //             ], 401);
     //         }
-    
+
     //         $dealers = [];
-    
-    //         if ($employee->employee_type_id == 2) { // ASO (Area Sales Officer)
+
+    //         if ($employee->employee_type_id == 2) { 
     //             $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
-    
+
     //             if (empty($assignedRoutes)) {
     //                 return response()->json([
     //                     'success' => false,
@@ -893,17 +875,17 @@ class OrderController extends Controller
     //                     'message' => "No assigned routes found for the employee.",
     //                 ], 404);
     //             }
-    
+
     //             $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
-    
-    //         } elseif ($employee->employee_type_id == 3) { // DSM (District Sales Manager)
-    //             $dealers = Dealer::where('district', $employee->district)->pluck('id')->toArray();
-    
-    //         } elseif ($employee->employee_type_id == 4) { // RSM (Regional Sales Manager)
+
+    //         } elseif ($employee->employee_type_id == 3) { 
+    //             $dealers = Dealer::where('district_id', $employee->district_id)->pluck('id')->toArray();
+
+    //         } elseif ($employee->employee_type_id == 4) { 
     //             $region = Regions::whereHas('districts', function ($query) use ($employee) {
     //                 $query->where('id', $employee->district_id);
     //             })->first();
-    
+
     //             if (!$region) {
     //                 return response()->json([
     //                     'success' => false,
@@ -911,12 +893,15 @@ class OrderController extends Controller
     //                     'message' => "Region not found for the employee's district.",
     //                 ], 404);
     //             }
-    
+
     //             $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
-    
+
     //             $dealers = Dealer::whereIn('district_id', $districtsInRegion)->pluck('id')->toArray();
+
+    //         } elseif ($employee->employee_type_id == 5) {
+    //             $dealers = Dealer::pluck('id')->toArray();
     //         }
-    
+
     //         if (empty($dealers)) {
     //             return response()->json([
     //                 'success' => false,
@@ -924,14 +909,13 @@ class OrderController extends Controller
     //                 'message' => "No dealers found for the given criteria.",
     //             ], 404);
     //         }
-    
+
     //         $outstandingPayments = OutstandingPayment::whereIn('dealer_id', $dealers)
     //             ->where('outstanding_amount', '>', 0) 
     //             ->with('dealer:id,dealer_name,dealer_code') 
     //             ->orderBy('due_date', 'asc')
     //             ->get();
-    
-    //         // Format response data
+
     //         $paymentsData = $outstandingPayments->map(function ($payment) {
     //             return [
     //                 'order_id' => $payment->order_id,
@@ -950,14 +934,14 @@ class OrderController extends Controller
     //                 ]
     //             ];
     //         });
-    
+
     //         return response()->json([
     //             'success' => true,
     //             'statusCode' => 200,
     //             'message' => 'Outstanding payments fetched successfully',
     //             'data' => $paymentsData,
     //         ], 200);
-    
+
     //     } catch (Exception $e) {
     //         return response()->json([
     //             'success' => false,
@@ -970,7 +954,7 @@ class OrderController extends Controller
     // {
     //     try {
     //         $employee = Auth::user();
-    
+
     //         if (!$employee) {
     //             return response()->json([
     //                 'success' => false,
@@ -978,13 +962,30 @@ class OrderController extends Controller
     //                 'message' => "User not Authenticated",
     //             ], 401);
     //         }
-    
-    //         // Get RSM's region and districts
-    //         if ($employee->employee_type_id == 4) { // RSM (Regional Sales Manager)
+
+    //         $dealers = [];
+
+    //         if ($employee->employee_type_id == 2) { 
+    //             $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+
+    //             if (empty($assignedRoutes)) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'statusCode' => 404,
+    //                     'message' => "No assigned routes found for the employee.",
+    //                 ], 404);
+    //             }
+
+    //             $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
+
+    //         } elseif ($employee->employee_type_id == 3) { 
+    //             $dealers = Dealer::where('district_id', $employee->district_id)->pluck('id')->toArray();
+
+    //         } elseif ($employee->employee_type_id == 4) { 
     //             $region = Regions::whereHas('districts', function ($query) use ($employee) {
     //                 $query->where('id', $employee->district_id);
     //             })->first();
-    
+
     //             if (!$region) {
     //                 return response()->json([
     //                     'success' => false,
@@ -992,12 +993,22 @@ class OrderController extends Controller
     //                     'message' => "Region not found for the employee's district.",
     //                 ], 404);
     //             }
-    
+
     //             $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
-    
     //             $dealers = Dealer::whereIn('district_id', $districtsInRegion)->pluck('id')->toArray();
+
+    //         } elseif ($employee->employee_type_id == 5) { 
+    //             $dealers = Dealer::pluck('id')->toArray();
     //         }
-    
+
+    //         if (empty($dealers)) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'statusCode' => 404,
+    //                 'message' => "No dealers found for the given criteria.",
+    //             ], 404);
+    //         }
+
     //         $outstandingPayment = OutstandingPayment::with([
     //             'dealer:id,dealer_name,dealer_code,district_id',
     //             'order.orderType:id,name',
@@ -1005,7 +1016,7 @@ class OrderController extends Controller
     //             'order.paymentTerm:id,name',
     //             'order.vehicleCategory:id,vehicle_category_name'
     //         ])->where('order_id', $orderId)->first();
-    
+
     //         if (!$outstandingPayment) {
     //             return response()->json([
     //                 'success' => false,
@@ -1014,19 +1025,17 @@ class OrderController extends Controller
     //                 'data' => []
     //             ], 404);
     //         }
-    
-    //         // Restrict RSMs to only their region's dealers
-    //         if ($employee->employee_type_id == 4 && !in_array($outstandingPayment->dealer->district_id, $districtsInRegion)) {
+
+    //         if (!in_array($outstandingPayment->dealer->id, $dealers)) {
     //             return response()->json([
     //                 'success' => false,
     //                 'statusCode' => 403,
     //                 'message' => "You do not have permission to view this order.",
     //             ], 403);
     //         }
-    
-    //         // Format response
+
     //         $order = $outstandingPayment->order;
-    
+
     //         $orderItems = $order->orderItems->map(function ($item) {
     //             $productDetails = collect($item->product_details)->map(function ($detail) {
     //                 $productType = ProductType::find($detail['product_type_id']);
@@ -1037,7 +1046,7 @@ class OrderController extends Controller
     //                     'rate' => $detail['rate']
     //                 ];
     //             });
-    
+
     //             return [
     //                 'product_id' => $item->product_id,
     //                 'product_name' => $item->product->product_name ?? null,
@@ -1045,7 +1054,7 @@ class OrderController extends Controller
     //                 'product_details' => $productDetails,
     //             ];
     //         });
-    
+
     //         $response = [
     //             'order_id' => $order->id,
     //             'order_type' => $order->orderType->name ?? null,
@@ -1061,6 +1070,7 @@ class OrderController extends Controller
     //             'driver_name' => $order->driver_name,
     //             'driver_phone' => $order->driver_phone,
     //             'outstanding_payment' => [
+    //                 'outstanding_payment_id' =>  $outstandingPayment->id,
     //                 'invoice_number' => $outstandingPayment->invoice_number,
     //                 'invoice_date' => $outstandingPayment->invoice_date ? \Carbon\Carbon::parse($outstandingPayment->invoice_date)->format('d/m/Y') : null,
     //                 'due_date' => $outstandingPayment->due_date ? \Carbon\Carbon::parse($outstandingPayment->due_date)->format('d/m/Y') : null,
@@ -1078,14 +1088,14 @@ class OrderController extends Controller
     //                 'code' => $outstandingPayment->dealer->dealer_code,
     //             ]
     //         ];
-    
+
     //         return response()->json([
     //             'success' => true,
     //             'statusCode' => 200,
     //             'message' => 'Outstanding Payment Order details fetched successfully',
     //             'data' => $response,
     //         ], 200);
-    
+
     //     } catch (Exception $e) {
     //         return response()->json([
     //             'success' => false,
@@ -1116,10 +1126,31 @@ class OrderController extends Controller
 
     //         // Fetch outstanding payment with dealer details
     //         $outstandingPayment = OutstandingPayment::with('dealer')->findOrFail($outstandingPaymentId);
+    //         $dealerDistrictId = $outstandingPayment->dealer->district_id;
+    //         $dealerId = $outstandingPayment->dealer->id;
 
-    //         // Restrict RSMs to only their region's dealers
-    //         if ($employee->employee_type_id == 4) { // RSM (Regional Sales Manager)
-    //             // Fetch RSM's assigned region
+    //         // Role-based access control
+    //         if ($employee->employee_type_id == 2) { // ASO - Check assigned routes
+    //             $assignedDealerIds = AssignRoute::where('employee_id', $employee->id)
+    //                 ->pluck('dealer_id')
+    //                 ->toArray();
+
+    //             if (!in_array($dealerId, $assignedDealerIds)) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'statusCode' => 403,
+    //                     'message' => "You do not have permission to add commitments for this order.",
+    //                 ], 403);
+    //             }
+    //         } elseif ($employee->employee_type_id == 3) { // DSM - Check district
+    //             if ($dealerDistrictId != $employee->district_id) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'statusCode' => 403,
+    //                     'message' => "You do not have permission to add commitments for this order.",
+    //                 ], 403);
+    //             }
+    //         } elseif ($employee->employee_type_id == 4) { // RSM - Check region
     //             $region = Regions::whereHas('districts', function ($query) use ($employee) {
     //                 $query->where('id', $employee->district_id);
     //             })->first();
@@ -1132,11 +1163,8 @@ class OrderController extends Controller
     //                 ], 404);
     //             }
 
-    //             // Get all district IDs under the RSM's region
     //             $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
-
-    //             // Check if dealer belongs to the RSM's region
-    //             if (!in_array($outstandingPayment->dealer->district_id, $districtsInRegion)) {
+    //             if (!in_array($dealerDistrictId, $districtsInRegion)) {
     //                 return response()->json([
     //                     'success' => false,
     //                     'statusCode' => 403,
@@ -1144,6 +1172,7 @@ class OrderController extends Controller
     //                 ], 403);
     //             }
     //         }
+    //         // SM (employee_type_id == 5) has access to all orders, so no restriction needed.
 
     //         // Calculate remaining outstanding amount
     //         $totalCommitted = OutstandingPaymentCommitment::where('outstanding_payment_id', $outstandingPaymentId)->sum('committed_amount');
@@ -1205,41 +1234,43 @@ class OrderController extends Controller
 
             $dealers = [];
 
-            if ($employee->employee_type_id == 2) { 
-                $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+            switch ($employee->employee_type_id) {
+                case 2: // ASO
+                    $assignedRoutes = AssignRoute::where('parent_id', $employee->id)->pluck('id')->toArray();
+                    if (empty($assignedRoutes)) {
+                        return response()->json([
+                            'success' => false,
+                            'statusCode' => 404,
+                            'message' => "No assigned routes found for the employee.",
+                        ], 404);
+                    }
+                    $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
+                    break;
 
-                if (empty($assignedRoutes)) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 404,
-                        'message' => "No assigned routes found for the employee.",
-                    ], 404);
-                }
+                case 3: // DSM
+                    $dealers = Dealer::where('district_id', $employee->district_id)->pluck('id')->toArray();
+                    break;
 
-                $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
+                case 4: // RSM
+                    $region = Regions::whereHas('districts', function ($query) use ($employee) {
+                        $query->where('id', $employee->district_id);
+                    })->first();
 
-            } elseif ($employee->employee_type_id == 3) { 
-                $dealers = Dealer::where('district_id', $employee->district_id)->pluck('id')->toArray();
+                    if (!$region) {
+                        return response()->json([
+                            'success' => false,
+                            'statusCode' => 404,
+                            'message' => "Region not found for the employee's district.",
+                        ], 404);
+                    }
 
-            } elseif ($employee->employee_type_id == 4) { 
-                $region = Regions::whereHas('districts', function ($query) use ($employee) {
-                    $query->where('id', $employee->district_id);
-                })->first();
+                    $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
+                    $dealers = Dealer::whereIn('district_id', $districtsInRegion)->pluck('id')->toArray();
+                    break;
 
-                if (!$region) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 404,
-                        'message' => "Region not found for the employee's district.",
-                    ], 404);
-                }
-
-                $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
-
-                $dealers = Dealer::whereIn('district_id', $districtsInRegion)->pluck('id')->toArray();
-
-            } elseif ($employee->employee_type_id == 5) {
-                $dealers = Dealer::pluck('id')->toArray();
+                case 5: // SM
+                    $dealers = Dealer::pluck('id')->toArray();
+                    break;
             }
 
             if (empty($dealers)) {
@@ -1251,17 +1282,18 @@ class OrderController extends Controller
             }
 
             $outstandingPayments = OutstandingPayment::whereIn('dealer_id', $dealers)
-                ->where('outstanding_amount', '>', 0) 
-                ->with('dealer:id,dealer_name,dealer_code') 
+                ->where('outstanding_amount', '>', 0)
+                ->with('dealer:id,dealer_name,dealer_code')
                 ->orderBy('due_date', 'asc')
                 ->get();
 
             $paymentsData = $outstandingPayments->map(function ($payment) {
                 return [
+                    'id' => $payment->id,
                     'order_id' => $payment->order_id,
                     'invoice_number' => $payment->invoice_number,
-                    'invoice_date' => $payment->invoice_date ? \Carbon\Carbon::parse($payment->invoice_date)->format('d/m/Y') : null,
-                    'due_date' => $payment->due_date ? \Carbon\Carbon::parse($payment->due_date)->format('d/m/Y') : null,
+                    'invoice_date' => optional($payment->invoice_date)->format('d/m/Y'),
+                    'due_date' => optional($payment->due_date)->format('d/m/Y'),
                     'invoice_total' => (float) $payment->invoice_total,
                     'paid_amount' => (float) $payment->paid_amount,
                     'outstanding_amount' => (float) $payment->outstanding_amount,
@@ -1294,7 +1326,7 @@ class OrderController extends Controller
     {
         try {
             $employee = Auth::user();
-
+    
             if (!$employee) {
                 return response()->json([
                     'success' => false,
@@ -1302,12 +1334,12 @@ class OrderController extends Controller
                     'message' => "User not Authenticated",
                 ], 401);
             }
-
+    
             $dealers = [];
-
-            if ($employee->employee_type_id == 2) { 
+    
+            if ($employee->employee_type_id == 2) { // ASO
                 $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
-
+    
                 if (empty($assignedRoutes)) {
                     return response()->json([
                         'success' => false,
@@ -1315,17 +1347,19 @@ class OrderController extends Controller
                         'message' => "No assigned routes found for the employee.",
                     ], 404);
                 }
-
-                $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
-
-            } elseif ($employee->employee_type_id == 3) { 
+    
+                // Get dealers assigned to ASO via parent_id relationship
+                $dealerRoutes = AssignRoute::whereIn('parent_id', $assignedRoutes)->pluck('id')->toArray();
+                $dealers = Dealer::whereIn('assigned_route_id', $dealerRoutes)->pluck('id')->toArray();
+    
+            } elseif ($employee->employee_type_id == 3) { // DSM
                 $dealers = Dealer::where('district_id', $employee->district_id)->pluck('id')->toArray();
-
-            } elseif ($employee->employee_type_id == 4) { 
+    
+            } elseif ($employee->employee_type_id == 4) { // RSM
                 $region = Regions::whereHas('districts', function ($query) use ($employee) {
                     $query->where('id', $employee->district_id);
                 })->first();
-
+    
                 if (!$region) {
                     return response()->json([
                         'success' => false,
@@ -1333,14 +1367,14 @@ class OrderController extends Controller
                         'message' => "Region not found for the employee's district.",
                     ], 404);
                 }
-
+    
                 $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
                 $dealers = Dealer::whereIn('district_id', $districtsInRegion)->pluck('id')->toArray();
-
-            } elseif ($employee->employee_type_id == 5) { 
+    
+            } elseif ($employee->employee_type_id == 5) { // SM
                 $dealers = Dealer::pluck('id')->toArray();
             }
-
+    
             if (empty($dealers)) {
                 return response()->json([
                     'success' => false,
@@ -1348,7 +1382,7 @@ class OrderController extends Controller
                     'message' => "No dealers found for the given criteria.",
                 ], 404);
             }
-
+    
             $outstandingPayment = OutstandingPayment::with([
                 'dealer:id,dealer_name,dealer_code,district_id',
                 'order.orderType:id,name',
@@ -1356,7 +1390,7 @@ class OrderController extends Controller
                 'order.paymentTerm:id,name',
                 'order.vehicleCategory:id,vehicle_category_name'
             ])->where('order_id', $orderId)->first();
-
+    
             if (!$outstandingPayment) {
                 return response()->json([
                     'success' => false,
@@ -1365,7 +1399,7 @@ class OrderController extends Controller
                     'data' => []
                 ], 404);
             }
-
+    
             if (!in_array($outstandingPayment->dealer->id, $dealers)) {
                 return response()->json([
                     'success' => false,
@@ -1373,9 +1407,9 @@ class OrderController extends Controller
                     'message' => "You do not have permission to view this order.",
                 ], 403);
             }
-
+    
             $order = $outstandingPayment->order;
-
+    
             $orderItems = $order->orderItems->map(function ($item) {
                 $productDetails = collect($item->product_details)->map(function ($detail) {
                     $productType = ProductType::find($detail['product_type_id']);
@@ -1386,7 +1420,7 @@ class OrderController extends Controller
                         'rate' => $detail['rate']
                     ];
                 });
-
+    
                 return [
                     'product_id' => $item->product_id,
                     'product_name' => $item->product->product_name ?? null,
@@ -1394,7 +1428,7 @@ class OrderController extends Controller
                     'product_details' => $productDetails,
                 ];
             });
-
+    
             $response = [
                 'order_id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
@@ -1410,6 +1444,7 @@ class OrderController extends Controller
                 'driver_name' => $order->driver_name,
                 'driver_phone' => $order->driver_phone,
                 'outstanding_payment' => [
+                    'outstanding_payment_id' =>  $outstandingPayment->id,
                     'invoice_number' => $outstandingPayment->invoice_number,
                     'invoice_date' => $outstandingPayment->invoice_date ? \Carbon\Carbon::parse($outstandingPayment->invoice_date)->format('d/m/Y') : null,
                     'due_date' => $outstandingPayment->due_date ? \Carbon\Carbon::parse($outstandingPayment->due_date)->format('d/m/Y') : null,
@@ -1427,14 +1462,14 @@ class OrderController extends Controller
                     'code' => $outstandingPayment->dealer->dealer_code,
                 ]
             ];
-
+    
             return response()->json([
                 'success' => true,
                 'statusCode' => 200,
                 'message' => 'Outstanding Payment Order details fetched successfully',
                 'data' => $response,
             ], 200);
-
+    
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1465,53 +1500,44 @@ class OrderController extends Controller
 
             // Fetch outstanding payment with dealer details
             $outstandingPayment = OutstandingPayment::with('dealer')->findOrFail($outstandingPaymentId);
-            $dealerDistrictId = $outstandingPayment->dealer->district_id;
-            $dealerId = $outstandingPayment->dealer->id;
+            $dealer = $outstandingPayment->dealer;
 
-            // Role-based access control
-            if ($employee->employee_type_id == 2) { // ASO - Check assigned routes
-                $assignedDealerIds = AssignRoute::where('employee_id', $employee->id)
-                    ->pluck('dealer_id')
-                    ->toArray();
+            // Access control logic
+            $allowed = false;
 
-                if (!in_array($dealerId, $assignedDealerIds)) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 403,
-                        'message' => "You do not have permission to add commitments for this order.",
-                    ], 403);
-                }
-            } elseif ($employee->employee_type_id == 3) { // DSM - Check district
-                if ($dealerDistrictId != $employee->district_id) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 403,
-                        'message' => "You do not have permission to add commitments for this order.",
-                    ], 403);
-                }
-            } elseif ($employee->employee_type_id == 4) { // RSM - Check region
-                $region = Regions::whereHas('districts', function ($query) use ($employee) {
-                    $query->where('id', $employee->district_id);
-                })->first();
+            switch ($employee->employee_type_id) {
+                case 2: // ASO - Check assigned routes
+                    $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+                    $allowed = in_array($dealer->assigned_route_id, $assignedRoutes);
+                    break;
 
-                if (!$region) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 404,
-                        'message' => "Region not found for the employee's district.",
-                    ], 404);
-                }
+                case 3: // DSM - Check district
+                    $allowed = ($dealer->district_id == $employee->district_id);
+                    break;
 
-                $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
-                if (!in_array($dealerDistrictId, $districtsInRegion)) {
-                    return response()->json([
-                        'success' => false,
-                        'statusCode' => 403,
-                        'message' => "You do not have permission to add commitments for this order.",
-                    ], 403);
-                }
+                case 4: // RSM - Check region
+                    $region = Regions::whereHas('districts', function ($query) use ($employee) {
+                        $query->where('id', $employee->district_id);
+                    })->first();
+
+                    if ($region) {
+                        $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
+                        $allowed = in_array($dealer->district_id, $districtsInRegion);
+                    }
+                    break;
+
+                case 5: // SM - Unrestricted access
+                    $allowed = true;
+                    break;
             }
-            // SM (employee_type_id == 5) has access to all orders, so no restriction needed.
+
+            if (!$allowed) {
+                return response()->json([
+                    'success' => false,
+                    'statusCode' => 403,
+                    'message' => "You do not have permission to add commitments for this order.",
+                ], 403);
+            }
 
             // Calculate remaining outstanding amount
             $totalCommitted = OutstandingPaymentCommitment::where('outstanding_payment_id', $outstandingPaymentId)->sum('committed_amount');
@@ -1558,6 +1584,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
 
 
    
