@@ -54,7 +54,7 @@
                     @foreach(range(1, 6) as $i)
                     <div class="row mt-2">
                         <div class="col-md-5">
-                            <select name="route_name{{ $i }}" class="form-control ">
+                            <select name="routes[{{ $i }}][route_name]" class="form-control ">
                                 <option value="">Select Route</option>
                                 <option value="R1">R1</option>
                                 <option value="R2">R2</option>
@@ -66,7 +66,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <select class="form-control select2-multi" name="locations{{ $i }}[]" multiple="multiple"></select>
+                            <select class="form-control select2-multi" name="routes[{{ $i }}][locations][]" multiple="multiple"></select>
                         </div>
                     </div>
                     @endforeach

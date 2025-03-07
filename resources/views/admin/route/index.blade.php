@@ -39,19 +39,22 @@
         }
 
         initializeSelect2();
+        
         function updateRouteDropdowns() {
             let selectedRoutes = [];
-            $('select[name^="route_name"]').each(function () {
+
+            $('select[name^="routes"]').each(function () {
                 let val = $(this).val();
                 if (val) selectedRoutes.push(val);
             });
 
-            $('select[name^="route_name"]').each(function () {
+            $('select[name^="routes"]').each(function () {
                 let currentSelect = $(this);
                 let currentValue = currentSelect.val();
 
                 currentSelect.find('option').each(function () {
                     let optionValue = $(this).val();
+
                     if (optionValue && selectedRoutes.includes(optionValue) && optionValue !== currentValue) {
                         $(this).prop('disabled', true);
                     } else {
@@ -60,38 +63,44 @@
                 });
             });
         }
-
+     
         function updateLocationDropdowns() {
-            let selectedLocations = [];
+            let selectedLocations = new Set();
+
             $('.select2-multi').each(function () {
-                let val = $(this).val();
-                if (val) selectedLocations = selectedLocations.concat(val);
+                let values = $(this).val();
+                if (values) {
+                    values.forEach(value => selectedLocations.add(value));
+                }
             });
 
+            // Update all dropdowns to disable selected locations
             $('.select2-multi').each(function () {
                 let currentSelect = $(this);
-                let currentValues = currentSelect.val();
+                let currentValue = new Set(currentSelect.val() || []);
 
                 currentSelect.find('option').each(function () {
                     let optionValue = $(this).val();
-                    if (optionValue && selectedLocations.includes(optionValue) && (!currentValues || !currentValues.includes(optionValue))) {
+
+                    if (optionValue && selectedLocations.has(optionValue) && !currentValue.has(optionValue)) {
                         $(this).prop('disabled', true);
                     } else {
                         $(this).prop('disabled', false);
                     }
                 });
 
-                currentSelect.trigger('change.select2'); 
+                // Refresh select2 to apply changes
+                currentSelect.trigger('change.select2');
             });
         }
-
-        $(document).on('change', 'select[name^="route_name"]', function () {
-            updateRouteDropdowns();
-        });
-
         $(document).on('change', '.select2-multi', function () {
             updateLocationDropdowns();
         });
+
+        $(document).on('change', 'select[name^="routes"]', function () {
+            updateRouteDropdowns();
+        });
+   
 
         function loadDistricts() {
             $.get("{{ route('admin.get-districts') }}", function (data) {
@@ -130,22 +139,45 @@
                     });
                 });
             }
-
             if (district_id) {
                 $.get("{{ route('admin.get-locations') }}", { district_id: district_id }, function (data) {
-                    $('.select2-multi').empty();
-                    if (data.length > 0) {
-                        $.each(data, function (index, location) {
-                            $('.select2-multi').append('<option value="' + location + '">' + location + '</option>');
-                        });
-                    } else {
-                        $('.select2-multi').append('<option value="">No Locations Available</option>');
-                    }
-                    $('.select2-multi').trigger('change'); 
+                    $('.select2-multi').each(function () {
+                        let $select = $(this);
+                        $select.empty();
+
+                        if (data.length > 0) {
+                            $.each(data, function (index, location) {
+                                $select.append(`<option value="${location}">${location}</option>`);
+                            });
+                        } else {
+                            $select.append('<option value="">No Locations Available</option>');
+                        }
+
+                        // Trigger change and reapply disabled logic
+                        $select.trigger('change.select2');
+                        updateLocationDropdowns();
+                    });
                 });
             } else {
-                $('.select2-multi').empty().trigger('change');
+                $('.select2-multi').empty().trigger('change.select2');
             }
+
+
+            // if (district_id) {
+            //     $.get("{{ route('admin.get-locations') }}", { district_id: district_id }, function (data) {
+            //         $('.select2-multi').empty();
+            //         if (data.length > 0) {
+            //             $.each(data, function (index, location) {
+            //                 $('.select2-multi').append('<option value="' + location + '">' + location + '</option>');
+            //             });
+            //         } else {
+            //             $('.select2-multi').append('<option value="">No Locations Available</option>');
+            //         }
+            //         $('.select2-multi').trigger('change'); 
+            //     });
+            // } else {
+            //     $('.select2-multi').empty().trigger('change');
+            // }
         });
 
 
@@ -168,7 +200,12 @@
         $('#openCreateAssignRouteModal').on('click', function () {
             $('#assignedRouteForm')[0].reset();
             $('.select2').val(null).trigger('change');
-            $('.select2-multi').val([]).trigger('change');
+            // $('.select2-multi').val([]).trigger('change');
+
+            $('.select2-multi').each(function () {
+                $(this).find('option').prop('disabled', false); // Re-enable all options
+                $(this).val([]).trigger('change'); // Clear selection
+            });            
             updateRouteDropdowns();
             updateLocationDropdowns();
             $('#createEditAssignRouteModal').modal('show');
@@ -190,25 +227,57 @@
 
         $('#assignedRouteForm').on('submit', function (e) {
             e.preventDefault();
+
+            let isValid = true;
+
+            $('select[name^="routes"]').each(function () {
+                if (!$(this).val()) {
+                    $(this).attr('required', true); 
+                    isValid = false;
+                } else {
+                    $(this).removeAttr('required');
+                }
+            });
+
+            $('.select2-multi').each(function () {
+                if (!$(this).val() || $(this).val().length === 0) {
+                    $(this).attr('required', true);
+                    isValid = false;
+                } else {
+                    $(this).removeAttr('required'); 
+                }
+            });
+
+            if (!isValid) {
+                return false; 
+            }
             let routeId = $('#route_id').val().trim();
-            let formData = $(this).serialize();
-            let url = routeId ? "{{ route('admin.route.assigned-update', ':id') }}".replace(':id', routeId) : "{{ route('admin.route.assigned-store') }}";
-            let type = routeId ? "PUT" : "POST";
+            
+            let formData = new FormData(this);
+
+            let url = routeId 
+                ? "{{ route('admin.route.assigned-update', ':id') }}".replace(':id', routeId) 
+                : "{{ route('admin.route.assigned-store') }}";
+
+            let type = routeId ? "POST" : "POST"; 
 
             $.ajax({
                 url: url,
                 type: type,
                 data: formData,
+                processData: false,
+                contentType: false, 
                 success: function (response) {
                     alert(response.message);
                     $('#createEditAssignRouteModal').modal('hide');
                     routeTable.ajax.reload();
                 },
                 error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.message);
+                    alert('Error: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Something went wrong'));
                 }
             });
         });
+
 
         $(document).on('click', '.deleteRoute', function () {
             let routeId = $(this).data('id');
