@@ -1338,7 +1338,8 @@ class OrderController extends Controller
             $dealers = [];
     
             if ($employee->employee_type_id == 2) { // ASO
-                $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+                // $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
+                $assignedRoutes = AssignRoute::where('parent_id', $employee->id)->pluck('id')->toArray();
     
                 if (empty($assignedRoutes)) {
                     return response()->json([
@@ -1349,8 +1350,9 @@ class OrderController extends Controller
                 }
     
                 // Get dealers assigned to ASO via parent_id relationship
-                $dealerRoutes = AssignRoute::whereIn('parent_id', $assignedRoutes)->pluck('id')->toArray();
-                $dealers = Dealer::whereIn('assigned_route_id', $dealerRoutes)->pluck('id')->toArray();
+                // $dealerRoutes = AssignRoute::whereIn('parent_id', $assignedRoutes)->pluck('id')->toArray();
+                // $dealers = Dealer::whereIn('assigned_route_id', $dealerRoutes)->pluck('id')->toArray();
+                $dealers = Dealer::whereIn('assigned_route_id', $assignedRoutes)->pluck('id')->toArray();
     
             } elseif ($employee->employee_type_id == 3) { // DSM
                 $dealers = Dealer::where('district_id', $employee->district_id)->pluck('id')->toArray();
