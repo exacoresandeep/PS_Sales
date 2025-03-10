@@ -345,3 +345,15 @@ main {
 .active-menu > ul {
   display: block !important;
 }
+/* Ansiya */
+.button-align{
+  position: relative;
+}
+.button-align .btn{
+  position: absolute;
+  right:0px;
+}
+.search-btn{
+  display: flex;
+  align-items: center;
+}
