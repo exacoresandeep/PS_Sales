@@ -21,93 +21,7 @@ use Exception;
 
 class RouteController extends Controller
 {
-    // public function index()
-    // {
-    //     $routes = TripRoute::all(); 
-    //     $districts = District::all();
-    //     $employeeTypes = EmployeeType::all();
-    
-    //     return view('admin.route.index', compact('routes', 'districts', 'employeeTypes'));
-    // }
-    // public function store(Request $request)
-    // {
-    //     $request->validate([
-    //         'district_id' => 'required|exists:districts,id',
-    //         'route_name' => 'required|string|max:255',
-    //         'location_name' => 'required|string|max:255',
-    //         'sub_locations' => 'required|string', 
-    //     ]);
-    //     $subLocations = json_decode($request->sub_locations, true);
 
-    //     if (!is_array($subLocations)) {
-    //         return response()->json(['message' => 'Invalid sub locations format'], 422);
-    //     }
-
-    
-    //     $route = new TripRoute();
-    //     $route->district_id = $request->district_id;
-    //     $route->route_name = $request->route_name;
-    //     $route->location_name = $request->location_name;
-    //     $route->sub_locations = json_encode($subLocations);
-    //     $route->status = "1";
-    //     $route->save();
-
-    //     return response()->json(['message' => 'Route created successfully']);
-    // }
-
-    // public function update(Request $request)
-    // {
-    //     $request->validate([
-    //         'district_id' => 'required|exists:districts,id',
-    //         'route_name' => 'required|string|max:255',
-    //         'location_name' => 'required|string|max:255',
-    //         'sub_locations' => 'required|string',
-    //     ]);
-    //     $subLocations = json_decode($request->sub_locations, true);
-
-    //     if (!is_array($subLocations)) {
-    //         return response()->json(['message' => 'Invalid sub locations format'], 422);
-    //     }
-
-    //     $route = TripRoute::findOrFail($request->id);
-        
-    //     $route->district_id = $request->district_id;
-    //     $route->route_name = $request->route_name;
-    //     $route->location_name = $request->location_name;
-    //     $route->sub_locations = json_encode($subLocations);
-    //     $route->save();
-
-    //     return response()->json(['message' => 'Route updated successfully']);
-    // }
-    // public function routesListing(Request $request)
-    // {
-    //     $query = TripRoute::with('district'); 
-    
-    //     return DataTables::of($query)
-    //         ->addIndexColumn()
-    //         ->addColumn('district_name', function ($route) {
-    //             return optional($route->district)->name ?? '-'; 
-    //         })
-    //         ->addColumn('sub_locations', function ($route) {
-    //             $subLocations = json_decode($route->sub_locations, true);
-    //             return is_array($subLocations) ? implode(', ', $subLocations) : '-';
-    //         })
-    //         ->addColumn('action', function ($route) {
-    //             return '
-    //                 <button class="btn btn-sm btn-info" onclick="handleAction(' . $route->id . ', \'view\')" title="View">
-    //                     <i class="fa fa-eye"></i>
-    //                 </button>
-    //                 <button class="btn btn-sm btn-warning" onclick="handleAction(' . $route->id . ', \'edit\')" title="Edit">
-    //                     <i class="fa fa-edit"></i>
-    //                 </button>
-    //                 <button class="btn btn-sm btn-danger" onclick="deleteRoute(' . $route->id . ')" title="Delete">
-    //                     <i class="fa fa-trash"></i>
-    //                 </button>
-    //             ';
-    //         })
-    //         ->rawColumns(['action'])
-    //         ->make(true);
-    // }
     public function getTodaysTrip(Request $request)
     {
         try {
@@ -836,7 +750,7 @@ class RouteController extends Controller
     {
         $districts = District::all(); 
 
-        return view('admin.route.route-index', compact('districts'));
+        return view('sales.route.route-index', compact('districts'));
     }
 
     public function routeList(Request $request)
@@ -921,44 +835,48 @@ class RouteController extends Controller
     }
     public function assignedIndex()
     {
-        return view('admin.route.index');
+        return view('sales.route.index');
     }
 
     public function assignedList()
     {
-        $routes = AssignRoute::with(['district', 'employee'])->get();
+        $routes = AssignRoute::with(['district', 'employee'])
+            ->get()
+            ->groupBy('employee_id'); 
 
-        return DataTables::of($routes)
-            ->addIndexColumn() 
-            ->addColumn('district', function ($route) {
-                return $route->district->name ?? 'N/A';
-            })
-            ->addColumn('employee_type', function ($route) {
-                if ($route->employee) {
-                    $employeeTypes = [
-                        1 => 'Sales Executive',
-                        2 => 'Area Sales Officer'
-                    ];
-                    return $employeeTypes[$route->employee->employee_type_id] ?? 'Unknown';
-                }
-                return 'N/A';
-            })
-            ->addColumn('employee', function ($route) {
-                return $route->employee->name ?? 'N/A';
-            })
-            ->addColumn('route_name', function ($route) {
-                return $route->route_name  ?? 'N/A';
-            })
-            ->addColumn('locations', function ($route) {
-                return  $route->locations ?? 'N/A';
-            })
-            ->addColumn('action', function ($route) {
-                return '<button class="btn btn-sm btn-warning editRoute" data-id="'.$route->id.'">Edit</button>
-                        <button class="btn btn-sm btn-danger deleteRoute" data-id="'.$route->id.'">Delete</button>';
-            })
-            ->rawColumns(['action'])
+        $formattedRoutes = $routes->map(function ($routeGroup) {
+            $firstRoute = $routeGroup->first(); 
+            
+            return [
+                'DT_RowIndex'   => null, 
+                'district'      => $firstRoute->district->name ?? 'N/A',
+                'employee_type' => $this->getEmployeeType($firstRoute->employee->employee_type_id ?? null),
+                'employee'      => $firstRoute->employee->name ?? 'N/A',
+                'route_name'    => $routeGroup->map(function ($route) {
+                    return $route->route_name . ' - ' . $route->locations; 
+                })->implode('<br>'), 
+                'action'        => '<button class="btn btn-sm btn-warning editRoute" data-id="'.$firstRoute->id.'">Edit</button>'
+            ];
+        })->values(); 
+
+        return DataTables::of($formattedRoutes)
+            ->addIndexColumn()
+            ->rawColumns(['route_name', 'action']) 
             ->make(true);
     }
+
+    private function getEmployeeType($employee_type_id)
+    {
+        $employeeTypes = [
+            1 => 'Sales Executive',
+            2 => 'Area Sales Officer',
+            3 => 'District Sales Manager',
+            4 => 'Regional Sales Manager',
+            5 => 'Sales Manager'
+        ];
+        return $employeeTypes[$employee_type_id] ?? 'Unknown';
+    }
+
     
     public function storeAssignedRoute(Request $request)
     {
@@ -1005,38 +923,108 @@ class RouteController extends Controller
     
         return response()->json(['message' => 'Assigned Routes stored successfully!']);
     }
-    
-    
+   
     public function editAssignedRoute($id)
     {
         $route = AssignRoute::findOrFail($id);
-        return response()->json($route);
+    
+        $assignedRoutes = AssignRoute::where('district_id', $route->district_id)
+            ->where('employee_type_id', $route->employee_type_id)
+            ->where('employee_id', $route->employee_id)
+            ->get();
+    
+        $formattedRoutes = [
+            'id' => $route->id,
+            'district_id' => $route->district_id,
+            'employee_type_id' => $route->employee_type_id,
+            'employee_id' => $route->employee_id, 
+            'aso_id' => $route->parent_id, 
+            'routes' => $assignedRoutes->map(function ($r) {
+                return [
+                    'route_name' => $r->route_name,
+                    'locations' => !empty($r->locations) ? explode(', ', $r->locations) : [],
+                ];
+            })
+        ];
+    
+        return response()->json($formattedRoutes);
     }
-    public function updateAssignedRoute(Request $request, $id)
-    {
+  
 
+    public function updateAssignedRoute(Request $request, $assignedRouteId)
+    {
         $request->validate([
-            'district_id' => 'required|exists:districts,id',
             'employee_type_id' => 'required|integer',
             'employee_id' => 'required|exists:employees,id',
-            'route_name' => 'required|string|max:255',
-            'locations' => 'required|array',
+            'aso_id' => 'nullable|exists:employees,id',
+            'routes' => 'required|array|max:6',
+            'routes.*.route_name' => 'required|string|max:255',
+            'routes.*.locations' => 'nullable|array',
+            'routes.*.locations.*' => 'nullable|string',
         ]);
 
+        $referenceRoute = AssignRoute::find($assignedRouteId);
+        if (!$referenceRoute) {
+            return response()->json(['message' => 'Assigned route not found!'], 404);
+        }
 
-        $route = AssignRoute::findOrFail($id);
+        $employeeTypeId = $request->employee_type_id;
+        $newEmployeeId = $request->employee_id;
+        $oldEmployeeId = $referenceRoute->employee_id;
+        $parentId = ($employeeTypeId == 1) ? $request->aso_id : null;
+        
+        if ($newEmployeeId !== $oldEmployeeId) { 
+            $existingNewEmployeeRoutes = AssignRoute::where('employee_id', $newEmployeeId)
+                ->where('id', '!=', $assignedRouteId) 
+                ->count();
+        
+            if ($existingNewEmployeeRoutes > 5) { 
+                return response()->json(['message' => 'This employee already has assigned routes!'], 400);
+            }
+        }
+        $existingRoutes = AssignRoute::where('employee_id', $oldEmployeeId)
+            ->orderBy('id')
+            ->get();
 
-        $route->update([
-            'district_id' => $request->district_id,
-            'employee_type_id' => $request->employee_type_id,
-            'employee_id' => $request->employee_id,
-            'route_name' => $request->route_name,
-            'locations' => json_encode($request->locations), 
-        ]);
+        if ($existingRoutes->count() < 6) {
+            return response()->json(['message' => 'Not enough assigned routes found!'], 404);
+        }
 
-        return response()->json(['message' => 'Assigned Route updated successfully!']);
+        if (!$existingRoutes->contains('id', $assignedRouteId)) {
+            return response()->json(['message' => 'Assigned route not found in existing routes!'], 404);
+        }
+
+        $requestRoutes = collect(array_values($request->routes));
+        if ($requestRoutes->count() < 6) {
+            return response()->json(['message' => 'You must provide exactly 6 routes!'], 400);
+        }
+
+        $existingRoutes = $existingRoutes->sortBy('id')->values();
+
+        foreach ($existingRoutes as $index => $route) {
+            if (!$requestRoutes->has($index)) {
+                continue;
+            }
+
+            $updatedRoute = $requestRoutes[$index];
+
+            $route->refresh();
+
+            $route->update([
+                'employee_type_id' => $employeeTypeId,
+                'employee_id' => $newEmployeeId,
+                'parent_id' => $parentId,
+                'route_name' => $updatedRoute['route_name'],
+                'locations' => isset($updatedRoute['locations']) && is_array($updatedRoute['locations'])
+                    ? implode(', ', $updatedRoute['locations'])
+                    : '',
+            ]);
+        }
+
+        return response()->json(['message' => 'Assigned Routes updated successfully!']);
     }
 
+   
     public function deleteAssignedRoute($id)
     {
         AssignRoute::findOrFail($id)->delete();
@@ -1065,8 +1053,6 @@ class RouteController extends Controller
 
         return response()->json($locations);
     }
-
-
 
 
 }

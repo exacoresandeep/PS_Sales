@@ -30,11 +30,11 @@
     <main>
         <div class="main-container">
             <div class="d-flex h-100">
-                @include('admin.includes.sidebar-menu')
+                @include('includes.sidebar-menu')
 
                 <div class="w-100">
                     <div class="content-area">
-                        @include('admin.includes.header')
+                        @include('includes.header')
                         <div class="dashboard-area">
                             @yield('content')
                         </div>
@@ -45,5 +45,5 @@
     </main>
       
 
-    @include('admin.includes.footer')
+    @include('includes.footer')
 

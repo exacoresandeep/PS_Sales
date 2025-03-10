@@ -24,7 +24,7 @@
     </div>
 </div>
 
-@include('admin.route.route-modal-create-edit')
+@include('sales.route.route-modal-create-edit')
 
 @endsection
 {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
@@ -62,7 +62,7 @@
         let routeTable = $('#routeTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route("admin.route.route-list") }}',
+            ajax: '{{ route("sales.route.type.list") }}',
             columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'district_name', name: 'district.name' },
@@ -80,8 +80,8 @@
 
             let route_id = $('#route_id').val();
             let url = route_id
-                ? `{{ route('admin.route.route-update', ':id') }}`.replace(':id', route_id)
-                : "{{ route('admin.route.route-store') }}";
+                ? `{{ route('sales.route.type.update', ':id') }}`.replace(':id', route_id)
+                : "{{ route('sales.route.type.store') }}";
 
             let formData = new FormData();
             formData.append('_token', '{{ csrf_token() }}');
@@ -113,7 +113,7 @@
             let route_id = $(this).data('id');
 
             $.ajax({
-                url: `{{ route('admin.route.route-edit', ':id') }}`.replace(':id', route_id),
+                url: `{{ route('sales.route.type.edit', ':id') }}`.replace(':id', route_id),
                 type: 'GET',
                 success: function (response) {
                     const route = response.route;
@@ -155,7 +155,7 @@
             const route_id = $(this).data('id');
             if (confirm('Are you sure you want to delete this route?')) {
                 $.ajax({
-                    url: `{{ route('admin.route.route-delete', ':id') }}`.replace(':id', route_id),
+                    url: `{{ route('sales.route.type.delete', ':id') }}`.replace(':id', route_id),
                     method: 'DELETE',
                     data: { _token: '{{ csrf_token() }}' },
                     success: function (response) {

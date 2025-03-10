@@ -37,9 +37,9 @@
                             </div>
                         @endif
     
-                        <form method="POST" action="{{ route('admin.doLogin') }}">
+                        <form method="POST" action="{{ route('doLogin') }}">
                             @csrf
-    
+
                             <label>User Name</label>
                             <input type="text" name="username" class="form-control" placeholder="Username" required>
     

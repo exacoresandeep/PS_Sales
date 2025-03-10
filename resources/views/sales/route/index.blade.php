@@ -15,8 +15,7 @@
                     <th>District</th>
                     <th>Employee Type</th>
                     <th>Employee</th>
-                    <th>Route Name</th>
-                    <th>Locations</th>
+                    <th>Assigned Routes</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -25,7 +24,7 @@
     </div>
 </div>
 
-@include('admin.route.modal-create-edit')
+@include('sales.route.modal-create-edit')
 
 @endsection
 
@@ -74,7 +73,6 @@
                 }
             });
 
-            // Update all dropdowns to disable selected locations
             $('.select2-multi').each(function () {
                 let currentSelect = $(this);
                 let currentValue = new Set(currentSelect.val() || []);
@@ -89,7 +87,6 @@
                     }
                 });
 
-                // Refresh select2 to apply changes
                 currentSelect.trigger('change.select2');
             });
         }
@@ -103,7 +100,7 @@
    
 
         function loadDistricts() {
-            $.get("{{ route('admin.get-districts') }}", function (data) {
+            $.get("{{ route('sales.get-districts') }}", function (data) {
                 $('#district').empty().append('<option value="">Select District</option>');
                 $.each(data, function (key, district) {
                     $('#district').append(`<option value="${district.id}">${district.name}</option>`);
@@ -118,7 +115,7 @@
                 $('#asoField').show();
                 $('#aso').attr('required', true);
                 if (district_id) {
-                    $.get("{{ route('admin.get-employees') }}", { district_id: district_id, employee_type_id: 2 }, function (data) {
+                    $.get("{{ route('sales.get-employees') }}", { district_id: district_id, employee_type_id: 2 }, function (data) {
                         $('#aso').empty().append('<option value="">Select Area Sales Officer</option>');
                         $.each(data, function (key, employee) {
                             $('#aso').append(`<option value="${employee.id}">${employee.name}</option>`);
@@ -132,7 +129,7 @@
             }
 
             if (district_id && employee_type_id) {
-                $.get("{{ route('admin.get-employees') }}", { district_id, employee_type_id }, function (data) {
+                $.get("{{ route('sales.get-employees') }}", { district_id, employee_type_id }, function (data) {
                     $('#employee').empty().append('<option value="">Select Employee</option>');
                     $.each(data, function (key, employee) {
                         $('#employee').append(`<option value="${employee.id}">${employee.name}</option>`);
@@ -140,10 +137,10 @@
                 });
             }
             if (district_id) {
-                $.get("{{ route('admin.get-locations') }}", { district_id: district_id }, function (data) {
+                $.get("{{ route('sales.get-locations') }}", { district_id: district_id }, function (data) {
                     $('.select2-multi').each(function () {
                         let $select = $(this);
-                        $select.empty();
+                        // $select.empty();
 
                         if (data.length > 0) {
                             $.each(data, function (index, location) {
@@ -163,36 +160,18 @@
             }
 
 
-            // if (district_id) {
-            //     $.get("{{ route('admin.get-locations') }}", { district_id: district_id }, function (data) {
-            //         $('.select2-multi').empty();
-            //         if (data.length > 0) {
-            //             $.each(data, function (index, location) {
-            //                 $('.select2-multi').append('<option value="' + location + '">' + location + '</option>');
-            //             });
-            //         } else {
-            //             $('.select2-multi').append('<option value="">No Locations Available</option>');
-            //         }
-            //         $('.select2-multi').trigger('change'); 
-            //     });
-            // } else {
-            //     $('.select2-multi').empty().trigger('change');
-            // }
         });
-
-
 
         let routeTable = $('#routeTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: "{{ route('admin.route.assigned-list') }}",
+            ajax: "{{ route('sales.route.assigned.list') }}",
             columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: false, orderable: false },
                 { data: 'district', name: 'district' },
                 { data: 'employee_type', name: 'employee_type' },
                 { data: 'employee', name: 'employee' },
                 { data: 'route_name', name: 'route_name' },
-                { data: 'locations', name: 'locations' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ]
         });
@@ -200,31 +179,110 @@
         $('#openCreateAssignRouteModal').on('click', function () {
             $('#assignedRouteForm')[0].reset();
             $('.select2').val(null).trigger('change');
-            // $('.select2-multi').val([]).trigger('change');
 
             $('.select2-multi').each(function () {
-                $(this).find('option').prop('disabled', false); // Re-enable all options
-                $(this).val([]).trigger('change'); // Clear selection
+                $(this).find('option').prop('disabled', false); 
+                $(this).val([]).trigger('change'); 
             });            
             updateRouteDropdowns();
             updateLocationDropdowns();
             $('#createEditAssignRouteModal').modal('show');
         });
 
-        $(document).on('click', '.editRoute', function () {
-            let routeId = $(this).data('id');
-            $.get("{{ url('admin/routes/edit') }}/" + routeId, function (data) {
-                $('#route_id').val(data.id);
-                $('#district').val(data.district_id).trigger('change');
-                $('#employee_type').val(data.employee_type_id).trigger('change');
-                $('#employee').val(data.employee_id).trigger('change');
-                $('#aso').val(data.aso_id).trigger('change');
-                $('#route_names').val(data.route_names).trigger('change');
-                $('#locations').val(data.locations).trigger('change');
-                $('#createEditAssignRouteModal').modal('show');
-            });
-        });
+        $(document).on('click', '.editRoute', async function () 
+        {
+            try {
+                let routeId = $(this).data('id');
+                if (routeId) {
+                    $("#district").prop("disabled", true); // Disable district field
+                } else {
+                    $("#district").prop("disabled", false); // Enable for new entry
+                }
+                let response = await $.ajax({
+                    url: `/sales/routes/edit/${routeId}`,
+                    type: 'GET'
+                });
 
+                $('#route_id').val(response.id);
+                $('#district').val(response.district_id).trigger('change');
+                $('#employee_type').val(response.employee_type_id).trigger('change');
+
+                let employees = await $.ajax({
+                    url: '/sales/get-employees',
+                    type: 'GET',
+                    data: {
+                        district_id: response.district_id,
+                        employee_type_id: response.employee_type_id
+                    }
+                });
+
+                let $employeeSelect = $('#employee').empty().append('<option value="">Select Employee</option>');
+                employees.forEach(employee => {
+                    $employeeSelect.append(`<option value="${employee.id}">${employee.name}</option>`);
+                });
+                $employeeSelect.val(response.employee_id).trigger('change');
+
+                if (response.employee_type_id == 1) {
+                    $('#asoField').show();
+                    let asoDropdown = $('#aso');
+
+                    let asoList = await $.ajax({
+                        url: '/sales/get-employees',
+                        type: 'GET',
+                        data: { employee_type_id: 2, district_id: response.district_id }
+                    });
+
+                    asoDropdown.empty().append('<option value="">Select ASO</option>');
+                    asoList.forEach(aso => {
+                        asoDropdown.append(`<option value="${aso.id}">${aso.name}</option>`);
+                    });
+
+                    asoDropdown.val(response.aso_id).trigger('change');
+                } else {
+                    $('#asoField').hide();
+                }
+
+                $('.form-control[name^="routes"]').val('');
+                $('.select2-multi').empty().trigger('change');
+
+                for (let index = 0; index < response.routes.length; index++) {
+                    let route = response.routes[index];
+                    let routeSelector = $(`select[name="routes[${index + 1}][route_name]"]`);
+                    let locationSelector = $(`select[name="routes[${index + 1}][locations][]"]`);
+
+                    if (routeSelector.length) {
+                        routeSelector.val(route.route_name).trigger('change');
+                    }
+
+                    if (locationSelector.length) {
+                        let locations = await $.ajax({
+                            url: '/sales/get-locations',
+                            type: 'GET',
+                            data: { district_id: response.district_id }
+                        });
+
+                        locationSelector.empty();
+                        locations.forEach(location => {
+                            locationSelector.append(`<option value="${location}">${location}</option>`);
+                        });
+
+                        locationSelector.val(route.locations).trigger('change');
+                    }
+                }
+
+                $('#createEditAssignRouteModal .modal-title').text('Edit Assigned Route');
+                $('#createEditAssignRouteModal button[type="submit"]').text('Update');
+                $('#createEditAssignRouteModal').modal('show');
+
+            } catch (error) {
+                console.error('Error loading route data:', error);
+            }
+        });
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
         $('#assignedRouteForm').on('submit', function (e) {
             e.preventDefault();
 
@@ -254,12 +312,18 @@
             let routeId = $('#route_id').val().trim();
             
             let formData = new FormData(this);
+            formData.append('employee_type_id', $('#employee_type').val());
 
-            let url = routeId 
-                ? "{{ route('admin.route.assigned-update', ':id') }}".replace(':id', routeId) 
-                : "{{ route('admin.route.assigned-store') }}";
+            let url, type;
 
-            let type = routeId ? "POST" : "POST"; 
+            if (routeId) { 
+                url = "{{ route('sales.route.assigned.update', ':id') }}".replace(':id', routeId);
+                formData.append('_method', 'PUT'); 
+                type = "POST"; // Laravel requires _method override for PUT
+            } else {
+                url = "{{ route('sales.route.assigned.store') }}";
+                type = "POST"; // Direct POST request for storing new data
+            }
 
             $.ajax({
                 url: url,
@@ -267,6 +331,7 @@
                 data: formData,
                 processData: false,
                 contentType: false, 
+                
                 success: function (response) {
                     alert(response.message);
                     $('#createEditAssignRouteModal').modal('hide');
@@ -276,25 +341,7 @@
                     alert('Error: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Something went wrong'));
                 }
             });
-        });
 
-
-        $(document).on('click', '.deleteRoute', function () {
-            let routeId = $(this).data('id');
-            if (confirm("Are you sure you want to delete this assigned route?")) {
-                $.ajax({
-                    url: "{{ url('admin/routes/delete') }}/" + routeId,
-                    type: "DELETE",
-                    data: { _token: "{{ csrf_token() }}" },
-                    success: function (response) {
-                        alert(response.message);
-                        routeTable.ajax.reload();
-                    },
-                    error: function (xhr) {
-                        alert('Error: ' + xhr.responseJSON.message);
-                    }
-                });
-            }
         });
 
         loadDistricts();
