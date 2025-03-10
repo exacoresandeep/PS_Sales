@@ -25,7 +25,7 @@ class TargetController extends Controller
     {
         $targets = Target::all(); 
         $employeeTypes = EmployeeType::all();
-        return view('admin.target.index', compact('targets','employeeTypes'));
+        return view('sales.target.index', compact('targets','employeeTypes'));
     }
 
     public function store(Request $request)
@@ -441,7 +441,7 @@ class TargetController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => view('admin.target.view', compact('target'))->render()
+            'data' => view('sales.target.view', compact('target'))->render()
         ]);
     }
     public function update(Request $request)
@@ -475,7 +475,7 @@ class TargetController extends Controller
             return response()->json(['error' => 'Target not found.'], 404);
         }
 
-        $viewContent = view('admin.target.modal-view', compact('target'))->render();
+        $viewContent = view('sales.target.modal-view', compact('target'))->render();
 
         return response()->json([
             'target' => $target,

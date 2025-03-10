@@ -71,8 +71,8 @@
     </div>
 </div>
 
-@include('admin.activity.modal-create-edit')
-@include('admin.activity.modal-view')
+@include('sales.activity.modal-create-edit')
+@include('sales.activity.modal-view')
 @endsection
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -154,8 +154,8 @@
 
         window.handleAction = function (id, action) {
             let url = action === 'view' 
-                ? "{{ route('admin.activity.view', ':id') }}" 
-                : "{{ route('admin.activity.edit', ':id') }}";
+                ? "{{ route('sales.activity.view', ':id') }}" 
+                : "{{ route('sales.activity.edit', ':id') }}";
             
             $.get(url.replace(':id', id), function (response) {
                 if (action === 'edit') {
@@ -211,7 +211,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('admin.activity.list') }}",
+                url: "{{ route('sales.activity.list') }}",
                 data: function (d) {
                     d.activity_type = $('#filter_activity_type').val();
                     d.dealer = $('#filter_dealer').val();

@@ -48,59 +48,79 @@ class AdminController extends Controller
     
     public function login()
     {
-        return view('admin.login');
+        return view('login');
     }
 
     public function doLogin(Request $request)
     {
         $request->validate([
-            'employee_code' => 'required|string',
-            'password' => 'required',
+            'username' => 'required|string',
+            'password' => 'required|string',
         ]);
-        $employee = Employee::where('employee_code', $request->employee_code)->first();
-        
-        if ($employee && password_verify($request->password, $employee->password)) {
-            Auth::login($employee);
-            return redirect()->route('admin.dashboard');
-        }else{
+
+        $credentials = $request->only('username', 'password');
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+
+            switch ($user->role_id) {
+                case 1: // Super Admin
+                    return redirect()->route('admin.dashboard');
+                case 2: // Sales
+                    return redirect()->route('sales.dashboard');
+                case 3: // Accounts
+                    return redirect()->route('accounts.dashboard');
+                default:
+                    Auth::logout();
+                    return back()->with('error', 'Unauthorized role access');
+            }
         }
 
-        return back()->with('error', 'Invalid Employee Code or Password');
+        return back()->with('error', 'Invalid Username or Password');
     }
 
     public function dashboard()
     {
-        return view('layouts.app');
+        $user = Auth::user();
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        switch ($user->role_id) {
+            case 1: return view('admin.dashboard', compact('user')); 
+            case 2: return view('sales.dashboard', compact('user')); 
+            case 3: return view('accounts.dashboard', compact('user')); 
+            default:
+                Auth::logout();
+                return redirect()->route('login')->with('error', 'Unauthorized role access');
+        }
     }
 
     public function logout(Request $request)
     {
         Cookie::queue(Cookie::forget('selectedLink'));
+
         if (Auth::check()) {
-            Auth::user()->tokens()->delete(); 
-            Auth::logout(); 
+            Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            return redirect()->route('admin.login');
         }
-    
-        return redirect()->route('admin.login');
 
+        return redirect()->route('login');
     }
     public function activity_management(Request $request)
     {
-        return view('admin.activity-management');
+        return view('sales.activity-management');
     }
     public function route_management(Request $request)
     {
-        return view('admin.route-management');
+        return view('sales.route-management');
     }
     public function target_management(Request $request)
-{
-    $employeeTypes = EmployeeType::all();
+    {
+        $employeeTypes = EmployeeType::all();
 
-    // Force an empty array if it's null
-    return view('admin.target-management', ['employeeTypes' => $employeeTypes ?? collect([])]);
-}
+        return view('sales.target-management', ['employeeTypes' => $employeeTypes ?? collect([])]);
+    }
 
 }

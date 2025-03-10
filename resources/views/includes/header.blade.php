@@ -8,10 +8,10 @@
         </div>
         <div class="col-md-3 align-content-center">
             <div class="settings-box">
-                <a href="" class="notify"><i class="fa fa-bell" aria-hidden="true"></i></a>
+                {{-- <a href="" class="notify"><i class="fa fa-bell" aria-hidden="true"></i></a> --}}
                 <div class="profi-blk">
                     <img src="{{ asset('images/profile-pic.svg') }}" class="img-fluid">
-                    <p>Basil John</p>
+                    <p>{{ Auth::check() ? Auth::user()->name : 'Guest' }}</p>
                 </div>
             </div>
         </div>

@@ -11,7 +11,6 @@
                 <input type="hidden" name="id" id="route_id">
 
                 <div class="modal-body">
-                    <!-- First Row -->
                     <div class="row">
                         <div class="col-md-3">
                             <label for="district" class="form-label">District</label>
@@ -44,7 +43,6 @@
                         </div>
                     </div>
 
-                    <!-- Routes & Locations -->
                     <div class="row mt-3">
                         <div class="col-md-12">
                             <label class="form-label">Assign Routes & Locations</label>

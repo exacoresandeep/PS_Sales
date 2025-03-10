@@ -381,7 +381,7 @@ class ActivityController extends Controller
 
     public function activityTypeIndex()
     {
-        return view('admin.activity.activity-type-index'); 
+        return view('sales.activity.activity-type-index'); 
     }
 
     public function activityTypeStore(Request $request)
@@ -476,7 +476,7 @@ class ActivityController extends Controller
     {
         $activityTypes = ActivityType::all();
         $districts = District::select('id', 'name')->get();
-        return view('admin.activity.index', compact('activityTypes', 'districts'));
+        return view('sales.activity.index', compact('activityTypes', 'districts'));
     }
     public function list(Request $request)
     {
