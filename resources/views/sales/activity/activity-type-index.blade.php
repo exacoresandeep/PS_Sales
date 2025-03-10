@@ -25,7 +25,7 @@
 </div>
 
 <!-- Include modal for creating/editing activity type -->
-@include('admin.activity.type-modal-create-edit')
+@include('sales.activity.type-modal-create-edit')
 
 @endsection
 
@@ -38,7 +38,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('admin.activity.activity-type-list') }}",
+                url: "{{ route('sales.activity.activity-type-list') }}",
                 data: function (d) {
                     d.status = $('#statusFilter').val(); 
                 }
@@ -85,7 +85,7 @@
             e.preventDefault();
             
             let id = $('#activity_type_id').val();
-            let url = id ? `/admin/activity/activity-type-update/${id}` : "/admin/activity/activity-type-store";
+            let url = id ? `/sales/activity/activity-type-update/${id}` : "/sales/activity/activity-type-store";
             let method = id ? 'PUT' : 'POST';
             
             let formData = $(this).serialize(); 
@@ -113,7 +113,7 @@
             let id = $(this).data('id');
 
             $.ajax({
-                url: `/admin/activity/activity-type-edit/${id}`,
+                url: `/sales/activity/activity-type-edit/${id}`,
                 type: 'GET',
                 success: function (response) {
                     $('#activity_type_id').val(response.activity_type.id);
@@ -136,7 +136,7 @@
 
             if (confirm('Are you sure you want to delete this Activity Type?')) {
                 $.ajax({
-                    url: `/admin/activity/activity-type-delete/${id}`,
+                    url: `/sales/activity/activity-type-delete/${id}`,
                     type: 'DELETE', 
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 

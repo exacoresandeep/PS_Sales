@@ -70,9 +70,9 @@
     </div>
 </div>
 
-@include('admin.target.modal-create-edit')
+@include('sales.target.modal-create-edit')
 
-@include('admin.target.modal-view')
+@include('sales.target.modal-view')
 
 @endsection 
 @section('scripts')
@@ -90,7 +90,7 @@ $(document).ready(function () {
         e.preventDefault();
         let formData = $(this).serialize();
         let targetId = $('#target_id').val();
-        let url = targetId ? "{{ route('admin.target.update') }}" : "{{ route('admin.target.store') }}";
+        let url = targetId ? "{{ route('sales.target.update') }}" : "{{ route('sales.target.store') }}";
 
         $.ajax({
             url: url,
@@ -113,7 +113,7 @@ $(document).ready(function () {
         serverSide: true,
         searching: true,
         ajax: {
-            url: "{{ route('admin.target.list') }}",
+            url: "{{ route('sales.target.list') }}",
             type: 'POST',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             data: function (d) {
@@ -143,7 +143,7 @@ $(document).ready(function () {
         $('#employee_id').html('<option value="">Loading...</option>');
 
         if (employeeTypeId) {
-            $.get("{{ route('admin.getEmployees', '') }}/" + employeeTypeId, function (response) {
+            $.get("{{ route('sales.getEmployees', '') }}/" + employeeTypeId, function (response) {
                 $('#employee_id').html('<option value="">-Select Employee-</option>');
                 $.each(response, function (index, employee) {
                     $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
@@ -164,7 +164,7 @@ $(document).ready(function () {
         $('#filter_employee').html('<option value="">Loading...</option>');
 
         if (employeeTypeId) {
-            $.get("{{ route('admin.getEmployees', '') }}/" + employeeTypeId, function (response) {
+            $.get("{{ route('sales.getEmployees', '') }}/" + employeeTypeId, function (response) {
                 $('#filter_employee').html('<option value="">-Select Employee-</option>');
                 $.each(response, function (index, employee) {
                     $('#filter_employee').append('<option value="' + employee.id + '">' + employee.name + '</option>');
@@ -187,7 +187,7 @@ $(document).ready(function () {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: "{{ route('admin.target.delete', '') }}/" + id,
+                    url: "{{ route('sales.target.delete', '') }}/" + id,
                     type: "DELETE",
                     data: { _token: "{{ csrf_token() }}" },
                     success: function (response) {
@@ -207,7 +207,7 @@ $(document).ready(function () {
     }
 
     window.handleAction = function (id, action) {
-        $.get("{{ route('admin.target.get', ':id') }}".replace(':id', id), function (response) {
+        $.get("{{ route('sales.target.list', ':id') }}".replace(':id', id), function (response) {
 
             if (action === 'edit') {
                 $('#createEditModalLabel').text('Edit Target');

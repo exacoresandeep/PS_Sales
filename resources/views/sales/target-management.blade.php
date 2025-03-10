@@ -235,7 +235,7 @@
 
             if (employeeTypeId) {
                 $.ajax({
-                        url: "{{ route('admin.getEmployees', '') }}/" + employeeTypeId, // Use Laravel route helper
+                        url: "{{ route('sales.getEmployees', '') }}/" + employeeTypeId, // Use Laravel route helper
                         type: "GET",
                         success: function (response) {
                             $('#employee_id').html('<option value="">Select Employee</option>'); // Reset dropdown
@@ -274,7 +274,7 @@
     });
       function handleAction(itemId, action) {
           $.ajax({
-              url: '/admin/viewTarget/' + itemId,
+              url: '/sales/viewTarget/' + itemId,
               method: 'GET',
               success: function(response) {
                   if (action === 'view') {
@@ -299,7 +299,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/admin/deleteTarget/' + itemId,
+                    url: '/sales/deleteTarget/' + itemId,
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
