@@ -94,24 +94,11 @@
         <a href="{{ route('accounts.dashboard') }}" class="dashboard w-100"><i class="fa fa-home" aria-hidden="true"></i> Dashboard</a>
         <ul class="w-100">
             <li>
-                <a class="menu-title">
+                <a class="menu-title" href="{{ route('accounts.orders.index') }}">
                     <i class="fa fa-cubes" aria-hidden="true"></i>
-                    Order Request <span class="icon-right"><i class="fa fa-solid fa-chevron-down"></i></span>
+                    Order Request <span class="icon-right"></span>
                 </a>
-                <ul class="submenu">
-                    <li>
-                        <a href="{{ route('sales.activity.activity-type-index') }}">
-                            <i class="fa fa-list" aria-hidden="true"></i>
-                            Activity Type <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('sales.activity.index') }}">
-                            <i class="fa fa-plus-square" aria-hidden="true"></i>
-                            Assign Activities <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
-                        </a>
-                    </li>
-                </ul>
+             
             </li>
           
         </ul>

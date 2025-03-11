@@ -6,12 +6,11 @@ use App\Http\Controllers\Api\TargetController;
 use App\Http\Controllers\Api\RouteController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\DealerController;
-use App\Http\Controllers\Api\AccountsController;
+use App\Http\Controllers\AccountsController;
 
-// Route::middleware('guest')->group(function () {
     Route::get('/login', [AdminController::class, 'login'])->name('login');
     Route::post('/doLogin', [AdminController::class, 'doLogin'])->name('doLogin');
-// });
+
 
 Route::post('/logout', [AdminController::class, 'logout'])->name('logout')->middleware('auth');
 
@@ -72,5 +71,11 @@ Route::prefix('sales')->middleware('auth')->group(function () {
 
 Route::prefix('accounts')->middleware('auth')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('accounts.dashboard');
+    Route::prefix('orders')->group(function () {
+        Route::get('/order-request', [AccountsController::class, 'index'])->name('accounts.orders.index');
+    });
 });
+
+
+
 
