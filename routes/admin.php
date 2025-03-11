@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\DealerController;
 use App\Http\Controllers\AccountsController;
 
-    Route::get('/login', [AdminController::class, 'login'])->name('login');
+    Route::get('/', [AdminController::class, 'login'])->name('login');
     Route::post('/doLogin', [AdminController::class, 'doLogin'])->name('doLogin');
 
 
