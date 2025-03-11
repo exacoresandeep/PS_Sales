@@ -10,6 +10,7 @@ use App\Models\Dealer;
 use App\Models\Lead;
 use App\Models\District;
 use App\Models\Regions;
+use App\Models\Payment;
 use App\Models\Employee;
 use App\Models\OutstandingPaymentCommitment;
 use App\Models\OutstandingPayment;
@@ -1409,8 +1410,17 @@ class OrderController extends Controller
                     'message' => "You do not have permission to view this order.",
                 ], 403);
             }
+            
     
             $order = $outstandingPayment->order;
+            $payments = Payment::where('order_id', $order->id)
+                ->where('dealer_id', $outstandingPayment->dealer->id)
+                ->select('payment_date', 'payment_amount', 'payment_document_no')
+                ->orderBy('payment_date', 'asc')
+                ->get();
+
+            $totalPaidAmount = $payments->sum('payment_amount');
+            $totalOutstandingAmount = $order->invoice_total - $totalPaidAmount;
     
             $orderItems = $order->orderItems->map(function ($item) {
                 $productDetails = collect($item->product_details)->map(function ($detail) {
@@ -1451,8 +1461,8 @@ class OrderController extends Controller
                     'invoice_date' => $outstandingPayment->invoice_date ? \Carbon\Carbon::parse($outstandingPayment->invoice_date)->format('d/m/Y') : null,
                     'due_date' => $outstandingPayment->due_date ? \Carbon\Carbon::parse($outstandingPayment->due_date)->format('d/m/Y') : null,
                     'invoice_total' => (float) $outstandingPayment->invoice_total,
-                    'paid_amount' => (float) $outstandingPayment->paid_amount,
-                    'outstanding_amount' => (float) $outstandingPayment->outstanding_amount,
+                    'paid_amount' => (float) $totalPaidAmount,
+                    'outstanding_amount' => (float) $totalOutstandingAmount,
                     'payment_doc_number' => $outstandingPayment->payment_doc_number,
                     'payment_date' => $outstandingPayment->payment_date ? \Carbon\Carbon::parse($outstandingPayment->payment_date)->format('d/m/Y') : null,
                     'payment_amount_applied' => (float) $outstandingPayment->payment_amount_applied,
@@ -1493,27 +1503,24 @@ class OrderController extends Controller
                 ], 401);
             }
 
-            // Validate request data
             $validatedData = $request->validate([
                 'commitments' => 'required|array|min:1',
                 'commitments.*.committed_date' => 'required|date|after_or_equal:today',
                 'commitments.*.committed_amount' => 'required|numeric|min:1',
             ]);
 
-            // Fetch outstanding payment with dealer details
             $outstandingPayment = OutstandingPayment::with('dealer')->findOrFail($outstandingPaymentId);
             $dealer = $outstandingPayment->dealer;
 
-            // Access control logic
             $allowed = false;
 
             switch ($employee->employee_type_id) {
-                case 2: // ASO - Check assigned routes
+                case 2: 
                     $assignedRoutes = AssignRoute::where('employee_id', $employee->id)->pluck('id')->toArray();
                     $allowed = in_array($dealer->assigned_route_id, $assignedRoutes);
                     break;
 
-                case 3: // DSM - Check district
+                case 3: 
                     $allowed = ($dealer->district_id == $employee->district_id);
                     break;
 

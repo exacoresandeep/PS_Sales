@@ -72,7 +72,12 @@ Route::prefix('sales')->middleware('auth')->group(function () {
 Route::prefix('accounts')->middleware('auth')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('accounts.dashboard');
     Route::prefix('orders')->group(function () {
-        Route::get('/order-request', [AccountsController::class, 'index'])->name('accounts.orders.index');
+        Route::get('/', [AccountsController::class, 'index'])->name('accounts.orders.index');
+        Route::get('/list', [AccountsController::class, 'orderList'])->name('accounts.orders.list');
+        Route::post('/approve/{id}', [AccountsController::class, 'approveOrder'])->name('accounts.orders.approve');
+        Route::post('/reject/{id}', [AccountsController::class, 'rejectOrder'])->name('accounts.orders.reject');
+
+
     });
 });
 
