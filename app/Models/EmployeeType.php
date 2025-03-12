@@ -18,3 +18,5 @@ class EmployeeType extends Model
         return $this->hasMany(Employee::class, 'employee_type_id'); 
     }
 }
+
+

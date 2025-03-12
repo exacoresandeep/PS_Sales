@@ -97,6 +97,15 @@ class StockController extends Controller
             ], 404);
         }
         $firstStock = $stockRecords->first();
+        $stockQuantity = (float) $firstStock->quantity;
+
+        // Determine availability status
+        $availabilityStatus = 'Out of Stock';
+        if ($stockQuantity > 0 && $stockQuantity < 1000) {
+            $availabilityStatus = 'Low Stock';
+        } elseif ($stockQuantity >= 1000) {
+            $availabilityStatus = 'In Stock';
+        }
         return response()->json([
             'success' => true,
             'statusCode' => 200,
@@ -113,7 +122,7 @@ class StockController extends Controller
                     'warehouse_id'       => $firstStock->warehouse_id,
                     'warehouse_name'     => $firstStock->warehouse->warehouse_name,
                     'stock_quantity'     => number_format((float) $firstStock->quantity, 5, '.', ''),
-                    'availability_status' => $firstStock->quantity > 0 ? 'In Stock' : 'Out of Stock',
+                    'availability_status' => $availabilityStatus,
                 ] : null,
             ],
         ], 200);
