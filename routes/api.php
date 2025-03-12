@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GreytHRController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\OrderController;
@@ -192,4 +193,8 @@ Route::prefix('v1')->group(function () {
         
 
     });
+
 });
+
+
+Route::get('/greythr/access-token', [GreytHRController::class, 'getAccessToken']);
