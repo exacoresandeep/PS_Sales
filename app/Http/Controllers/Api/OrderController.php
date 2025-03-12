@@ -45,7 +45,8 @@ class OrderController extends Controller
                 
                     $order->total_amount = (float) sprintf("%.2f", $order->total_amount);            
                         return $order;
-                    });     
+                    });  
+                    dd($orders);   
                 return response()->json([
                     'success' => true,
                     'statusCode' => 200,

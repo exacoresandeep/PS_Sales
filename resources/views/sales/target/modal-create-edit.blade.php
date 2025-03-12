@@ -10,7 +10,7 @@
                 <div class="modal-body">
                     <input type="hidden" name="id" id="target_id">
                     
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label>Employee Type</label>
                             <select class="form-control" name="employee_type" id="employee_type">
@@ -26,6 +26,8 @@
                                 <option value="">-Select Employee-</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label>Target Year</label>
                             <select class="form-control" name="year" id="year">
@@ -46,6 +48,8 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label>Unique Lead</label>
                             <input type="number" class="form-control" name="unique_lead" id="unique_lead">
@@ -54,6 +58,8 @@
                             <label>Customer Visit</label>
                             <input type="number" class="form-control" name="customer_visit" id="customer_visit">
                         </div>
+                    </div>
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label>Aashiyana Count</label>
                             <input type="number" class="form-control" name="aashiyana" id="aashiyana">
@@ -65,8 +71,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Target</button>
+                    <button type="submit" id="saveTargetBtn" class="btn btn-primary">Create</button>
                 </div>
             </form>
         </div>

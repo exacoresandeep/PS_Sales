@@ -40,6 +40,17 @@ class TargetController extends Controller
             'aashiyana' => 'required|integer|min:0',
             'order_quantity' => 'required|integer|min:0'
         ]);
+        $existingTarget = Target::where('employee_id', $request->employee_id)
+            ->where('year', $request->year)
+            ->where('month', $request->month)
+            ->first();
+
+        if ($existingTarget) {
+            return response()->json([
+                'message' => 'Error',
+                'errors' => ['employee_id' => ['Target already set for this employee in the selected month and year!']]
+            ], 422);
+        }
 
         $target = Target::create([
             'employee_type_id' => $request->employee_type,
@@ -55,71 +66,7 @@ class TargetController extends Controller
 
         return response()->json(['message' => 'Target created successfully!', 'target' => $target], 200);
     }
-    
-    // each employee target
-    // public function getTargets(Request $request)
-    // {
-
-    //     // $month = $request->month != "" ? $request->month : Carbon::now()->month;
-    //     $monthNumber = $request->month ?? Carbon::now()->month;
-    //     $month = $request->month ? Carbon::createFromDate(null, $request->month, 1)->format('F') : Carbon::now()->format('F');
-    //     $year  = $request->year  != "" ? $request->year : Carbon::now()->year;
-    //     $employeeId = Auth::id();
-
-    //     $targetQuery = Target::where('employee_id', $employeeId)
-    //                         ->where('month', $month)
-    //                         ->where('year', $year);
-    //     $target = $targetQuery->first();
-    //     $target = $target ? $target->toArray() : null;
-    //     $uniqueLeadsQuery = Lead::where('created_by', $employeeId)
-    //                             ->whereYear('created_at', $year)
-    //                             ->whereMonth('created_at', $monthNumber);
-    //     $uniqueLeads = $uniqueLeadsQuery->count();
-
-    //     $customerVisitCount = RescheduledRoute::where('employee_id', $employeeId)
-    //         ->whereYear('assign_date', $year)
-    //         ->whereMonth('assign_date', $monthNumber)
-    //         ->get()
-    //         ->sum(function ($route) {
-    //             $customers = collect(json_decode($route->customers ?? '[]', true));
-    //             return $customers->where('scheduled', true)->where('status', 'Completed')->count();
-    //         });
-
-    //     $aashiyanaQuery = Order::where('created_by', $employeeId)
-    //                         ->whereYear('created_at', $year)
-    //                         ->whereMonth('created_at', $monthNumber)
-    //                         ->where('payment_terms_id', 3);
-    //     $aashiyanaCount = $aashiyanaQuery->count();
-
-    //     $ordersQuery = Order::where('created_by', $employeeId)
-    //                         ->whereYear('created_at', $year)
-    //                         ->whereMonth('created_at', $monthNumber)
-    //                         ->where('status', 'Delivered');
-    //     $orders = $ordersQuery->pluck('id');
-
-    //     $achievedOrderQuantityQuery = DB::table('order_items')
-    //                                     ->whereIn('order_id', $orders);
-    //     $achievedOrderQuantity = $achievedOrderQuantityQuery->sum('total_quantity');
-
-    //     $response = [
-    //         'target' => $target,
-    //         'achieved' => [
-    //             'unique_leads' => $uniqueLeads,
-    //             'customer_visit' => $customerVisitCount, 
-    //             'aashiyana' => $aashiyanaCount,
-    //             'order_quantity' => (int) $achievedOrderQuantity,
-    //         ],
-    //     ];
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'statusCode' => 200,
-    //         'message' => 'Target data retrieved successfully.',
-    //         'data' => $response,
-    //     ], 200);
-    // }
-
-    // new target function 
+  
     public function getTargets(Request $request)
     {
         try {
@@ -204,139 +151,30 @@ class TargetController extends Controller
             ], 500);
         }
     }
+    public function view($id)
+    {
+        $target = Target::join('employees', 'employees.id', '=', 'Target.employee_id')
+            ->join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
+            ->where('Target.id', $id)
+            ->select(
+                'Target.id',
+                'Target.created_at as from_date',
+                'Target.*',
+                'employees.name as employee_name',
+                'employee_types.type_name as employee_type',
+                DB::raw("CONCAT(Target.month, '-', Target.year) as to_date")
+            )
+            ->first(); // Fetch a single record
 
-    
-    // common function 
-    // public function getTargets(Request $request)
-    // {
-    //     try {
-    //         $monthNumber = $request->month ?? Carbon::now()->month;
-    //         $month = $request->month ? Carbon::createFromDate(null, $request->month, 1)->format('F') : Carbon::now()->format('F');
-    //         $year = $request->year ?? Carbon::now()->year;
+        if (!$target) {
+            return response()->json(['success' => false, 'message' => 'Target not found.'], 404);
+        }
 
-    //         $employee = Auth::user();
-
-    //         if (!$employee) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 401,
-    //                 'message' => "User not authenticated",
-    //             ], 401);
-    //         }
-
-    //         // Initialize employee ID list
-    //         $employeeIds = [$employee->id]; // Start with own target
-
-    //         // Define access levels based on employee role
-    //         if ($employee->employee_type_id == 3) { // DSM
-    //             $employeeIds = Employee::where('district_id', $employee->district_id)
-    //                 ->where('employee_type_id', 1) // Get all SEs in the district
-    //                 ->pluck('id')->toArray();
-    //             array_unshift($employeeIds, $employee->id); // Add DSM's own ID
-
-    //         } elseif ($employee->employee_type_id == 4) { // RSM
-    //             $region = Regions::whereHas('districts', function ($query) use ($employee) {
-    //                 $query->where('id', $employee->district_id);
-    //             })->first();
-
-    //             if (!$region) {
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'statusCode' => 404,
-    //                     'message' => "Region not found for the employee's district.",
-    //                 ], 404);
-    //             }
-
-    //             $districtsInRegion = District::where('regions_id', $region->id)->pluck('id')->toArray();
-    //             $employeeIds = Employee::whereIn('district_id', $districtsInRegion)
-    //                 ->whereIn('employee_type_id', [2, 3]) // Get all ASOs & DSMs in the region
-    //                 ->pluck('id')->toArray();
-    //             array_unshift($employeeIds, $employee->id); // Add RSM's own ID
-
-    //         } elseif ($employee->employee_type_id == 5) { // SM
-    //             $employeeIds = Employee::pluck('id')->toArray(); // Get all employees
-    //             array_unshift($employeeIds, $employee->id); // Add SM's own ID
-    //         }
-
-    //         // Fetch all targets based on employee(s)
-    //         $targets = Target::whereIn('employee_id', $employeeIds)
-    //             ->where('month', $month)
-    //             ->where('year', $year)
-    //             ->get();
-
-    //         if ($targets->isEmpty()) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 404,
-    //                 'message' => "No targets found for the selected period.",
-    //             ], 404);
-    //         }
-
-    //         // Fetch achieved values for each target
-    //         $responseData = [];
-
-    //         foreach ($targets as $target) {
-    //             $employeeId = $target->employee_id;
-    //             $targetEmployee = Employee::find($employeeId);
-    //             $uniqueLeads = Lead::where('created_by', $employeeId)
-    //                 ->whereYear('created_at', $year)
-    //                 ->whereMonth('created_at', $monthNumber)
-    //                 ->count();
-
-    //             $customerVisitCount = RescheduledRoute::where('employee_id', $employeeId)
-    //                 ->whereYear('assign_date', $year)
-    //                 ->whereMonth('assign_date', $monthNumber)
-    //                 ->get()
-    //                 ->sum(function ($route) {
-    //                     $customers = collect(json_decode($route->customers ?? '[]', true));
-    //                     return $customers->where('scheduled', true)->where('status', 'Completed')->count();
-    //                 });
-
-    //             $aashiyanaCount = Order::where('created_by', $employeeId)
-    //                 ->whereYear('created_at', $year)
-    //                 ->whereMonth('created_at', $monthNumber)
-    //                 ->where('payment_terms_id', 3)
-    //                 ->count();
-
-    //             $orders = Order::where('created_by', $employeeId)
-    //                 ->whereYear('created_at', $year)
-    //                 ->whereMonth('created_at', $monthNumber)
-    //                 ->where('status', 'Delivered')
-    //                 ->pluck('id');
-
-    //             $achievedOrderQuantity = DB::table('order_items')
-    //                 ->whereIn('order_id', $orders)
-    //                 ->sum('total_quantity');
-
-    //             // Store data in response array
-    //             $responseData[] = [
-    //                 'employee_type_id' => $targetEmployee->employee_type_id ?? null,
-    //                 'target' => $target,
-    //                 'achieved' => [
-    //                     'unique_leads' => $uniqueLeads,
-    //                     'customer_visit' => $customerVisitCount,
-    //                     'aashiyana' => $aashiyanaCount,
-    //                     'order_quantity' => (int) $achievedOrderQuantity,
-    //                 ]
-    //             ];
-    //         }
-    //         return response()->json([
-    //             'success' => true,
-    //             'statusCode' => 200,
-    //             'message' => 'Target data retrieved successfully.',
-    //             'data' => $responseData,
-    //         ], 200);
-
-    //     } catch (Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 500,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
-
+        return response()->json([
+            'success' => true,
+            'data' => view('sales.target.view', compact('target'))->render()
+        ]);
+    }
     public function targetList(Request $request)
     {
         $query = Target::with(['employee.employeeType'])->where('status', '1')->withTrashed();
@@ -420,30 +258,7 @@ class TargetController extends Controller
     }
 
 
-    public function view($id)
-    {
-        $target = Target::join('employees', 'employees.id', '=', 'Target.employee_id')
-            ->join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
-            ->where('Target.id', $id)
-            ->select(
-                'Target.id',
-                'Target.created_at as from_date',
-                'Target.*',
-                'employees.name as employee_name',
-                'employee_types.type_name as employee_type',
-                DB::raw("CONCAT(Target.month, '-', Target.year) as to_date")
-            )
-            ->first(); // Fetch a single record
-
-        if (!$target) {
-            return response()->json(['success' => false, 'message' => 'Target not found.'], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => view('sales.target.view', compact('target'))->render()
-        ]);
-    }
+    
     public function update(Request $request)
     {
         $target = Target::find($request->id);
@@ -464,24 +279,63 @@ class TargetController extends Controller
 
         return response()->json(['message' => 'Target updated successfully']);
     }
+    // public function viewTargets($id)
+    // {
+    //     if (!$id) {
+    //         return response()->json(['error' => 'Missing target ID.'], 400);
+    //     }
+
+    //     $target = Target::with('employee.employeeType')->find($id);
+    //     if (!$target) {
+    //         return response()->json(['error' => 'Target not found.'], 404);
+    //     }
+
+    //     $viewContent = view('sales.target.modal-view', compact('target'))->render();
+
+    //     return response()->json([
+    //         'target' => $target,
+    //         'viewContent' => $viewContent
+    //     ]);
+    // }
     public function viewTargets($id)
     {
         if (!$id) {
             return response()->json(['error' => 'Missing target ID.'], 400);
         }
 
-        $target = Target::with('employee.employeeType')->find($id);
+        $target = Target::with(['employee.employeeType'])->find($id);
+
         if (!$target) {
             return response()->json(['error' => 'Target not found.'], 404);
         }
-
-        $viewContent = view('sales.target.modal-view', compact('target'))->render();
-
         return response()->json([
-            'target' => $target,
-            'viewContent' => $viewContent
+            'target' => $target
         ]);
     }
+    public function getTargetDetails($id)
+    {
+        $target = Target::with(['employee.employeeType'])->find($id);
+    
+        if (!$target) {
+            return response()->json(['error' => 'Target not found'], 404);
+        }
+    
+        return response()->json([
+            'target' => [
+                'employee_type' => optional($target->employee->employeeType)->type_name ?? '-',
+                'employee_name' => optional($target->employee)->name ?? '-',
+                'year' => $target->year ?? '-',
+                'month' => $target->month ?? '-',
+                'unique_lead' => $target->unique_lead ?? '0',
+                'customer_visit' => $target->customer_visit ?? '0',
+                'aashiyana' => $target->aashiyana ?? '0',
+                'order_quantity' => $target->order_quantity ?? '0',
+                'employee_type_id' => optional($target->employee)->employee_type_id ?? '',
+                'employee_id' => $target->employee_id ?? '',
+            ]
+        ]);
+    }
+    
 
     public function destroy($id)
     {

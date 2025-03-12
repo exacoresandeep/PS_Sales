@@ -217,7 +217,7 @@
                 success: function (response) {
                     if (response.success) {
                         let order = response.order;
-                        console.log(response.order);
+                        // console.log(response.order);
                         // Set Order Details
                         $('#view_order_id').text(order.order_id);
                         $('#view_date').text(order.date);
