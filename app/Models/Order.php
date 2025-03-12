@@ -47,6 +47,10 @@ class Order extends Model
         'invoice_total',
         'created_by_dealer',
         'created_by',
+        'order_approved',
+        'order_approved_by',
+        'order_payment_terms',
+        'order_remarks',
     ];
 
     protected $casts = [

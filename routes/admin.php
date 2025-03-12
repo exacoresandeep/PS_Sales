@@ -74,6 +74,7 @@ Route::prefix('accounts')->middleware('auth')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::get('/', [AccountsController::class, 'index'])->name('accounts.orders.index');
         Route::get('/list', [AccountsController::class, 'orderList'])->name('accounts.orders.list');
+        Route::get('/view/{id}', [AccountsController::class, 'viewOrder'])->name('view'); 
         Route::post('/approve/{id}', [AccountsController::class, 'approveOrder'])->name('accounts.orders.approve');
         Route::post('/reject/{id}', [AccountsController::class, 'rejectOrder'])->name('accounts.orders.reject');
 
