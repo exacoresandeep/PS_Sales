@@ -484,6 +484,7 @@ class OrderController extends Controller
                 'vehicle_number' => $order->vehicle_number,
                 'driver_name' => $order->driver_name,
                 'driver_phone' => $order->driver_phone,
+                'status' => $order->status,
                 'total_outstanding_payments' => $totalOutstandingPayments,
                 'dealer_code' => $dealer->dealer_code,
                 'dealer_name' => $dealer->dealer_name
