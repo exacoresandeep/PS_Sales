@@ -58,6 +58,8 @@ Route::prefix('sales')->middleware('auth')->group(function () {
         Route::post('/update', [TargetController::class, 'update'])->name('sales.target.update');
         Route::get('/view/{id}', [TargetController::class, 'viewTargets'])->name('sales.target.view');
         Route::delete('/delete/{id}', [TargetController::class, 'destroy'])->name('sales.target.delete');
+        Route::get('/{id}', [TargetController::class, 'getTargetDetails'])->name('sales.target.details');
+
     });
 
     Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType'])->name('sales.getEmployees');
