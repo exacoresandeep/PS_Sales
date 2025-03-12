@@ -85,7 +85,10 @@
             e.preventDefault();
             
             let id = $('#activity_type_id').val();
-            let url = id ? `/sales/activity/activity-type-update/${id}` : "/sales/activity/activity-type-store";
+            let url = id 
+                ? "{{ route('sales.activity.type.update', ':id') }}".replace(':id', id) 
+                : "{{ route('sales.activity.type.store') }}";
+            
             let method = id ? 'PUT' : 'POST';
             
             let formData = $(this).serialize(); 
@@ -98,12 +101,26 @@
                 type: 'POST',  
                 data: formData,
                 success: function (response) {
+                    Swal.fire({
+                        title: "Success!",
+                        text: response.message || "Activity type saved successfully!",
+                        icon: "success",
+                        timer: 2000,
+                        showConfirmButton: true
+                    });
+
                     $('#createEditActivityTypeModal').modal('hide');
                     $('#activityTypeForm')[0].reset();
                     table.ajax.reload();
                 },
                 error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.message);
+                    let errorMessage = xhr.responseJSON?.message || "Something went wrong!";
+                    Swal.fire({
+                        title: "Error!",
+                        text: errorMessage,
+                        icon: "error",
+                        confirmButtonText: "OK"
+                    });
                 }
             });
         });
@@ -113,7 +130,7 @@
             let id = $(this).data('id');
 
             $.ajax({
-                url: `/sales/activity/activity-type-edit/${id}`,
+                url: "{{ route('sales.activity.type.edit', '') }}/" + id,
                 type: 'GET',
                 success: function (response) {
                     $('#activity_type_id').val(response.activity_type.id);
@@ -134,23 +151,47 @@
         $(document).on('click', '.deleteActivityType', function () {
             let id = $(this).data('id');
 
-            if (confirm('Are you sure you want to delete this Activity Type?')) {
-                $.ajax({
-                    url: `/sales/activity/activity-type-delete/${id}`,
-                    type: 'DELETE', 
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
-                    },
-                    success: function (response) {
-                        alert(response.message);
-                        table.ajax.reload();
-                    },
-                    error: function (xhr) {
-                        alert('Error deleting activity type: ' + xhr.responseText);
-                    }
-                });
-            }
+            Swal.fire({
+                title: "Are you sure?",
+                text: "This action cannot be undone!",
+                icon: "warning",
+                showCancelButton: true,
+                // confirmButtonColor: "#d33",
+                // cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete it!",
+                cancelButtonText: "No, cancel!",
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/sales/activity/type/delete/${id}`, 
+                        type: 'DELETE', 
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') 
+                        },
+                        success: function (response) {
+                            Swal.fire({
+                                title: "Deleted!",
+                                text: response.message || "Activity Type deleted successfully!",
+                                icon: "success",
+                                timer: 2000,
+                                showConfirmButton: true
+                            });
+                            table.ajax.reload();
+                        },
+                        error: function (xhr) {
+                            Swal.fire({
+                                title: "Error!",
+                                text: xhr.responseJSON?.message || "Failed to delete activity type!",
+                                icon: "error",
+                                confirmButtonText: "OK"
+                            });
+                        }
+                    });
+                }
+            });
         });
+
 
     });
 </script>

@@ -10,12 +10,14 @@
                 <div class="modal-body">
                     <input type="hidden" name="id" id="activity_type_id">
                     
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-md-12">
                             <label>Activity Name</label>
                             <input type="text" class="form-control" name="activity_name" id="activity_name" required>
                         </div>
+                    </div>
 
+                    <div class="row mb-3">
                         <div class="col-md-12">
                             <label>Status</label>
                             <select class="form-control" name="status" id="status">

@@ -10,19 +10,15 @@
             <li>
                 <a class="menu-title">
                     <i class="fa fa-cubes" aria-hidden="true"></i>
-                    Activity Management <span class="icon-right"><i class="fa fa-solid fa-chevron-down"></i></span>
+                    Activity Management <span class="icon-right"><i class="fa fa-solid fa-angle-down"></i></span>
                 </a>
                 <ul class="submenu">
                     <li>
-                        <a href="{{ route('sales.activity.activity-type-index') }}">
-                            <i class="fa fa-list" aria-hidden="true"></i>
-                            Activity Type <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
+                        <a href="{{ route('sales.activity.activity-type-index') }}">Activity Type <span class="icon-right"></span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('sales.activity.index') }}">
-                            <i class="fa fa-plus-square" aria-hidden="true"></i>
-                            Assign Activities <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
+                        <a href="{{ route('sales.activity.index') }}">Assign Activities <span class="icon-right"></span>
                         </a>
                     </li>
                 </ul>
@@ -30,20 +26,14 @@
             <li>
                 <a class="menu-title">
                     <i class="fa fa-road" aria-hidden="true"></i>
-                    Route Management <span class="icon-right"><i class="fa fa-solid fa-chevron-down"></i></span>
+                    Route Management <span class="icon-right"><i class="fa fa-solid fa-angle-down"></i></span>
                 </a>
                 <ul class="submenu">
                     <li>
-                        <a href="{{ route('sales.route.type.index') }}">
-                            <i class="fa fa-road" aria-hidden="true"></i>
-                             Routes <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
-                        </a>
+                        <a href="{{ route('sales.route.type.index') }}">Routes <span class="icon-right"></span></a>
                     </li>
                     <li>
-                        <a href="{{ route('sales.route.index') }}">
-                            <i class="fa fa-plus-square" aria-hidden="true"></i>
-                            Assigned Routes <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
-                        </a>
+                        <a href="{{ route('sales.route.index') }}">Assigned Routes <span class="icon-right"></span></a>
                     </li>
                 </ul>
             </li>
@@ -52,20 +42,7 @@
                     <i class="fa fa-road" aria-hidden="true"></i>
                     Target Management <span class="icon-right"></span>
                 </a>
-                {{-- <ul class="submenu">
-                    <li>
-                        <a href="{{ route('admin.target.index') }}">
-                            <i class="fa fa-road" aria-hidden="true"></i>
-                            All Targets <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="create-target">
-                            <i class="fa fa-plus-square" aria-hidden="true"></i>
-                            Create Target <span class="icon-right"><i class="fa fa-caret-right" aria-hidden="true"></i></span>
-                        </a>
-                    </li>
-                </ul> --}}
+                
             </li>
         </ul>
         
