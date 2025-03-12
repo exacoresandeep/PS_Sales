@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RouteController extends Controller
 {
@@ -784,6 +785,11 @@ class RouteController extends Controller
             'district' => 'required|exists:districts,id',
             'locations' => 'required|array',
         ]);
+        $existingRoute = TripRoute::where('district_id', $validatedData['district'])->first();
+
+        if ($existingRoute) {
+            return response()->json(['message' => 'A route already exists for this district!'], 409);
+        }
 
         $route = TripRoute::create([
             'district_id' => $validatedData['district'],
@@ -814,6 +820,15 @@ class RouteController extends Controller
             'locations' => 'required|array',
         ]);
         $route = TripRoute::findOrFail($route_id);
+
+        $existingRoute = TripRoute::where('district_id', $validatedData['district'])
+            ->where('id', '!=', $route_id)
+            ->first();
+
+        if ($existingRoute) {
+            return response()->json(['message' => 'A route already exists for this district!'], 409);
+        }
+
         $route->update([
             'district_id' => $validatedData['district'],
             'locations' => array_values($validatedData['locations']), // Store as JSON
@@ -827,10 +842,12 @@ class RouteController extends Controller
         try {
             $route = TripRoute::findOrFail($route_id);
             $route->delete();
-    
-            return response()->json(['message' => 'Route deleted successfully!']);
+
+            return response()->json(['success' => true, 'message' => 'Route deleted successfully!']);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Route not found!'], 404);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to delete route!'], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to delete route!'], 500);
         }
     }
     public function assignedIndex()

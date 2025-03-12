@@ -97,13 +97,35 @@
                 processData: false,
                 contentType: false,
                 success: function (response) {
-                    alert(response.message);
+                    Swal.fire('Success', response.message, 'success');
                     routeTable.ajax.reload();
                     $('#createEditRouteModal').modal('hide');
                     $('#routeForm')[0].reset();
                 },
                 error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.message);
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        let errorMessages = "";
+                        $.each(errors, function (key, value) {
+                            errorMessages += value[0] + "<br>";
+                        });
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validation Error',
+                            html: errorMessages
+                        });
+
+                    } else if (xhr.status === 400 || xhr.status === 409) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Warning',
+                            text: xhr.responseJSON.message
+                        });
+
+                    } else {
+                        Swal.fire('Error', 'Could not create route.', 'error');
+                    }
                 }
             });
         });
@@ -144,29 +166,50 @@
                     $('#createEditRouteModal').modal('show');
                 },
                 error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.message);
+                    Swal.fire('Error', 'Could not fetch route details.', 'error');
                 }
             });
         });
 
-        // Delete Route
         $(document).on('click', '.deleteRoute', function () {
             const route_id = $(this).data('id');
-            if (confirm('Are you sure you want to delete this route?')) {
-                $.ajax({
-                    url: `{{ route('sales.route.type.delete', ':id') }}`.replace(':id', route_id),
-                    method: 'DELETE',
-                    data: { _token: '{{ csrf_token() }}' },
-                    success: function (response) {
-                        alert(response.message);
-                        routeTable.ajax.reload();
-                    },
-                    error: function (xhr) {
-                        alert('Error: ' + xhr.responseJSON.message);
-                    }
-                });
-            }
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel!',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let deleteUrl = "{{ route('sales.route.type.delete', ':id') }}".replace(':id', route_id);
+
+                    $.ajax({
+                        url: deleteUrl,
+                        method: 'DELETE',
+                        data: { _token: '{{ csrf_token() }}' },
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire('Deleted!', response.message, 'success');
+                                $('#routeTable').DataTable().ajax.reload(); // Reload DataTable
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        },
+                        error: function (xhr) {
+                            if (xhr.status === 404) {
+                                Swal.fire('Error', 'Route not found!', 'error');
+                            } else {
+                                Swal.fire('Error', 'Could not delete route.', 'error');
+                            }
+                        }
+                    });
+                }
+            });
         });
+
     });
 
 </script>
