@@ -85,7 +85,7 @@
             if (district_id) {
                 // Fetch dealers in the selected district
                 $.ajax({
-                    url: `/admin/dealers-by-district/${district_id}`,
+                    url: `/sales/dealers-by-district/${district_id}`,
                     type: 'GET',
                     success: function (response) {
                         $('#dealer_id').html('<option value="">-Select Dealer-</option>');
@@ -105,7 +105,7 @@
 
             if (dealer_id) {
                 $.ajax({
-                    url: `/admin/employees-by-dealer/${dealer_id}`,
+                    url: `/sales/employees-by-dealer/${dealer_id}`,
                     type: 'GET',
                     success: function (response) {
                         $('#employee_id').html('<option value="">-Select Employee-</option>');
@@ -128,8 +128,9 @@
 
         $('#activityForm').submit(function (e) {
             e.preventDefault();
+            
             let id = $('#activity_id').val();
-            let url = id ? `/admin/activity/update/${id}` : "/admin/activity/store";
+            let url = id ? `/sales/activity/update/${id}` : "/sales/activity/store";
             let method = id ? 'PUT' : 'POST';
             
             let formData = $(this).serialize();
@@ -137,20 +138,44 @@
                 formData += '&_method=PUT';
             }
 
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: formData,
-                success: function (response) {
-                    $('#createEditActivityModal').modal('hide');
-                    $('#activityForm')[0].reset();
-                    $('#activityTable').DataTable().ajax.reload();
-                },
-                error: function (xhr) {
-                    alert('Error: ' + xhr.responseJSON.message);
+            Swal.fire({
+                title: 'Are you sure?',
+                text: id ? 'Do you want to update this activity?' : 'Do you want to create this activity?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: id ? 'Yes, update it!' : 'Yes, create it!',
+                cancelButtonText: 'No, cancel!',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: formData,
+                        success: function (response) {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: true
+                            });
+                            $('#createEditActivityModal').modal('hide');
+                            $('#activityForm')[0].reset();
+                            $('#activityTable').DataTable().ajax.reload();
+                        },
+                        error: function (xhr) {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: xhr.responseJSON ? xhr.responseJSON.message : 'Something went wrong!',
+                                icon: 'error'
+                            });
+                        }
+                    });
                 }
             });
         });
+
 
         window.handleAction = function (id, action) {
             let url = action === 'view' 
@@ -254,21 +279,43 @@
        
         $(document).on('click', '.deleteActivity', function () {
             let id = $(this).data('id');
-            if (confirm('Are you sure you want to delete this Activity?')) {
-                $.ajax({
-                    url: `/admin/activity/delete/${id}`,
-                    type: 'POST',  // Change from DELETE to POST
-                    data: { _method: 'DELETE', _token: '{{ csrf_token() }}' },
-                    success: function (response) {
-                        alert(response.message);
-                        $('#activityTable').DataTable().ajax.reload();
-                    },
-                    error: function () {
-                        alert('Error deleting activity.');
-                    }
-                });
-            }
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel!',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/sales/activity/delete/${id}`,
+                        type: 'POST',  // Keeping POST as per your setup
+                        data: { _method: 'DELETE', _token: $('meta[name="csrf-token"]').attr('content') },
+                        success: function (response) {
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: true
+                            });
+                            $('#activityTable').DataTable().ajax.reload();
+                        },
+                        error: function () {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Could not delete activity.',
+                                icon: 'error'
+                            });
+                        }
+                    });
+                }
+            });
         });
+
 
     });
 </script>
