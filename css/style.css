@@ -74,6 +74,7 @@ main {
 
 .dashboard:hover {
   color: #fff;
+  background: #b43433;
   text-decoration: none;
 }
 
@@ -106,8 +107,8 @@ main {
 }
 
 .menu-cover ul li a.menu-title {
-  background: #666;
-  color: #fff;
+  background: #f5f5f5;
+  color: #333;
 }
 
 .menu-cover ul ul {
@@ -365,9 +366,16 @@ main {
   background-color: #DC3545 !important;
   border-color: #DC3545 !important;
 }
-.menu-title.active, 
-.submenu a.active, 
+ 
 .dashboard.active {
-    background-color: black !important;
+    background-color: #b43433 !important;
+    color: white !important;
+}
+.submenu a.active{
+    background-color: #333 !important;
+    color: white !important;
+}
+.menu-title.active{
+    background-color: #b43433 !important;
     color: white !important;
 }

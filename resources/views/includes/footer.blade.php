@@ -20,68 +20,134 @@
 
 <script>
 
-// $(document).ready(function () {
 
-//     $(".menu-title").click(function () {
-//         var $submenu = $(this).next(".submenu"); // Target the next UL (submenu)
-        
-//         if ($submenu.is(":visible")) {
-//             $submenu.slideUp(); // Hide submenu
-//             $(this).find(".icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
-//         } else {
-//             $(".submenu").slideUp(); // Close all other open menus
-//             $(".menu-title .icon-right i").removeClass("fa-chevron-up").addClass("fa-chevron-down");
-            
-//             $submenu.slideDown(); // Show clicked submenu
-//             $(this).find(".icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
+// $(document).ready(function () {
+//     let currentUrl = window.location.href;
+
+//     $(".submenu a").each(function () {
+//         if (this.href === currentUrl) {
+//             $(this).addClass("active");
+//             $(this).closest(".submenu").slideDown();
+//             $(this).closest("li").find(".menu-title").addClass("active"); 
+//             $(this).closest("li").find(".menu-title .icon-right i")
+//                 .removeClass("fa-angle-down")
+//                 .addClass("fa-angle-up"); 
 //         }
 //     });
 
-//     $(".submenu a.active").each(function () {
-//         $(this).closest(".submenu").slideDown();
-//         $(this).closest("li").find(".menu-title .icon-right i").removeClass("fa-chevron-down").addClass("fa-chevron-up");
+//     $(".dashboard").each(function () {
+//         if (this.href === currentUrl) {
+//             $(this).addClass("active");
+//         }
 //     });
 
+//     $(".menu-title").click(function () {
+//         var $submenu = $(this).next(".submenu");
+
+//         if ($submenu.is(":visible")) {
+//             $submenu.slideUp(); 
+//             $(this).removeClass("active");
+//             $(this).find(".icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
+//         } else {
+//             $(".submenu").slideUp(); 
+//             $(".menu-title").removeClass("active"); 
+//             $(".menu-title .icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
+
+//             $submenu.slideDown(); 
+//             $(this).addClass("active"); 
+//             $(this).find(".icon-right i").removeClass("fa-angle-down").addClass("fa-angle-up");
+//         }
+//     });
 // });
 $(document).ready(function () {
     let currentUrl = window.location.href;
 
-    // Loop through each submenu item to check if it matches the current page URL
+    // Retrieve last clicked menu-title from localStorage
+    let activeMenu = localStorage.getItem("activeMenu");
+
+    // Highlight active submenu item and its corresponding menu-title
     $(".submenu a").each(function () {
         if (this.href === currentUrl) {
-            $(this).addClass("active"); // Highlight active submenu link
-            $(this).closest(".submenu").slideDown(); // Keep submenu open
-            $(this).closest("li").find(".menu-title").addClass("active"); // Highlight main menu
-            $(this).closest("li").find(".menu-title .icon-right i")
-                .removeClass("fa-angle-down")
-                .addClass("fa-angle-up"); // Change icon to up arrow
+            $(this).addClass("active");
+            let $menuTitle = $(this).closest(".submenu").prev(".menu-title");
+            $menuTitle.addClass("active");
+            $(this).closest(".submenu").slideDown();
+            $menuTitle.find(".icon-right i").removeClass("fa-angle-down").addClass("fa-angle-up");
+
+            // Save active menu-title in localStorage
+            localStorage.setItem("activeMenu", $menuTitle.text().trim());
         }
     });
 
-    // Highlight the dashboard if it's active
+    // Highlight active dashboard link and clear active from menu-title
     $(".dashboard").each(function () {
         if (this.href === currentUrl) {
             $(this).addClass("active");
+
+            // Remove active class from all menu titles and submenu items
+            $(".menu-title, .submenu a").removeClass("active");
+            $(".submenu").slideUp();
+            $(".menu-title .icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
+
+            // Clear stored menu-title from localStorage
+            localStorage.removeItem("activeMenu");
         }
     });
 
-    // Toggle submenus on menu-title click
-    $(".menu-title").click(function () {
-        var $submenu = $(this).next(".submenu");
-
-        if ($submenu.is(":visible")) {
-            $submenu.slideUp(); // Hide submenu
-            $(this).removeClass("active"); // Remove active class
-            $(this).find(".icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
-        } else {
-            $(".submenu").slideUp(); // Close all other open menus
-            $(".menu-title").removeClass("active"); // Remove active from all menu titles
-            $(".menu-title .icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
-
-            $submenu.slideDown(); // Show clicked submenu
-            $(this).addClass("active"); // Set active class
-            $(this).find(".icon-right i").removeClass("fa-angle-down").addClass("fa-angle-up");
+    // Restore active menu-title after redirection
+    $(".menu-title").each(function () {
+        if ($(this).text().trim() === activeMenu) {
+            $(this).addClass("active");
+            let $submenu = $(this).next(".submenu");
+            if ($submenu.length) {
+                $submenu.slideDown();
+                $(this).find(".icon-right i").removeClass("fa-angle-down").addClass("fa-angle-up");
+            }
         }
+    });
+
+    // Handle menu-title click event
+    $(".menu-title").click(function () {
+        let $submenu = $(this).next(".submenu");
+
+        if ($submenu.length) {
+            if ($submenu.is(":visible")) {
+                $submenu.slideUp();
+                $(this).removeClass("active");
+                $(this).find(".icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
+            } else {
+                $(".submenu").slideUp();
+                $(".menu-title").removeClass("active");
+                $(".menu-title .icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
+
+                $submenu.slideDown();
+                $(this).addClass("active");
+                $(this).find(".icon-right i").removeClass("fa-angle-down").addClass("fa-angle-up");
+            }
+        } else {
+            // If no submenu, simply add active class
+            $(".menu-title").removeClass("active");
+            $(this).addClass("active");
+
+            // Store active menu in localStorage
+            localStorage.setItem("activeMenu", $(this).text().trim());
+        }
+    });
+
+    // Handle submenu item click event
+    $(".submenu a").click(function () {
+        $(".submenu a").removeClass("active");
+        $(this).addClass("active");
+
+        // Ensure the corresponding menu-title stays active
+        let $menuTitle = $(this).closest(".submenu").prev(".menu-title");
+        $(".menu-title").removeClass("active");
+        $menuTitle.addClass("active");
+        $(".menu-title .icon-right i").removeClass("fa-angle-up").addClass("fa-angle-down");
+        $menuTitle.find(".icon-right i").removeClass("fa-angle-down").addClass("fa-angle-up");
+
+        // Store active menu-title in localStorage
+        localStorage.setItem("activeMenu", $menuTitle.text().trim());
     });
 });
 
