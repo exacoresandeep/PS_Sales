@@ -106,7 +106,7 @@ class ActivityController extends Controller
             }
 
             $activity->record_details = $validatedData['record_details'];
-            $activity->attachments = json_encode($validatedData['attachments']);
+            $activity->attachments = $validatedData['attachments'];
             $activity->completed_date = now(); 
             $activity->status = 'Completed';
             $activity->save();  
@@ -126,52 +126,7 @@ class ActivityController extends Controller
             ], 500);
         }
     }
-    // public function viewActivity($activityId)
-    // {
-    //     try {
-    //         $user = Auth::user();
-    //         if ($user === null) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 400,
-    //                 'message' => 'Unauthorized access',
-    //             ], 400);
-    //         }
-
-    //         $activity = Activity::with(['activityType', 'dealer']) 
-    //             ->find($activityId);
-
-    //         if (!$activity) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 404,
-    //                 'message' => 'Activity not found',
-    //             ], 404);
-    //         }
-
-    //         if ($activity->employee_id !== $user->id) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'statusCode' => 400,
-    //                 'message' => 'Forbidden: You can only view your own activities.',
-    //             ], 400);
-    //         }
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'statusCode' => 200,
-    //             'message' => 'Activity retrieved successfully!',
-    //             'data' => $activity,
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'statusCode' => 500,
-    //             'message' => $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
+ 
     public function viewActivity($activityId)
     {
         try {
