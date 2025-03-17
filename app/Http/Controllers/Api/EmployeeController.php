@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\Lead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 // use Illuminate\Support\Facades\Validator;
@@ -95,6 +96,14 @@ class EmployeeController extends Controller
     public function getEmployeesByType($employeeTypeId)
     {
         $employees = Employee::where('employee_type_id', $employeeTypeId)->get();
+        $employees = $employees->map(function ($employee) {
+            $customerVisitCount = Lead::where('created_by', $employee->id)->count();
+            return [
+                'id' => $employee->id,
+                'name' => $employee->name,
+                'customer_visit' => $customerVisitCount
+            ];
+        });
         return response()->json($employees);
     }
     public function filterEmployeesByType(Request $request)

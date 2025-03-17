@@ -77,7 +77,10 @@
             $('#activity_type_id').val('');
             $('.submit-btn').text('Create');
             $('#createEditActivityTypeModalLabel').text('Create Activity Type');
-            $('#createEditActivityTypeModal').modal('show');
+            $('#createEditActivityTypeModal').modal({
+                backdrop: 'static', // Prevent clicking outside to close
+                keyboard: false     // Prevent "Esc" key from closing
+            }).modal('show');
         });
 
         // Handle Create / Update
@@ -136,7 +139,10 @@
                     $('#activity_type_id').val(response.activity_type.id);
                     $('#activity_name').val(response.activity_type.name);
                     $('#status').val(response.activity_type.status);
-                    $('#createEditActivityTypeModal').modal('show');
+                    $('#createEditActivityTypeModal').modal({
+                        backdrop: 'static', // Prevent clicking outside to close
+                        keyboard: false     // Prevent "Esc" key from closing
+                    }).modal('show');
                     $('#createEditActivityTypeModalLabel').text('Edit Activity Type');
                     $('.submit-btn').text('Update');
 

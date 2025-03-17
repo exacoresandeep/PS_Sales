@@ -136,7 +136,10 @@
                         $('#approve_order, #reject_order').data('id', orderId);
 
                         // Show Modal
-                        $('#viewModal').modal('show');
+                        $('#viewModal').modal({
+                            backdrop: 'static', // Prevent clicking outside to close
+                            keyboard: false     // Prevent "Esc" key from closing
+                        }).modal('show');
                     }
                 }
             });
