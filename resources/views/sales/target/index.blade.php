@@ -82,7 +82,10 @@
             $('#targetForm')[0].reset(); 
             $('#target_id').val(''); 
             $('#createEditModalLabel').text('Create Target');
-            $('#createEditModal').modal('show'); 
+            $('#createEditModal').modal({
+                backdrop: 'static', // Prevent clicking outside to close
+                keyboard: false     // Prevent "Esc" key from closing
+            }).modal('show'); 
         });
 
         $('#targetForm').submit(function (e) {
@@ -276,7 +279,10 @@
                         $('#aashiyana').val(response.target.aashiyana);
                         $('#order_quantity').val(response.target.order_quantity);
                         $('#saveTargetBtn').text('Update');
-                        $('#createEditModal').modal('show');
+                        $('#createEditModal').modal({
+                            backdrop: 'static', // Prevent clicking outside to close
+                            keyboard: false     // Prevent "Esc" key from closing
+                        }).modal('show');
                     } else if (action === 'view') {
                         $('#view_employee_type').text(response.target.employee_type || '-');
                         $('#view_employee_name').text(response.target.employee_name || '-');
@@ -287,7 +293,10 @@
                         $('#view_aashiyana').text(response.target.aashiyana || '0');
                         $('#view_order_quantity').text(response.target.order_quantity || '0');
 
-                        $('#viewModal').modal('show');
+                        $('#viewModal').modal({
+                            backdrop: 'static', // Prevent clicking outside to close
+                            keyboard: false     // Prevent "Esc" key from closing
+                        }).modal('show');
                     }
                 },
                 error: function () {

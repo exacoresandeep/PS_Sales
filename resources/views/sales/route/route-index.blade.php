@@ -71,7 +71,10 @@
         });
 
         $('#openCreateRouteModal').click(function () {
-            $('#createEditRouteModal').modal('show');
+            $('#createEditRouteModal').modal({
+                backdrop: 'static', // Prevent clicking outside to close
+                keyboard: false     // Prevent "Esc" key from closing
+            }).modal('show');
         });
 
         $('#routeForm').on('submit', function (e) {
@@ -163,7 +166,10 @@
 
                     $('#createEditRouteModalLabel').text('Edit Route');
                     $('.submit-btn').text('Update');
-                    $('#createEditRouteModal').modal('show');
+                    $('#createEditRouteModal').modal({
+                        backdrop: 'static', // Prevent clicking outside to close
+                        keyboard: false     // Prevent "Esc" key from closing
+                    }).modal('show');
                 },
                 error: function (xhr) {
                     Swal.fire('Error', 'Could not fetch route details.', 'error');

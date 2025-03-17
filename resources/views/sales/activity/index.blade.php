@@ -123,7 +123,10 @@
             $('#activity_id').val('');
             $('.submit-btn').text('Create');
             $('#createEditActivityModalLabel').text('Create Activity');
-            $('#createEditActivityModal').modal('show');
+            $('#createEditActivityModal').modal({
+                backdrop: 'static', // Prevent clicking outside to close
+                keyboard: false     // Prevent "Esc" key from closing
+            }).modal('show');
         });
 
         $('#activityForm').submit(function (e) {
@@ -210,7 +213,10 @@
                         }, 500);
                     }
 
-                    $('#createEditActivityModal').modal('show');
+                    $('#createEditActivityModal').modal({
+                        backdrop: 'static', // Prevent clicking outside to close
+                        keyboard: false     // Prevent "Esc" key from closing
+                    }).modal('show');
 
                 } else if (action === 'view') {
 
@@ -225,7 +231,10 @@
                     );
                     $('#view_instructions').text(response.activity.instructions || 'No instructions provided');
 
-                    $('#viewModal').modal('show');
+                    $('#viewModal').modal({
+                        backdrop: 'static', // Prevent clicking outside to close
+                        keyboard: false     // Prevent "Esc" key from closing
+                    }).modal('show');
                 }
             }).fail(function () {
                 Swal.fire('Error', 'Could not fetch activity details.', 'error');

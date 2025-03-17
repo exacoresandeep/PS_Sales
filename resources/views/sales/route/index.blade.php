@@ -187,7 +187,10 @@
             });            
             updateRouteDropdowns();
             updateLocationDropdowns();
-            $('#createEditAssignRouteModal').modal('show');
+            $('#createEditAssignRouteModal').modal({
+                backdrop: 'static', // Prevent clicking outside to close
+                keyboard: false     // Prevent "Esc" key from closing
+            }).modal('show');
         });
 
         $(document).on('click', '.editRoute', async function () 
@@ -273,7 +276,10 @@
 
                 $('#createEditAssignRouteModal .modal-title').text('Edit Assigned Route');
                 $('#createEditAssignRouteModal button[type="submit"]').text('Update');
-                $('#createEditAssignRouteModal').modal('show');
+                $('#createEditAssignRouteModal').modal({
+                    backdrop: 'static', // Prevent clicking outside to close
+                    keyboard: false     // Prevent "Esc" key from closing
+                }).modal('show');
 
             } catch (error) {
                 console.error('Error loading route data:', error);

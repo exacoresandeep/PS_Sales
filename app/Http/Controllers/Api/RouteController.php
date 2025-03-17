@@ -872,7 +872,7 @@ class RouteController extends Controller
                 'route_name'    => $routeGroup->map(function ($route) {
                     return $route->route_name . ' - ' . $route->locations; 
                 })->implode('<br>'), 
-                'action'        => '<button class="btn btn-sm btn-warning editRoute" data-id="'.$firstRoute->id.'">Edit</button>'
+                'action'        => '<button class="btn btn-sm btn-warning editRoute" data-id="'.$firstRoute->id.'"><i class="fa fa-edit"></i></button>'
             ];
         })->values(); 
 
