@@ -230,9 +230,10 @@ class RouteController extends Controller
                 // $locations = $rescheduledRoute->locations;
                 $locations = json_decode($rescheduledRoute->locations, true);
 
-                $scheduledCustomers = collect(json_decode($rescheduledRoute->customers ?? '[]', true))->map(function ($customer) {
-                    return array_merge($customer, ['scheduled' => true]);
+                $scheduledCustomers = collect(json_decode($rescheduledRoute->customers ?? '[]', true) ?? [])->map(function ($customer) {
+                    return collect($customer)->merge(['scheduled' => true]);
                 });
+                
             } else {
                 $trip = AssignRoute::where('employee_id', $employeeId)
                     ->where('route_name', $routeName)
@@ -273,7 +274,7 @@ class RouteController extends Controller
                         return array_merge($lead->toArray(), ['scheduled' => false]);
                     });
 
-                $scheduledCustomers = $dealers->merge($leads);
+                $scheduledCustomers = collect($dealers)->merge($leads);
             }
 
             return response()->json([
