@@ -141,6 +141,7 @@
                     $('.select2-multi').each(function () {
                         let $select = $(this);
                         // $select.empty();
+                        $select.empty().trigger('change');
 
                         if (data.length > 0) {
                             $.each(data, function (index, location) {
@@ -194,9 +195,9 @@
             try {
                 let routeId = $(this).data('id');
                 if (routeId) {
-                    $("#district").prop("disabled", true); // Disable district field
+                    $("#district").prop("disabled", true); 
                 } else {
-                    $("#district").prop("disabled", false); // Enable for new entry
+                    $("#district").prop("disabled", false);
                 }
                 let response = await $.ajax({
                     url: `/sales/routes/edit/${routeId}`,
@@ -320,9 +321,11 @@
                 url = "{{ route('sales.route.assigned.update', ':id') }}".replace(':id', routeId);
                 formData.append('_method', 'PUT'); 
                 type = "POST"; // Laravel requires _method override for PUT
+                actionType = "updated";
             } else {
                 url = "{{ route('sales.route.assigned.store') }}";
                 type = "POST"; // Direct POST request for storing new data
+                actionType = "created";
             }
 
             $.ajax({
@@ -333,12 +336,23 @@
                 contentType: false, 
                 
                 success: function (response) {
-                    alert(response.message);
-                    $('#createEditAssignRouteModal').modal('hide');
-                    routeTable.ajax.reload();
+                    Swal.fire({
+                        title: 'Success!',
+                        text: `Route successfully ${actionType}.`,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        $('#createEditAssignRouteModal').modal('hide');
+                        routeTable.ajax.reload();
+                    });
                 },
                 error: function (xhr) {
-                    alert('Error: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Something went wrong'));
+                    Swal.fire({
+                        title: 'Error!',
+                        text: xhr.responseJSON ? xhr.responseJSON.message : 'Something went wrong',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
             });
 

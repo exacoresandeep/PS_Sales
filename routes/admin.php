@@ -59,7 +59,7 @@ Route::prefix('sales')->middleware('auth')->group(function () {
         Route::get('/view/{id}', [TargetController::class, 'viewTargets'])->name('sales.target.view');
         Route::delete('/delete/{id}', [TargetController::class, 'destroy'])->name('sales.target.delete');
         Route::get('/{id}', [TargetController::class, 'getTargetDetails'])->name('sales.target.details');
-
+        Route::get('/getVisitCount/{employeeType}/employee/{employee}', [TargetController::class, 'getVisitCount'])->name('sales.getVisitCount');
     });
 
     Route::get('/get-employees/{employeeTypeId}', [EmployeeController::class, 'getEmployeesByType'])->name('sales.getEmployees');

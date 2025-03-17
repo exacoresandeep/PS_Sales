@@ -10,7 +10,7 @@
             <div class="settings-box">
                 {{-- <a href="" class="notify"><i class="fa fa-bell" aria-hidden="true"></i></a> --}}
                 <div class="profi-blk">
-                    <img src="{{ asset('images/profile-pic.svg') }}" class="img-fluid">
+                    <img src="{{ asset('images/profile-pic.png') }}" class="img-fluid">
                     <p>{{ Auth::check() ? Auth::user()->name : 'Guest' }}</p>
                 </div>
             </div>
