@@ -70,7 +70,8 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    Route::post('login', [GreytHRController::class, 'login']);
+    Route::post('login', [AuthController::class, 'login']);
+    // Route::post('login', [GreytHRController::class, 'login']);
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('employees', [EmployeeController::class, 'store']);
