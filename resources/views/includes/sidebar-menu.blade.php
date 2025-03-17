@@ -5,11 +5,17 @@
     </div>          
     <div class="menu-cover d-flex flex-wrap">
       <div class="d-flex align-self-start flex-wrap">
-        <a href="{{ route('sales.dashboard') }}" class="dashboard w-100"><i class="fa fa-home" aria-hidden="true"></i> Dashboard</a>
         <ul class="w-100">
             <li>
+                <a class="menu-title"  href="{{ route('sales.dashboard') }}">
+                    <i class="fa fa-home" aria-hidden="true"></i>
+                    Dashboard <span class="icon-right"></span>
+                </a>
+                
+            </li>
+            <li>
                 <a class="menu-title">
-                    <i class="fa fa-cubes" aria-hidden="true"></i>
+                    <i class="fa fa-tasks" aria-hidden="true"></i>
                     Activity Management <span class="icon-right"><i class="fa fa-solid fa-angle-down"></i></span>
                 </a>
                 <ul class="submenu">
@@ -39,7 +45,7 @@
             </li>
             <li>
                 <a class="menu-title"  href="{{ route('sales.target.index') }}">
-                    <i class="fa fa-road" aria-hidden="true"></i>
+                    <i class="fa fa-bullseye" aria-hidden="true"></i>
                     Target Management <span class="icon-right"></span>
                 </a>
                 
@@ -67,12 +73,17 @@
       <a href="{{ route('accounts.dashboard') }}"><img src="{{asset('images/logo.svg')}}"></a>
     </div>          
     <div class="menu-cover d-flex flex-wrap">
-      <div class="d-flex align-self-start flex-wrap">
-        <a href="{{ route('accounts.dashboard') }}" class="dashboard w-100"><i class="fa fa-home" aria-hidden="true"></i> Dashboard</a>
+      <div class="d-flex align-self-start flex-wrap w-100">
         <ul class="w-100">
             <li>
+                <a class="menu-title"  href="{{ route('accounts.dashboard') }}">
+                    <i class="fa fa-home" aria-hidden="true"></i>
+                    Dashboard <span class="icon-right"></span>
+                </a>
+            </li>
+            <li>
                 <a class="menu-title" href="{{ route('accounts.orders.index') }}">
-                    <i class="fa fa-cubes" aria-hidden="true"></i>
+                    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
                     Order Request <span class="icon-right"></span>
                 </a>
              

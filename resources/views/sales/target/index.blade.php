@@ -82,7 +82,10 @@
             $('#targetForm')[0].reset(); 
             $('#target_id').val(''); 
             $('#createEditModalLabel').text('Create Target');
-            $('#createEditModal').modal('show'); 
+            $('#createEditModal').modal({
+                backdrop: 'static', // Prevent clicking outside to close
+                keyboard: false     // Prevent "Esc" key from closing
+            }).modal('show'); 
         });
 
         $('#targetForm').submit(function (e) {
@@ -162,18 +165,36 @@
         $('#employee_type').change(function () {
             let employeeTypeId = $(this).val();
             $('#employee_id').html('<option value="">Loading...</option>');
-
+            $('#customer_visit').val('').prop('readonly', false);
             if (employeeTypeId) {
                 $.get("{{ route('sales.getEmployees', '') }}/" + employeeTypeId, function (response) {
                     $('#employee_id').html('<option value="">-Select Employee-</option>');
                     $.each(response, function (index, employee) {
                         $('#employee_id').append('<option value="' + employee.id + '">' + employee.name + '</option>');
                     });
+                    
                 }).fail(function () {
                     Swal.fire('Error', 'Could not load employees.', 'error');
                 });
             } else {
                 $('#employee_id').html('<option value="">-Select Employee-</option>');
+            }
+        });
+        $('#employee_id').change(function () {
+            let employeeId = $(this).val();
+            let employeeTypeId = $('#employee_type').val();
+            $('#customer_visit').val('').prop('readonly', false); // Reset field
+
+            if (employeeId) {
+                $.get("{{ url('sales/targets/getVisitCount') }}/" + employeeTypeId + "/employee/" + employeeId, function (response) {
+                    if (response.visit_count > 0) {
+                        $('#customer_visit').val(response.visit_count).prop('readonly', true);
+                    } else {
+                        $('#customer_visit').val('').prop('readonly', false);
+                    }
+                }).fail(function () {
+                    Swal.fire('Error', 'Could not load visit count.', 'error');
+                });
             }
         });
         $('.target-filter select').change(function () {
@@ -239,6 +260,16 @@
 
                         setTimeout(() => {
                             $('#employee_id').val(response.target.employee_id);
+                            $.get("{{ url('sales/targets/getVisitCount') }}/" + employeeTypeId + "/employee/" + employeeId, function (response) {
+                                if (visitResponse.visit_count > 0) {
+                                    $('#customer_visit').val(visitResponse.visit_count).prop('readonly', true);
+                                } else {
+                                    $('#customer_visit').val(response.target.customer_visit).prop('readonly', false);
+                                }
+                            }).fail(function () {
+                                Swal.fire('Error', 'Could not load visit count.', 'error');
+                            });
+
                         }, 500);
 
                         $('#year').val(response.target.year);
@@ -248,7 +279,10 @@
                         $('#aashiyana').val(response.target.aashiyana);
                         $('#order_quantity').val(response.target.order_quantity);
                         $('#saveTargetBtn').text('Update');
-                        $('#createEditModal').modal('show');
+                        $('#createEditModal').modal({
+                            backdrop: 'static', // Prevent clicking outside to close
+                            keyboard: false     // Prevent "Esc" key from closing
+                        }).modal('show');
                     } else if (action === 'view') {
                         $('#view_employee_type').text(response.target.employee_type || '-');
                         $('#view_employee_name').text(response.target.employee_name || '-');
@@ -259,7 +293,10 @@
                         $('#view_aashiyana').text(response.target.aashiyana || '0');
                         $('#view_order_quantity').text(response.target.order_quantity || '0');
 
-                        $('#viewModal').modal('show');
+                        $('#viewModal').modal({
+                            backdrop: 'static', // Prevent clicking outside to close
+                            keyboard: false     // Prevent "Esc" key from closing
+                        }).modal('show');
                     }
                 },
                 error: function () {

@@ -34,5 +34,11 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'greythr' => [
+        'api_user' => env('GREYTHR_API_USER', 'demo1'),
+        'api_key'  => env('GREYTHR_API_KEY', 'b223954f-bdc9-406f-b87f-62f158d9734e'),
+        'host'     => env('GREYTHR_HOST', 'tousifapisso.greythr.com'),
+        'api_url'  => env('GREYTHR_API_URL', 'https://api.greythr.com'),
+    ],
 
 ];
