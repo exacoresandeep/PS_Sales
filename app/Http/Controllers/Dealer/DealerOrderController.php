@@ -199,10 +199,6 @@ class DealerOrderController extends Controller
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($orderId);
     
-            // $order->billing_date = Carbon::parse($order->billing_date)->format('d/m/Y');
-            // $order->created_at = Carbon::parse($order->created_at)->format('d/m/Y');
-            // $order->updated_at = Carbon::parse($order->updated_at)->format('d/m/Y');
-    
             $responseData = [
                 'id' => $order->id,
                 'order_type' => $order->orderType->name ?? null,
@@ -227,6 +223,13 @@ class DealerOrderController extends Controller
                     'vehicle_number' => $order->vehicle_number,
                     'driver_name' => $order->driver_name,
                     'driver_phone' => $order->driver_phone,
+                ],
+                'track_order' =>[
+                    'accepted_time'   => $order->accepted_time,
+                    'rejected_time'   => $order->rejected_time,
+                    'dispatched_time' => $order->dispatched_time,
+                    'intransit_time'  => $order->intransit_time,
+                    'delivered_time'  => $order->delivered_time,
                 ],
                 'attachments' => $order->attachment ?? [],
     
