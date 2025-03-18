@@ -1896,6 +1896,7 @@ class OrderController extends Controller
                 'billing_date'   => $order->billing_date ? \Carbon\Carbon::parse($order->billing_date)->format('d/m/Y') : 'N/A',
                 'created_at'     => \Carbon\Carbon::parse($order->created_at)->format('d/m/Y'),
                 'dealer_details' => $dealerDetails,
+                'additional_information' => $order->additional_information,
                 'order_status'   => $order->status ?? 'N/A',
                 'total_amount'   => (int) $order->total_amount,
                 'order_items'    => $orderItems->count() === 1 ? $orderItems->first() : $orderItems,
