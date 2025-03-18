@@ -199,7 +199,7 @@ class DealerOrderController extends Controller
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($orderId);
     
-            $order->billing_date = $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null;
+            $order->billing_date = Carbon::parse($order->billing_date)->format('d/m/Y');
             $order->created_at = Carbon::parse($order->created_at)->format('d/m-Y');
             $order->updated_at = Carbon::parse($order->updated_at)->format('d/m-Y');
     

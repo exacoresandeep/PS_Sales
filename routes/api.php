@@ -92,6 +92,7 @@ Route::prefix('v1')->group(function () {
 
             Route::post('/send-for-approval/{orderId}', [OrderController::class, 'sendForApproval']);
             Route::post('/order-approval-list', [OrderController::class, 'orderApprovalList']);
+            Route::get('/order-approval/{orderId}', [OrderController::class, 'orderApprovalDetails']);
          
         });
 
