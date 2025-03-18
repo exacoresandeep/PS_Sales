@@ -52,21 +52,6 @@ Route::prefix('v1')->group(function () {
             Route::get('support', [DealerOrderController::class, 'getSupport']);
             Route::post('logout', [DealerController::class, 'logout']);
 
-            // Route::get('orders', [OrderController::class, 'dealerOrderList']);
-            // Route::get('order-details/{orderId}', [OrderController::class, 'dealerOrderDetails']); 
-            // Route::post('order-status-update/{orderId}', [OrderController::class, 'dealerOrderStatusUpdate']); 
-            // Route::get('order-filter', [OrderController::class, 'dealerOrderFilter']);
-
-            // Route::get('outstanding-payments', [OrderController::class, 'outstandingPaymentsList']); 
-            // Route::get('view-outstanding-payment/{orderId}', [OrderController::class, 'viewOutstandingPaymentOrderDetails']); 
-            // Route::post('outstanding-payment/{id}/add-commitment', [OrderController::class, 'addOutstandingPaymentCommitment']);
-
-            // Route::get('stock-insights', [StockController::class, 'stockList']);
-            // Route::get('product-stock/{product_details_id}', [StockController::class, 'getProductStockDetails']);
-            // Route::get('stock-filter', [StockController::class, 'stockFilter']);
-
-            // Route::get('track-order', [AuthController::class, 'trackOrder']);
-            // Route::get('payment-terms', [AuthController::class, 'getPaymentTerms']);
         });
     });
 

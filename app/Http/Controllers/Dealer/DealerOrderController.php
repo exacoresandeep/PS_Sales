@@ -32,14 +32,14 @@ class DealerOrderController extends Controller
                 ->where('dealer_flag_order', "1")
                 ->with([
                     'dealer:id,dealer_name,dealer_code',
-                    'orderItems:id,order_id,total_quantity' // Include order items to sum total_quantity
+                    'orderItems:id,order_id,total_quantity' 
                 ])
                 ->select('id', 'total_amount', 'status', 'created_at', 'created_by_dealer')
                 ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($order) {
                     $order->total_amount = (float) sprintf("%.2f", $order->total_amount);
-                    $order->total_quantity = $order->orderItems->sum('total_quantity'); // Summing up total quantity
+                    $order->total_quantity = $order->orderItems->sum('total_quantity'); 
                     return $order;
                 });     
                 return response()->json([
@@ -199,9 +199,10 @@ class DealerOrderController extends Controller
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($orderId);
     
-            $order->billing_date = Carbon::parse($order->billing_date)->format('d/m/Y');
-            $order->created_at = Carbon::parse($order->created_at)->format('d/m-Y');
-            $order->updated_at = Carbon::parse($order->updated_at)->format('d/m-Y');
+            $order->billing_date = !empty($order->billing_date) ? Carbon::createFromFormat('Y-m-d', $order->billing_date)->format('d/m/Y') : null;
+            $order->created_at = !empty($order->created_at) ? Carbon::parse($order->created_at)->format('d/m/Y') : null;
+            $order->updated_at = !empty($order->updated_at) ? Carbon::parse($order->updated_at)->format('d/m/Y') : null;
+
     
             $responseData = [
                 'id' => $order->id,
