@@ -199,9 +199,9 @@ class DealerOrderController extends Controller
                 'vehicleCategory:id,vehicle_category_name'
             ])->findOrFail($orderId);
     
-            $order->billing_date = Carbon::parse($order->billing_date)->format('d/m/Y');
-            $order->created_at = Carbon::parse($order->created_at)->format('d/m/Y');
-            $order->updated_at = Carbon::parse($order->updated_at)->format('d/m/Y');
+            // $order->billing_date = Carbon::parse($order->billing_date)->format('d/m/Y');
+            // $order->created_at = Carbon::parse($order->created_at)->format('d/m/Y');
+            // $order->updated_at = Carbon::parse($order->updated_at)->format('d/m/Y');
     
             $responseData = [
                 'id' => $order->id,
@@ -215,7 +215,7 @@ class DealerOrderController extends Controller
                     'id' => $order->paymentTerm->id ?? null,
                     'name' => $order->paymentTerm->name ?? null,
                 ],
-                'billing_date' => $order->billing_date,
+                'billing_date' => $order->billing_date ? Carbon::parse($order->billing_date)->format('d/m/Y') : null,
                 'total_amount' => round($order->total_amount, 2),
                 'additional_information' => $order->additional_information,
                 'status' => $order->status,
@@ -248,8 +248,7 @@ class DealerOrderController extends Controller
                     ];
                 }),
     
-                'created_at' => $order->created_at,
-                'updated_at' => $order->updated_at,
+                'created_at' => $order->created_at ? Carbon::parse($order->created_at)->format('d/m/Y') : null,
             ];
     
             return response()->json([
