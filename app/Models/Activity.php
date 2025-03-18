@@ -27,6 +27,7 @@ class Activity extends Model
     protected $casts = [
         'attachments' => 'array', 
         'completed_date' => 'date',
+        'assigned_date' => 'date',
     ];
     
 
