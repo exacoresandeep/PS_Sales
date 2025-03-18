@@ -5,10 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
-use App\Models\Target;
 use App\Models\EmployeeType;
+use App\Models\District;
+use Yajra\DataTables\Facades\DataTables;
 use Redirect;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Hash;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
+
 class AdminController extends Controller
 {
 
@@ -108,19 +115,111 @@ class AdminController extends Controller
 
         return redirect()->route('login');
     }
-    public function activity_management(Request $request)
+    public function employeeIndex()
     {
-        return view('sales.activity-management');
+        return view('admin.users.employee-index');
     }
-    public function route_management(Request $request)
+    public function employeeList(Request $request)
     {
-        return view('sales.route-management');
-    }
-    public function target_management(Request $request)
-    {
-        $employeeTypes = EmployeeType::all();
+        $employees = Employee::with('reportingManager') // Load the reporting manager relationship
+            ->select([
+                'id', 'employee_code', 'name', 'email', 'phone', 
+                'district', 'area', 'designation', 'reporting_manager', 
+                'address', 'emergency_contact'
+            ]);
 
-        return view('sales.target-management', ['employeeTypes' => $employeeTypes ?? collect([])]);
+        return DataTables::of($employees)
+            ->addColumn('reporting_manager', function ($employee) {
+                return $employee->reportingManager ? $employee->reportingManager->name : 'N/A';
+            })
+            ->make(true);
     }
+    public function importEmployees(Request $request)
+    {
+        if (!$request->hasFile('file')) {
+            return response()->json(['message' => 'No file uploaded'], 400);
+        }
+    
+        $file = $request->file('file');
+        $extension = $file->getClientOriginalExtension();
+    
+        // Allowed file types
+        if (!in_array($extension, ['csv', 'xlsx', 'xls'])) {
+            return response()->json(['message' => 'Invalid file format. Upload CSV or Excel file.'], 400);
+        }
+    
+        try {
+            DB::transaction(function () use ($file) {
+                $spreadsheet = IOFactory::load($file->getPathname());
+                $sheet = $spreadsheet->getActiveSheet();
+                $rows = $sheet->toArray();
+    
+                // Skip first row (Header)
+                unset($rows[0]);
+    
+                foreach ($rows as $row) {
+                    $employeeCode = $row[0]; // Employee ID
+                    $name = $row[1];
+                    $email = $row[2];
+                    $phone = $row[3];
+                    $districtName = $row[4]; // District Name from CSV
+                    $area = $row[5];
+                    $designation = trim($row[6]);
+                    $reportingManagerName = $row[7];
+                    $address = $row[8];
+                    $emergencyContact = $row[9];
+
+                    if (empty($designation)) {
+                        continue; // Skip this row
+                    }
+                    // Check if employee already exists
+                    if (Employee::where('employee_code', $employeeCode)->exists()) {
+                        continue; // Skip existing employee
+                    }
+                    $district = District::where('name', $districtName)->first();
+                    $districtId = $district ? $district->id : null;
+    
+                    // Check if Designation Exists in EmployeeTypes
+                    $employeeType = EmployeeType::firstOrCreate(
+                        ['type_name' => $designation],
+                        ['created_at' => now(), 'updated_at' => now()]
+                    );
+                   
+                    // Get Reporting Manager ID from Name
+                    $reportingManager = Employee::where('name', $reportingManagerName)->first();
+                    $reportingManagerId = $reportingManager ? $reportingManager->id : null;
+    
+                    // Generate Password (first 3 letters of name + employee code)
+                    $passwordString = substr($name, 0, 3) . $employeeCode;
+                    $hashedPassword = Hash::make($passwordString);
+    
+                    // Insert Employee
+                    Employee::create([
+                        'employee_code' => $employeeCode,
+                        'name' => $name,
+                        'email' => $email,
+                        'phone' => $phone,
+                        'district_id' => $districtId, // Store district ID if found
+                        'district' => $districtName,
+                        'area' => $area,
+                        'designation' => $designation,
+                        'employee_type_id' => $employeeType->id,
+                        'reporting_manager' => $reportingManagerId,
+                        'address' => $address,
+                        'emergency_contact' => $emergencyContact,
+                        'password' => $hashedPassword, // Store encrypted password
+                        'status' => '1',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+    
+            return response()->json(['message' => 'Employees imported successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+    
 
 }

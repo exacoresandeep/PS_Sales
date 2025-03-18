@@ -87,11 +87,17 @@ Route::prefix('accounts')->middleware('auth')->group(function () {
 Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::prefix('users')->group(function () {
-        Route::get('/', [TargetController::class, 'usersIndex'])->name('admin.users.index');
-        Route::post('/list', [TargetController::class, 'usersList'])->name('admin.users.list');
-        Route::post('/store', [TargetController::class, 'usersStore'])->name('admin.users.store');
-        Route::post('/update', [TargetController::class, 'usersUpdate'])->name('admin.users.update');
-        Route::delete('/delete/{id}', [TargetController::class, 'usersDestroy'])->name('admin.users.delete');
+        Route::get('/', [AdminController::class, 'usersIndex'])->name('admin.users.index');
+        Route::post('/list', [AdminController::class, 'usersList'])->name('admin.users.list');
+        Route::post('/store', [AdminController::class, 'usersStore'])->name('admin.users.store');
+        Route::post('/update', [AdminController::class, 'usersUpdate'])->name('admin.users.update');
+        Route::delete('/delete/{id}', [AdminController::class, 'usersDestroy'])->name('admin.users.delete');
+
+        Route::get('/employees', [AdminController::class, 'employeeIndex'])->name('admin.users.employee-index');
+        Route::get('/employees/list', [AdminController::class, 'employeeList'])->name('admin.users.employee-list');
+        Route::post('/employees/import', [AdminController::class, 'importEmployees'])->name('admin.users.import-employees');
+
+
     });
 });
 
