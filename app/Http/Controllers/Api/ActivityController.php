@@ -10,6 +10,7 @@ use App\Models\ActivityType;
 use App\Models\Dealer;
 use App\Models\District;
 use App\Models\AssignRoute;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Yajra\DataTables\Facades\DataTables;
@@ -301,8 +302,8 @@ class ActivityController extends Controller
                     'activity_type' => $activity->activityType ? $activity->activityType->name : null,
                     'dealer_code' => $activity->dealer ? $activity->dealer->dealer_code : null,
                     'dealer_name' => $activity->dealer ? $activity->dealer->dealer_name : null,
-                    'completed_date' => $activity->status === 'Pending' ? null : ($activity->completed_date ? $activity->completed_date->format('d/m/Y') : null),
-                    'assigned_date' => $activity->status === 'Pending' ? $activity->assigned_date->format('d/m/Y') : null,
+                    'completed_date' => $activity->status === 'Pending' ? null : ($activity->completed_date ? Carbon::parse($activity->completed_date)->format('d/m/Y') : null),
+                    'assigned_date' => $activity->status === 'Pending' ? Carbon::parse($activity->assigned_date)->format('d/m/Y') : null,
                     'status' => $activity->status,
                 ];
             });
