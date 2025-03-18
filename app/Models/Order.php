@@ -120,5 +120,10 @@ class Order extends Model
     {
         return $this->hasMany(Payment::class, 'invoice_number', 'invoice_number');
     }
+    public function sendForApprovalBy()
+    {
+        return $this->belongsTo(Employee::class, 'send_for_approval_by');
+    }
+
     
 }

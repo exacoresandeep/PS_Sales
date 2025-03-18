@@ -23,7 +23,8 @@
                         <a href="{{ route('admin.users.index') }}">Users <span class="icon-right"></span></a>
                     </li>
                     <li>
-                        <a href="{{ route('admin.users.employee-index') }}">Employees <span class="icon-right"></span></a>
+                        <a href="{{ route('admin.users.employee-index') }}">Employees <span class="icon-right"></span>
+                        </a>
                     </li>
                     
                 </ul>
