@@ -1837,7 +1837,7 @@ class OrderController extends Controller
                             ->where('send_for_approval', '1');
                     });
                 })
-                ->with(['createdBy', 'dealer', 'orderType', 'paymentTerm', 'orderItems.product'])
+                ->with(['createdBy', 'dealer', 'orderType', 'paymentTerm', 'orderItems.product', 'vehicleCategory'])
                 ->first();
 
             if (!$order) {
