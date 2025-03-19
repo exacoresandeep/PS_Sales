@@ -1887,11 +1887,12 @@ class OrderController extends Controller
                     })
                 ];
             });
-            $vehicleCategory = [
-                'vehicle_category_id' => $order->vehicleCategory?->id ?? null,
-                'vehicle_category_name' => $order->vehicleCategory?->name ?? 'N/A',
-                'driver_phone' => $order->driver_name ?? 'N/A',
-                'driver_name' => $order->driver_phone ?? 'N/A',
+            $vehicleDetails = [
+                'vehicle_category_id'   => $order->vehicleCategory->id ?? null,
+                'vehicle_category_name' => $order->vehicleCategory->vehicle_category_name ?? 'N/A',
+                'vehicle_number'        => $order->vehicle_number ?? null,
+                'driver_name'           => $order->driver_name ?? null,
+                'driver_phone'          => $order->driver_phone ?? null,
             ];
 
             $orderDetails = [
@@ -1907,7 +1908,7 @@ class OrderController extends Controller
                 'total_amount'   => (int) $order->total_amount,
                 'order_items' => $orderItems->isEmpty() ? null : ($orderItems->count() === 1 ? $orderItems->first() : $orderItems),
                 'total_outstanding_amount' => $totalOutstandingAmount,
-                'vehicle_category' => $vehicleCategory
+                'vehicle_category' => $vehicleDetails,
             ];
 
             return response()->json([
