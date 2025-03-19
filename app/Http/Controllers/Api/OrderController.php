@@ -1899,7 +1899,7 @@ class OrderController extends Controller
                 'additional_information' => $order->additional_information,
                 'order_status'   => $order->status ?? 'N/A',
                 'total_amount'   => (int) $order->total_amount,
-                'order_items'    => $orderItems->count() === 1 ? $orderItems->first() : $orderItems,
+                'order_items' => $orderItems->isEmpty() ? [] : ($orderItems->count() === 1 ? $orderItems->first() : $orderItems),
                 'total_outstanding_amount' => $totalOutstandingAmount,
             ];
 
