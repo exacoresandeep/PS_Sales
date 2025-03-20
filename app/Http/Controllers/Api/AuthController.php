@@ -41,7 +41,7 @@ class AuthController extends Controller
             ->where('employees.employee_type_id', $validated['employee_type_id'])
             ->select('employees.*', 'employee_types.id as type_id', 'employee_types.type_name') 
             ->first();
-
+// dd($employee);
         if (!$employee || !Hash::check($validated['password'], $employee->password)) {
             return response()->json([
                 'success' => false,
