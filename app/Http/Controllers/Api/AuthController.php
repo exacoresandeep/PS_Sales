@@ -36,7 +36,7 @@ class AuthController extends Controller
                 'employee_type_id' => 'required|integer',
             ]);
 
-            $employee = Employee::join('employee_types', 'employees.id', '=', 'employee_types.id')
+            $employee = Employee::join('employee_types', 'employees.employee_type_id', '=', 'employee_types.id')
             ->where('employee_code', $validated['employee_code'])
             ->where('employees.employee_type_id', $validated['employee_type_id'])
             ->select('employees.*', 'employee_types.id as type_id', 'employee_types.type_name') 
