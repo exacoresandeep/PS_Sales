@@ -191,6 +191,7 @@ class AdminController extends Controller
     
                     // Generate Password (first 3 letters of name + employee code)
                     $passwordString = strtoupper(substr($name, 0, 3)) . $employeeCode;
+                    
                     $hashedPassword = Hash::make($passwordString);
     
                     // Insert Employee
