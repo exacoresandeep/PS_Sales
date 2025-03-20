@@ -190,7 +190,7 @@ class AdminController extends Controller
                     $reportingManagerId = $reportingManager ? $reportingManager->id : null;
     
                     // Generate Password (first 3 letters of name + employee code)
-                    $passwordString = substr($name, 0, 3) . $employeeCode;
+                    $passwordString = strtoupper(substr($name, 0, 3)) . $employeeCode;
                     $hashedPassword = Hash::make($passwordString);
     
                     // Insert Employee
